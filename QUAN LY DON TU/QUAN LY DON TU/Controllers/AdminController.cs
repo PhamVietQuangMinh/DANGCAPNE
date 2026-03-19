@@ -4,16 +4,19 @@ using DANGCAPNE.Data;
 using DANGCAPNE.Models.Organization;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.ViewModels;
-
+using Microsoft.AspNetCore.SignalR;
+using DANGCAPNE.Hubs;
 namespace DANGCAPNE.Controllers
 {
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public AdminController(ApplicationDbContext context)
+        public AdminController(ApplicationDbContext context, IHubContext<NotificationHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<IActionResult> Index(string tab = "users")
@@ -21,7 +24,7 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin")) return RedirectToAction("AccessDenied", "Account");
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
             var model = new AdminViewModel
@@ -129,6 +132,119 @@ namespace DANGCAPNE.Controllers
             await _context.SaveChangesAsync();
             TempData["Success"] = "Lưu thông tin nhân viên thành công!";
             return RedirectToAction("Index", new { tab = "users" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Whitelist()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            var model = new WhitelistViewModel
+            {
+                PendingUsers = await _context.Users
+                    .Include(u => u.Department)
+                    .Where(u => u.TenantId == tenantId && u.Status == "PendingApproval")
+                    .OrderByDescending(u => u.CreatedAt)
+                    .ToListAsync(),
+                ApprovedUsers = await _context.Users
+                    .Include(u => u.Department)
+                    .Where(u => u.TenantId == tenantId && u.Status == "Active")
+                    .OrderByDescending(u => u.UpdatedAt)
+                    .Take(100)
+                    .ToListAsync()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveUser(int id)
+        {
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+
+            var user = await _context.Users.FindAsync(id);
+            if (user != null && user.Status == "PendingApproval")
+            {
+                user.Status = "Active";
+                user.UpdatedAt = DateTime.Now;
+                
+                // Gán role mặc định là Employee nếu chưa có
+                if (!await _context.UserRoles.AnyAsync(ur => ur.UserId == id))
+                {
+                    var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
+                    if (employeeRole != null)
+                    {
+                        _context.UserRoles.Add(new UserRole { UserId = id, RoleId = employeeRole.Id });
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Notify User
+                _context.Notifications.Add(new Models.SystemModels.Notification
+                {
+                    TenantId = user.TenantId,
+                    UserId = user.Id,
+                    Title = "Tài khoản đã được duyệt",
+                    Message = "Tài khoản đăng nhập của bạn đã được quản trị viên phê duyệt thành công.",
+                    Type = "Info",
+                    ActionUrl = "/Account/Profile"
+                });
+                await _context.SaveChangesAsync();
+                
+                await _hubContext.Clients.Group($"user_{user.Id}").SendAsync("ReceiveNotification", new
+                {
+                    title = "Tài khoản đã được duyệt",
+                    message = "Tài khoản của bạn đã được duyệt.",
+                    type = "Info",
+                    actionUrl = "/Account/Profile"
+                });
+
+                TempData["Success"] = $"Đã phê duyệt email {user.Email}!";
+            }
+            return RedirectToAction("Whitelist");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectUser(int id)
+        {
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+
+            var user = await _context.Users.FindAsync(id);
+            if (user != null && user.Status == "PendingApproval")
+            {
+                user.Status = "Rejected";
+                user.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                // Notify User
+                _context.Notifications.Add(new Models.SystemModels.Notification
+                {
+                    TenantId = user.TenantId,
+                    UserId = user.Id,
+                    Title = "Đăng ký bị từ chối",
+                    Message = "Rất tiếc, yêu cầu tạo tài khoản của bạn đã bị từ chối.",
+                    Type = "Info"
+                });
+                await _context.SaveChangesAsync();
+
+                await _hubContext.Clients.Group($"user_{user.Id}").SendAsync("ReceiveNotification", new
+                {
+                    title = "Đăng ký bị từ chối",
+                    message = "Yêu cầu đăng ký tài khoản của bạn đã bị từ chối.",
+                    type = "Info"
+                });
+
+                TempData["Error"] = $"Đã từ chối email {user.Email}!";
+            }
+            return RedirectToAction("Whitelist");
         }
 
         [HttpPost]

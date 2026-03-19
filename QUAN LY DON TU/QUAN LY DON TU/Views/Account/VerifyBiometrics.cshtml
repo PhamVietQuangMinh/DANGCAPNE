@@ -1,0 +1,227 @@
+@model DANGCAPNE.Models.Organization.User
+@{
+    Layout = null; // Clean layout for login verification
+}
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng nhập Sinh trắc học - DANGCAPNE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { background: #f1f5f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: 'Inter', sans-serif; }
+        .verify-card { background: #fff; width: 440px; padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); text-align: center; position: relative; overflow: hidden; }
+        
+        .user-info { display: flex; align-items: center; gap: 12px; justify-content: center; margin-bottom: 32px; padding: 12px 20px; background: #f8fafc; border-radius: 99px; border: 1px solid #e2e8f0; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .user-name { font-weight: 700; color: #0f172a; font-size: 15px; margin: 0; }
+        .user-email { font-size: 13px; color: #64748b; margin: 0; }
+
+        .cam-circle { margin: 0 auto 32px auto; width: 220px; height: 220px; border-radius: 50%; position: relative; background: #e2e8f0; overflow: hidden; border: 4px solid #fff; box-shadow: 0 0 0 4px #3b82f6, 0 10px 25px rgba(59,130,246,0.3); transition: all 0.3s ease; }
+        .cam-circle.success { box-shadow: 0 0 0 4px #10b981, 0 10px 30px rgba(16,185,129,0.4); }
+        .cam-circle.error { box-shadow: 0 0 0 4px #ef4444, 0 10px 30px rgba(239,68,68,0.4); animation: shake 0.5s; }
+        
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); }
+
+        .scan-line { position: absolute; height: 4px; width: 100%; background: rgba(59, 130, 246, 0.6); box-shadow: 0 0 15px rgba(59,130,246,0.8); top: 0; animation: scan 2s linear infinite; z-index: 10; display: none; }
+        
+        h2 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        p.status-text { color: #64748b; font-size: 15px; margin-bottom: 24px; min-height: 22px; }
+
+        .btn-cancel { color: #64748b; font-weight: 600; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .btn-cancel:hover { color: #0f172a; }
+
+        /* Loader Overlay AI */
+        .ai-loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; }
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s infinite linear; }
+
+        .alert-box { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 24px; display: none; }
+        .warning-box { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        @@keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+        @@keyframes spin { 100% { transform: rotate(360deg); } }
+        @@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+    </style>
+</head>
+<body>
+    <div class="verify-card">
+        <div class="user-info">
+            <img class="user-avatar" src="@(string.IsNullOrEmpty(Model.PortraitImage) ? "/images/avatar-placeholder.png" : Model.PortraitImage)" alt="Avatar" />
+            <div style="text-align:left;">
+                <p class="user-name">@Model.FullName</p>
+                <p class="user-email">@Model.Email</p>
+            </div>
+        </div>
+
+        @if (ViewBag.IsTrustedDevice == false)
+        {
+            <div class="warning-box"><i class="bi bi-shield-exclamation"></i> Thiết bị lạ! Vui lòng xác thực khuôn mặt để tiếp tục.</div>
+        }
+
+        <div class="alert-box" id="errorBox"></div>
+
+        <div class="cam-circle" id="camContainer">
+            <div class="ai-loading-overlay" id="aiLoading">
+                <div class="loader-spinner"></div>
+            </div>
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+            <div class="scan-line" id="scanLine"></div>
+        </div>
+
+        <h2 id="mainTitle">Xác thực Sinh trắc học</h2>
+        <p class="status-text" id="statusTxt">Đang chuẩn bị Camera...</p>
+
+        <a href="/Account/Login" class="btn-cancel"><i class="bi bi-arrow-left"></i> Sử dụng tài khoản khác</a>
+        
+
+    </div>
+
+    <script src="~/lib/face-api/face-api.min.js"></script>
+    <script>
+        let stream = null;
+        let aiLoaded = false, isVerifying = false, stopScan = false;
+
+        document.addEventListener('DOMContentLoaded', startCameraAndAI);
+
+        async function startCameraAndAI() {
+            const video = document.getElementById('video');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (e) {
+                showError('Không thể truy cập Camera. Vui lòng cấp quyền!');
+                return;
+            }
+
+            video.addEventListener('loadedmetadata', async () => {
+                if (!aiLoaded) {
+                    try {
+                        const MODELS_URL = '/lib/face-api/models';
+                        await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL);
+                        await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL);
+                        await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL);
+                        aiLoaded = true;
+                        
+                        document.getElementById('aiLoading').style.display = 'none';
+                        document.getElementById('scanLine').style.display = 'block';
+                        document.getElementById('statusTxt').innerText = 'Đang nhận diện khuôn mặt...';
+                    } catch (e) {
+                        showError('Lỗi tải mô hình AI. Vui lòng refresh trang.');
+                        return;
+                    }
+                }
+                processAILoop();
+            });
+        }
+
+        async function processAILoop() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('overlay');
+            
+            if(!video.videoWidth) {
+                setTimeout(processAILoop, 100);
+                return;
+            }
+
+            const displaySize = { width: video.clientWidth, height: video.clientHeight };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            while (!stopScan) {
+                if (video.paused || video.ended || isVerifying) { await new Promise(r => setTimeout(r, 100)); continue; }
+                
+                let detections;
+                try {
+                    detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.6 }))
+                                                .withFaceLandmarks()
+                                                .withFaceDescriptor();
+                } catch(e) { }
+
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (!detections) {
+                    await new Promise(r => setTimeout(r, 100));
+                    continue;
+                }
+
+                const resized = faceapi.resizeResults(detections, displaySize);
+                faceapi.draw.drawDetections(canvas, resized);
+
+                // Check angle briefly to ensure they look straight
+                const landmarks = detections.landmarks.positions;
+                const distLeft = Math.abs(landmarks[30].x - landmarks[36].x);
+                const distRight = Math.abs(landmarks[45].x - landmarks[30].x);
+                const ratio = distLeft / distRight;
+
+                if (ratio > 0.6 && ratio < 1.4) {
+                    // Face is straight enough, pause scanning and verify
+                    verifyFace(detections.descriptor);
+                } else {
+                    document.getElementById('statusTxt').innerText = 'Vui lòng nhìn thẳng vào Camera...';
+                }
+
+                await new Promise(r => setTimeout(r, 100));
+            }
+        }
+
+        async function verifyFace(descriptor) {
+            isVerifying = true;
+            document.getElementById('camContainer').className = 'cam-circle'; // reset
+            document.getElementById('statusTxt').innerText = 'Đang phân tích và đối chiếu thẻ sinh trắc...';
+            document.getElementById('errorBox').style.display = 'none';
+            document.getElementById('scanLine').style.animationDuration = '0.5s';
+
+            const payload = { LiveDescriptor: JSON.stringify(Array.from(descriptor)) };
+
+            try {
+                const res = await fetch('/Account/VerifyFaceMatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    // Success!
+                    stopScan = true;
+                    if(stream) stream.getTracks().forEach(t => t.stop());
+                    
+                    document.getElementById('camContainer').className = 'cam-circle success';
+                    document.getElementById('mainTitle').innerText = 'Nhận diện thành công!';
+                    document.getElementById('mainTitle').style.color = '#10b981';
+                    document.getElementById('statusTxt').innerText = 'Đang đăng nhập vào hệ thống...';
+                    document.getElementById('scanLine').style.display = 'none';
+                    
+                    setTimeout(() => { window.location.href = '/Account/FinalizeLogin'; }, 1500);
+                } else {
+                    // Failed
+                    document.getElementById('camContainer').className = 'cam-circle error';
+                    document.getElementById('scanLine').style.animationDuration = '2s';
+                    showError(data.message || 'Khuôn mặt không khớp!');
+                    setTimeout(() => { 
+                        isVerifying = false; 
+                        document.getElementById('camContainer').className = 'cam-circle';
+                        document.getElementById('statusTxt').innerText = 'Vui lòng thử lại...';
+                    }, 2000);
+                }
+            } catch (err) {
+                showError('Lỗi kết nối máy chủ!');
+                isVerifying = false;
+            }
+        }
+
+        function showError(msg) {
+            const errBox = document.getElementById('errorBox');
+            errBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + msg;
+            errBox.style.display = 'block';
+            document.getElementById('statusTxt').innerText = 'Xác thực thất bại.';
+        }
+    </script>
+</body>
+</html>

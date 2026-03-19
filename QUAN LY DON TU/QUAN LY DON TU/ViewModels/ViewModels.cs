@@ -211,4 +211,19 @@ namespace DANGCAPNE.ViewModels
         public List<Department> Departments { get; set; } = new();
         public object? ReportData { get; set; }
     }
+
+    public class RegisterEmailViewModel
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public int? DepartmentId { get; set; }
+        public List<Department> Departments { get; set; } = new();
+    }
+
+    public class WhitelistViewModel
+    {
+        public List<User> PendingUsers { get; set; } = new();
+        public List<User> ApprovedUsers { get; set; } = new();
+    }
 }

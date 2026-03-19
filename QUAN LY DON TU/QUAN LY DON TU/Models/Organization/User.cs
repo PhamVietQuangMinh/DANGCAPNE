@@ -22,7 +22,6 @@ namespace DANGCAPNE.Models.Organization
         [MaxLength(20)]
         public string Phone { get; set; } = string.Empty;
 
-        [MaxLength(500)]
         public string AvatarUrl { get; set; } = string.Empty;
 
         [MaxLength(20)]
@@ -49,7 +48,12 @@ namespace DANGCAPNE.Models.Organization
         [MaxLength(256)]
         public string? PinHash { get; set; }
 
-        public string? FaceDescriptor { get; set; }
+        public bool IsBiometricEnrolled { get; set; } = false;
+        public string? FaceDescriptorFront { get; set; }
+        public string? FaceDescriptorLeft { get; set; }
+        public string? FaceDescriptorRight { get; set; }
+        public string? PortraitImage { get; set; }
+        public string? TrustedDeviceId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;

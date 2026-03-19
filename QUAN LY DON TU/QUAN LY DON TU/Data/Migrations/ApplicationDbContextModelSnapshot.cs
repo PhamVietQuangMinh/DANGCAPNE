@@ -1737,7 +1737,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             Code = "BOD",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8886),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1120),
                             IsActive = true,
                             Name = "Ban Giám đốc",
                             TenantId = 1
@@ -1746,7 +1746,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 2,
                             Code = "IT",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8889),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1125),
                             IsActive = true,
                             Name = "Phòng Công nghệ Thông tin",
                             TenantId = 1
@@ -1755,7 +1755,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             Code = "HR",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8891),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1127),
                             IsActive = true,
                             Name = "Phòng Nhân sự",
                             TenantId = 1
@@ -1764,7 +1764,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 4,
                             Code = "ACC",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8892),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1129),
                             IsActive = true,
                             Name = "Phòng Kế toán",
                             TenantId = 1
@@ -1773,7 +1773,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 5,
                             Code = "SALES",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8893),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1131),
                             IsActive = true,
                             Name = "Phòng Kinh doanh",
                             TenantId = 1
@@ -1782,7 +1782,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 6,
                             Code = "MKT",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8894),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1132),
                             IsActive = true,
                             Name = "Phòng Marketing",
                             TenantId = 1
@@ -1977,7 +1977,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8820),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1051),
                             Description = "Quản trị viên hệ thống",
                             Name = "Admin",
                             TenantId = 1
@@ -1985,7 +1985,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8826),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1055),
                             Description = "Hành chính Nhân sự",
                             Name = "HR",
                             TenantId = 1
@@ -1993,7 +1993,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8828),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1058),
                             Description = "Quản lý",
                             Name = "Manager",
                             TenantId = 1
@@ -2001,7 +2001,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8829),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(1059),
                             Description = "Nhân viên",
                             Name = "Employee",
                             TenantId = 1
@@ -2108,7 +2108,13 @@ namespace DANGCAPNE.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("FaceDescriptor")
+                    b.Property<string>("FaceDescriptorFront")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FaceDescriptorLeft")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FaceDescriptorRight")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FullName")
@@ -2118,6 +2124,9 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.Property<DateTime>("HireDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsBiometricEnrolled")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("JobTitleId")
                         .HasColumnType("int");
@@ -2141,6 +2150,9 @@ namespace DANGCAPNE.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("PortraitImage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("PositionId")
                         .HasColumnType("int");
 
@@ -2159,6 +2171,9 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TrustedDeviceId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
@@ -2188,12 +2203,13 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 1,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2440),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4415),
                             DepartmentId = 1,
                             Email = "admin@company.com",
                             EmployeeCode = "NV001",
                             FullName = "Nguyễn Văn Admin",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2436),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4395),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 1,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2203,19 +2219,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2441)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4415)
                         },
                         new
                         {
                             Id = 2,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2449),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4438),
                             DepartmentId = 3,
                             Email = "hr@company.com",
                             EmployeeCode = "NV002",
                             FullName = "Trần Thị HR",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2449),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4437),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 3,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2225,19 +2242,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2450)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4438)
                         },
                         new
                         {
                             Id = 3,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2453),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4443),
                             DepartmentId = 2,
                             Email = "manager@company.com",
                             EmployeeCode = "NV003",
                             FullName = "Lê Văn Manager",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2452),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4443),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 3,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2247,19 +2265,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2453)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4444)
                         },
                         new
                         {
                             Id = 4,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2455),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4448),
                             DepartmentId = 2,
                             Email = "employee@company.com",
                             EmployeeCode = "NV004",
                             FullName = "Phạm Thị Employee",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2455),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4448),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 6,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2268,19 +2287,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2455)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4449)
                         },
                         new
                         {
                             Id = 5,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2457),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4453),
                             DepartmentId = 2,
                             Email = "dev@company.com",
                             EmployeeCode = "NV005",
                             FullName = "Hoàng Văn Dev",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2457),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4452),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 5,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2289,19 +2309,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2458)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4453)
                         },
                         new
                         {
                             Id = 6,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2460),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4457),
                             DepartmentId = 4,
                             Email = "accountant@company.com",
                             EmployeeCode = "NV006",
                             FullName = "Vũ Thị Kế Toán",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2459),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4457),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 3,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2311,19 +2332,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2460)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4458)
                         },
                         new
                         {
                             Id = 7,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2462),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4462),
                             DepartmentId = 5,
                             Email = "sales@company.com",
                             EmployeeCode = "NV007",
                             FullName = "Đỗ Văn Sales",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2462),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4462),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 6,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2332,19 +2354,20 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2462)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4463)
                         },
                         new
                         {
                             Id = 8,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2464),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4467),
                             DepartmentId = 6,
                             Email = "marketing@company.com",
                             EmployeeCode = "NV008",
                             FullName = "Ngô Thị Marketing",
-                            HireDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2464),
+                            HireDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4467),
+                            IsBiometricEnrolled = false,
                             JobTitleId = 6,
                             Locale = "vi-VN",
                             PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
@@ -2353,7 +2376,7 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2465)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4467)
                         });
                 });
 
@@ -2394,7 +2417,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 1,
                             IsPrimary = true,
                             ManagerId = 3,
-                            StartDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2561),
+                            StartDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4667),
                             UserId = 4
                         },
                         new
@@ -2402,7 +2425,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 2,
                             IsPrimary = true,
                             ManagerId = 3,
-                            StartDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2563),
+                            StartDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4671),
                             UserId = 5
                         },
                         new
@@ -2410,7 +2433,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 3,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2564),
+                            StartDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4673),
                             UserId = 3
                         },
                         new
@@ -2418,7 +2441,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 4,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2565),
+                            StartDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4674),
                             UserId = 2
                         },
                         new
@@ -2426,7 +2449,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 5,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2566),
+                            StartDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4675),
                             UserId = 7
                         },
                         new
@@ -2434,7 +2457,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 6,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2566),
+                            StartDate = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4677),
                             UserId = 8
                         });
                 });
@@ -2468,63 +2491,63 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2520),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4613),
                             RoleId = 1,
                             UserId = 1
                         },
                         new
                         {
                             Id = 2,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2522),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4616),
                             RoleId = 2,
                             UserId = 2
                         },
                         new
                         {
                             Id = 3,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2523),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4617),
                             RoleId = 3,
                             UserId = 3
                         },
                         new
                         {
                             Id = 4,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2524),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4619),
                             RoleId = 4,
                             UserId = 4
                         },
                         new
                         {
                             Id = 5,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2534),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4620),
                             RoleId = 4,
                             UserId = 5
                         },
                         new
                         {
                             Id = 6,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2535),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4621),
                             RoleId = 4,
                             UserId = 6
                         },
                         new
                         {
                             Id = 7,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2535),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4623),
                             RoleId = 4,
                             UserId = 7
                         },
                         new
                         {
                             Id = 8,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2536),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4624),
                             RoleId = 4,
                             UserId = 8
                         },
                         new
                         {
                             Id = 9,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2537),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(4625),
                             RoleId = 3,
                             UserId = 1
                         });
@@ -2637,7 +2660,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "Pending",
                             TenantId = 1,
                             Title = "Xin nghỉ phép năm 3 ngày",
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3116)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5566)
                         },
                         new
                         {
@@ -2652,7 +2675,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "Approved",
                             TenantId = 1,
                             Title = "Làm thêm giờ dự án ERP",
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3124)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5578)
                         },
                         new
                         {
@@ -2666,7 +2689,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "InProgress",
                             TenantId = 1,
                             Title = "Tạm ứng đi công tác Đà Nẵng",
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3130)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5587)
                         },
                         new
                         {
@@ -2681,7 +2704,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "Rejected",
                             TenantId = 1,
                             Title = "Xin nghỉ phép 1 ngày",
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3132)
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5591)
                         });
                 });
 
@@ -3166,7 +3189,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             Code = "REQUEST_CREATE",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3271),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5805),
                             Description = "Create request",
                             IsActive = true,
                             Name = "Create Request",
@@ -3176,7 +3199,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 2,
                             Code = "REQUEST_APPROVE",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3274),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5809),
                             Description = "Approve request",
                             IsActive = true,
                             Name = "Approve Request",
@@ -3186,7 +3209,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             Code = "SYSTEM_ADMIN",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3275),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5811),
                             Description = "System administration",
                             IsActive = true,
                             Name = "System Admin",
@@ -3223,42 +3246,42 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3294),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5839),
                             PermissionId = 1,
                             RoleId = 4
                         },
                         new
                         {
                             Id = 2,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3295),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5841),
                             PermissionId = 2,
                             RoleId = 3
                         },
                         new
                         {
                             Id = 3,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3296),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5843),
                             PermissionId = 1,
                             RoleId = 1
                         },
                         new
                         {
                             Id = 4,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3296),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5844),
                             PermissionId = 2,
                             RoleId = 1
                         },
                         new
                         {
                             Id = 5,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3301),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5845),
                             PermissionId = 3,
                             RoleId = 1
                         },
                         new
                         {
                             Id = 6,
-                            AssignedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3301),
+                            AssignedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5846),
                             PermissionId = 2,
                             RoleId = 2
                         });
@@ -3301,7 +3324,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            GrantedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3316),
+                            GrantedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5874),
                             GrantedByUserId = 1,
                             IsActive = true,
                             PermissionId = 2,
@@ -3476,7 +3499,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             ActionUrl = "/Approvals",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3091),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5522),
                             IsRead = false,
                             Message = "Phạm Thị Employee đã tạo đơn xin nghỉ phép",
                             TenantId = 1,
@@ -3487,7 +3510,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3094),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5527),
                             IsRead = false,
                             Message = "Chào mừng bạn đến với hệ thống quản lý đơn từ DANGCAPNE",
                             TenantId = 1,
@@ -3499,7 +3522,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             ActionUrl = "/HR",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3095),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5529),
                             IsRead = false,
                             Message = "Có 5 đơn mới cần HR xử lý trong tuần này",
                             TenantId = 1,
@@ -3657,7 +3680,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             CompanyName = "DANGCAPNE Corporation",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 626, DateTimeKind.Local).AddTicks(8552),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 661, DateTimeKind.Local).AddTicks(794),
                             IsActive = true,
                             LogoUrl = "",
                             MaxUsers = 500,
@@ -3983,7 +4006,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3027),
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5434),
                             Used = 3.0,
                             UserId = 4,
                             Year = 2026
@@ -3997,7 +4020,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 30.0,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3036),
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5439),
                             Used = 1.0,
                             UserId = 4,
                             Year = 2026
@@ -4011,7 +4034,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3037),
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5441),
                             Used = 2.0,
                             UserId = 5,
                             Year = 2026
@@ -4025,7 +4048,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 30.0,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3039),
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5443),
                             Used = 0.0,
                             UserId = 5,
                             Year = 2026
@@ -4039,7 +4062,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3040),
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5445),
                             Used = 5.0,
                             UserId = 7,
                             Year = 2026
@@ -4053,7 +4076,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(3041),
+                            UpdatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5447),
                             Used = 1.0,
                             UserId = 8,
                             Year = 2026
@@ -5259,7 +5282,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             Category = "Leave",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2877),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5195),
                             Description = "",
                             Icon = "bi-calendar-x",
                             IconColor = "#10b981",
@@ -5273,7 +5296,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 2,
                             Category = "OT",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2880),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5201),
                             Description = "",
                             Icon = "bi-clock-history",
                             IconColor = "#f59e0b",
@@ -5287,7 +5310,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             Category = "Travel",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2882),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5204),
                             Description = "",
                             Icon = "bi-airplane",
                             IconColor = "#3b82f6",
@@ -5301,7 +5324,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 4,
                             Category = "Expense",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2884),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5206),
                             Description = "",
                             Icon = "bi-cash-stack",
                             IconColor = "#ef4444",
@@ -5315,7 +5338,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 5,
                             Category = "Equipment",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2885),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5209),
                             Description = "",
                             Icon = "bi-laptop",
                             IconColor = "#8b5cf6",
@@ -5329,7 +5352,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 6,
                             Category = "Leave",
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2887),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5211),
                             Description = "",
                             Icon = "bi-box-arrow-right",
                             IconColor = "#dc2626",
@@ -5467,7 +5490,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2812),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5112),
                             Description = "Quản lý trực tiếp -> HR",
                             IsActive = true,
                             Name = "Luồng duyệt cơ bản",
@@ -5476,7 +5499,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2816),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5117),
                             Description = "Quản lý -> Kế toán -> Giám đốc",
                             IsActive = true,
                             Name = "Luồng duyệt tài chính",
@@ -5485,7 +5508,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 18, 8, 24, 23, 627, DateTimeKind.Local).AddTicks(2818),
+                            CreatedAt = new DateTime(2026, 3, 19, 18, 48, 33, 679, DateTimeKind.Local).AddTicks(5119),
                             Description = "Quản lý -> Trưởng phòng -> HR -> Giám đốc",
                             IsActive = true,
                             Name = "Luồng duyệt vượt cấp",

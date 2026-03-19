@@ -100,9 +100,6 @@
                 {
                     <div class="nav-section">
                         <div class="nav-section-title" data-i18n="NavAdmin">Quản trị</div>
-                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" data-i18n="NavUsers">
-                            <i class="bi bi-people-fill"></i> Quản lý người dùng
-                        </a>
                         <a href="@Url.Action("FormBuilder", "Admin")" class="nav-link @(currentAction == "FormBuilder" ? "active" : "")" data-i18n="NavBuilder">
                             <i class="bi bi-ui-checks-grid"></i> Trình tạo biểu mẫu
                         </a>
@@ -111,6 +108,22 @@
                         </a>
                         <a href="@Url.Action("AuditLogs", "Admin")" class="nav-link @(currentAction == "AuditLogs" ? "active" : "")" data-i18n="NavAudit">
                             <i class="bi bi-shield-lock-fill"></i> Nhật ký hệ thống
+                        </a>
+                    </div>
+                }
+                
+                @if (isAdmin || isHR || isManager)
+                {
+                    <div class="nav-section">
+                        @if (isHR || isManager)
+                        {
+                            <div class="nav-section-title">Phê duyệt</div>
+                        }
+                        <a href="@Url.Action("Whitelist", "Admin")" class="nav-link @(currentAction == "Whitelist" ? "active" : "")">
+                            <i class="bi bi-shield-check"></i> Phê duyệt Email
+                        </a>
+                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" data-i18n="NavUsers">
+                            <i class="bi bi-people-fill"></i> Quản lý người dùng
                         </a>
                     </div>
                 }
@@ -437,238 +450,56 @@
                 loadNotifications();
             } catch (e) { }
         }
-    </script>
 
-    <!-- Global AI Chatbox -->
-    <div class="ai-chat-widget" id="aiChatWidget">
-        <button class="ai-chat-btn" id="aiChatBtn" title="Trợ lý AI (Kéo để di chuyển)">
-            <i class="bi bi-robot"></i>
-        </button>
-        <div class="ai-chat-panel" id="aiChatPanel" style="display: none;">
-            <div class="ai-chat-header">
-                <div>
-                    <div class="ai-chat-title"><i class="bi bi-stars"></i> <span data-i18n="LayoutAITitle">Trợ lý DANGCAPNE</span></div>
-                    <div class="ai-chat-subtitle" data-i18n="LayoutAISub">Luôn sẵn sàng hỗ trợ bạn</div>
-                </div>
-                <div style="display:flex; gap: 8px;">
-                    <button class="ai-close-btn" onclick="clearAIChat()"><i class="bi bi-trash"></i></button>
-                    <button class="ai-close-btn" onclick="toggleAIChat()"><i class="bi bi-x"></i></button>
-                </div>
-            </div>
-            <div class="ai-chat-messages" id="aiChatMessages">
-                <div class="chat-msg ai-msg" data-i18n="LayoutAIGreet">Xin chào! Em là trợ lý ảo của hệ thống DANGCAPNE. Anh/chị cần em giúp gì ạ?</div>
-            </div>
-            <div class="ai-chat-input">
-                <input type="text" id="aiChatInput" placeholder="Nhắn tin cho trợ lý ảo..." data-i18n="LayoutAIPlaceholder" onkeypress="handleAIChatEnter(event)" autocomplete="off" />
-                <button onclick="sendAIChat()"><i class="bi bi-send-fill"></i></button>
-            </div>
-        </div>
-    </div>
+        // --- Real-time Notifications via SignalR ---
+        const currentUserId = '@Context.Session.GetInt32("UserId")';
+        if (currentUserId && currentUserId !== '') {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub")
+                .withAutomaticReconnect()
+                .build();
 
-    <script>
-        // --- Drag Chatbox Logic ---
-        const widget = document.getElementById('aiChatWidget');
-        const chatBtn = document.getElementById('aiChatBtn');
-        let isDraggingChat = false;
-        let dragStartX, dragStartY;
-
-        chatBtn.addEventListener('mousedown', startDrag);
-        chatBtn.addEventListener('touchstart', startDrag, { passive: true });
-
-        document.addEventListener('mousemove', doDrag);
-        document.addEventListener('touchmove', doDrag, { passive: false });
-
-        document.addEventListener('mouseup', endDrag);
-        document.addEventListener('touchend', endDrag);
-
-        function startDrag(e) {
-            isDraggingChat = false;
-            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            let clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-            
-            dragStartX = clientX;
-            dragStartY = clientY;
-            
-            let rect = widget.getBoundingClientRect();
-            widget.style.bottom = 'auto';
-            widget.style.right = 'auto';
-            widget.style.left = rect.left + 'px';
-            widget.style.top = rect.top + 'px';
-            
-            chatBtn.style.cursor = 'grabbing';
-        }
-
-        function doDrag(e) {
-            if (dragStartX === undefined) return;
-            
-            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            let clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-            
-            let dx = clientX - dragStartX;
-            let dy = clientY - dragStartY;
-            
-            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-                isDraggingChat = true;
-                if(e.type === 'touchmove') e.preventDefault();
-                
-                let rect = widget.getBoundingClientRect();
-                let newLeft = rect.left + dx;
-                let newTop = rect.top + dy;
-                
-                // Keep widget within screen bounds
-                newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - rect.width));
-                newTop = Math.max(0, Math.min(newTop, window.innerHeight - rect.height));
-
-                widget.style.left = newLeft + 'px';
-                widget.style.top = newTop + 'px';
-                
-                dragStartX = clientX;
-                dragStartY = clientY;
-            }
-        }
-
-        function endDrag(e) {
-            if (dragStartX !== undefined) {
-                if (!isDraggingChat) {
-                    toggleAIChat();
+            connection.on("ReceiveNotification", function(data) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: data.title,
+                        text: data.message,
+                        icon: 'info',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true
+                    });
                 }
-                dragStartX = undefined;
-                dragStartY = undefined;
-                chatBtn.style.cursor = 'grab';
-            }
-        }
-
-        // --- Chat Logic ---
-        const currentUserId = '@Context.Session.GetInt32("UserId")' || 'guest';
-        const chatStorageKey = 'dangcapne_chat_history_' + currentUserId;
-        let chatHistory = JSON.parse(localStorage.getItem(chatStorageKey)) || [];
-        let isChatInitialLoaded = false;
-
-        function toggleAIChat() {
-            const panel = document.getElementById('aiChatPanel');
-            const btn = document.getElementById('aiChatBtn');
-            const currentLang = localStorage.getItem('dangcapne_lang') || 'vi';
-
-            // Sync titles dynamically because titles aren't auto-checked by applyLanguage easily
-            btn.title = dict[currentLang]?.LayoutAITooltip || "Trợ lý AI (Kéo để di chuyển)";
-
-            if (panel.style.display === 'none') {
-                panel.style.display = 'flex';
-                btn.classList.add('active');
-                
-                if (!isChatInitialLoaded) {
-                    renderChatHistory();
-                    isChatInitialLoaded = true;
-                } else {
-                    // Refresh translations inside dynamically loaded UI elements
-                    applyLanguage(currentLang);
-                }
-                
-                const messagesDiv = document.getElementById('aiChatMessages');
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                document.getElementById('aiChatInput').focus();
-            } else {
-                panel.style.display = 'none';
-                btn.classList.remove('active');
-            }
-        }
-
-        function renderChatHistory() {
-            const messagesDiv = document.getElementById('aiChatMessages');
-            const currentLang = localStorage.getItem('dangcapne_lang') || 'vi';
-            const greetMsg = dict[currentLang]?.LayoutAIGreet || "Xin chào! Em là trợ lý ảo của hệ thống DANGCAPNE. Anh/chị cần em giúp gì ạ?";
-            messagesDiv.innerHTML = `<div class="chat-msg ai-msg" data-i18n="LayoutAIGreet">${greetMsg}</div>`;
-            
-            chatHistory.forEach(msg => {
-                let formattedText = msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>');
-                if (msg.role === 'user') {
-                    messagesDiv.innerHTML += `<div class="chat-msg user-msg">${formattedText}</div>`;
-                } else {
-                    messagesDiv.innerHTML += `<div class="chat-msg ai-msg">${formattedText}</div>`;
-                }
+                loadNotifications();
             });
-            applyLanguage(currentLang);
-        }
 
-        function clearAIChat() {
-            const currentLang = localStorage.getItem('dangcapne_lang') || 'vi';
-            const confirmMsg = dict[currentLang]?.LayoutAIConfirmClear || "Bạn có chắc muốn xóa lịch sử trò chuyện này?";
-            if (confirm(confirmMsg)) {
-                chatHistory = [];
-                localStorage.removeItem(chatStorageKey);
-                renderChatHistory();
-            }
-        }
-
-        async function sendAIChat() {
-            const input = document.getElementById('aiChatInput');
-            const messageText = input.value.trim();
-            if (!messageText) return;
-
-            const messagesDiv = document.getElementById('aiChatMessages');
-            const currentLang = localStorage.getItem('dangcapne_lang') || 'vi';
-            
-            // Add user message to UI
-            messagesDiv.innerHTML += `<div class="chat-msg user-msg">${escapeHtml(messageText)}</div>`;
-            input.value = '';
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            // Push to history
-            chatHistory.push({ role: 'user', text: messageText });
-            localStorage.setItem(chatStorageKey, JSON.stringify(chatHistory));
-
-            // Add typing indicator
-            const typingId = 'typing-' + Date.now();
-            const typingMsg = dict[currentLang]?.LayoutAITyping || "Đang suy nghĩ...";
-            messagesDiv.innerHTML += `<div class="chat-msg ai-msg typing" id="${typingId}" data-i18n="LayoutAITyping">${typingMsg}</div>`;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            try {
-                const response = await fetch('/Requests/Chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ history: chatHistory })
-                });
-
-                document.getElementById(typingId)?.remove();
-
-                if (response.ok) {
-                    const data = await response.json();
-                    let aiText = data.text;
-                    
-                    // Push to history
-                    chatHistory.push({ role: 'ai', text: aiText });
-                    localStorage.setItem(chatStorageKey, JSON.stringify(chatHistory));
-
-                    // Format basic markdown
-                    let formattedAiText = aiText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>');
-                    messagesDiv.innerHTML += `<div class="chat-msg ai-msg">${formattedAiText}</div>`;
-                } else {
-                    const errMsg = dict[currentLang]?.LayoutAIErrorConn || "Xin lỗi, đã xảy ra lỗi kết nối.";
-                    messagesDiv.innerHTML += `<div class="chat-msg ai-msg error" data-i18n="LayoutAIErrorConn">${errMsg}</div>`;
-                    chatHistory.pop(); // remove user msg if failed
+            connection.on("RequestStatusChanged", function(data) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Cập nhật trạng thái',
+                        text: `Đơn ${data.requestCode} đã chuyển sang: ${data.newStatus}`,
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 5000
+                    });
                 }
-            } catch (e) {
-                document.getElementById(typingId)?.remove();
-                const srvMsg = dict[currentLang]?.LayoutAINoServer || "Không thể kết nối với máy chủ AI.";
-                messagesDiv.innerHTML += `<div class="chat-msg ai-msg error" data-i18n="LayoutAINoServer">${srvMsg}</div>`;
-                chatHistory.pop(); // remove user msg if failed
-            }
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
+                loadNotifications();
+            });
 
-        function handleAIChatEnter(e) {
-            if (e.key === 'Enter') sendAIChat();
-        }
-
-        function escapeHtml(unsafe) {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
+            connection.start().then(function() {
+                connection.invoke("JoinUserGroup", currentUserId).catch(function(err) {
+                    console.error("SignalR Join err:", err.toString());
+                });
+            }).catch(function(err) {
+                console.error("SignalR Connect err:", err.toString());
+            });
         }
     </script>
+
+
 </body>
 </html>

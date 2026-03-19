@@ -21,8 +21,8 @@ namespace DANGCAPNE.Controllers
             if (userId == null) return RedirectToAction("Login", "Account");
             
             var user = await _context.Users.FindAsync(userId);
-            ViewBag.HasFaceRegistered = !string.IsNullOrEmpty(user?.FaceDescriptor);
-            ViewBag.FaceDescriptor = user?.FaceDescriptor;
+            ViewBag.HasFaceRegistered = !string.IsNullOrEmpty(user?.FaceDescriptorFront);
+            ViewBag.FaceDescriptorFront = user?.FaceDescriptorFront;
             ViewBag.AvatarUrl = user?.AvatarUrl;
             
             var today = DateTime.Today;
@@ -99,7 +99,7 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveFaceDescriptor(string descriptor)
+        public async Task<IActionResult> SaveFaceDescriptorFront(string descriptor)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Json(new { success = false, message = "Phiên hết hạn" });
@@ -107,7 +107,7 @@ namespace DANGCAPNE.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return Json(new { success = false, message = "User không tồn tại" });
 
-            user.FaceDescriptor = descriptor;
+            user.FaceDescriptorFront = descriptor;
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Đăng ký khuôn mặt thành công" });
@@ -123,7 +123,7 @@ namespace DANGCAPNE.Controllers
             if (user == null) return Json(new { success = false, message = "Không tìm thấy người dùng" });
 
             // Kiểm tra xác thực khuôn mặt nếu user đã đăng ký
-            if (!string.IsNullOrEmpty(user.FaceDescriptor))
+            if (!string.IsNullOrEmpty(user.FaceDescriptorFront))
             {
                 if (faceMatched != true)
                     return Json(new { success = false, message = "Xác thực khuôn mặt thất bại. Vui lòng quét lại đúng gương mặt chủ tài khoản." });

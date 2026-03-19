@@ -1,0 +1,206 @@
+@model DANGCAPNE.ViewModels.RegisterEmailViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng ký Email - DANGCAPNE</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Bg from Login */
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            background-image: url('/img/anhlogin.webp');
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
+            animation: bgIntroAppearance 0.5s ease-out forwards;
+        }
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 15, 30, 0.6); /* Significantly darker overlay to fix text contrast */
+            z-index: -1;
+        }
+        @@keyframes bgIntroAppearance {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .glass-card {
+            position: relative;
+            z-index: 1;
+            width: min(460px, 90vw);
+            background: rgba(255, 255, 255, 0.0);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 40px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            animation: cardIntroSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+        }
+        @@keyframes cardIntroSlideUp {
+            0% { opacity: 0; transform: translateY(50px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand { text-align: center; margin-bottom: 30px; }
+        .logo-circle {
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 26px; color: #fff; margin-bottom: 16px;
+        }
+        .title { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: -0.02em; }
+        .subtitle { font-size: 14px; color: rgba(255, 255, 255, 0.8); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.9); margin-bottom: 10px; }
+        .input-wrap { position: relative; }
+        .input-wrap i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #6366f1; font-size: 18px; pointer-events: none; }
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+            padding: 14px 20px 14px 50px;
+            font-size: 14px;
+            color: #fff;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+        .form-input:focus { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.5); }
+        .form-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+        
+        select.form-input {
+            appearance: none;
+            color: #fff;
+        }
+        select.form-input option { background: #1a1a2e; color: #fff; }
+
+        .btn-submit {
+            width: 100%;
+            background: #fff;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 999px;
+            padding: 15px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); background: #f0f0ff; }
+
+        .footer-links { text-align: center; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+        .footer-links a { color: rgba(255, 255, 255, 0.6); text-decoration: none; font-size: 13px; transition: 0.2s; }
+        .footer-links a:hover { color: #fff; }
+        
+        .alert-glass {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 13px;
+            margin-bottom: 24px;
+            display: flex; align-items: center; gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <div class="bg-overlay"></div>
+
+    <div class="glass-card">
+        <div class="brand">
+            <div class="logo-circle">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h1 class="title">Tạo tài khoản mới</h1>
+            <p class="subtitle">Hệ thống phê duyệt nội bộ <span>DANGCAPNE</span></p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert-glass">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div asp-validation-summary="All" style="display:inline"></div>
+            </div>
+        }
+
+        <form asp-action="RegisterEmail" method="post">
+            <div class="form-group">
+                <label class="form-label">Họ và Tên</label>
+                <div class="input-wrap">
+                    <i class="bi bi-person"></i>
+                    <input asp-for="FullName" class="form-input" placeholder="Nhập họ tên đầy đủ..." required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email Công ty</label>
+                <div class="input-wrap">
+                    <i class="bi bi-envelope"></i>
+                    <input asp-for="Email" type="email" class="form-input" placeholder="example@congty.com" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mật khẩu</label>
+                <div class="input-wrap">
+                    <i class="bi bi-lock"></i>
+                    <input asp-for="Password" type="password" class="form-input" placeholder="Nhập mật khẩu của bạn..." required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Phòng ban</label>
+                <div class="input-wrap">
+                    <i class="bi bi-building"></i>
+                    <select asp-for="DepartmentId" class="form-input" required>
+                        <option value="">-- Chọn phòng ban --</option>
+                        @foreach (var dept in Model.Departments)
+                        {
+                            <option value="@dept.Id">@dept.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <span>Gửi yêu cầu phê duyệt</span>
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </form>
+
+        <div class="footer-links">
+            <a asp-action="Login"><i class="bi bi-arrow-left"></i> Quay lại Đăng nhập</a>
+        </div>
+    </div>
+</body>
+</html>

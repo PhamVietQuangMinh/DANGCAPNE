@@ -55,7 +55,7 @@
         let modelsLoaded = false; // Added this variable
 
         async function init() {
-            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/';
+            const MODEL_URL = '/lib/face-api/models';
             try {
                 instruction.innerText = "Đang tải dữ liệu nhận diện...";
                 await Promise.all([
@@ -166,7 +166,7 @@
 
             const descriptorArray = Array.from(window.lastDescriptor);
             
-            const resp = await fetch('@Url.Action("SaveFaceDescriptor")', {
+            const resp = await fetch('@Url.Action("SaveFaceDescriptorFront")', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ descriptor: JSON.stringify(descriptorArray) })

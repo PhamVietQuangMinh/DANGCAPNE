@@ -1,0 +1,216 @@
+@model DANGCAPNE.ViewModels.WhitelistViewModel
+@{
+    ViewData["Title"] = "Phê duyệt Email";
+}
+
+<div class="page-content">
+    <div class="card mb-24">
+        <div class="card-header d-flex justify-between align-center">
+            <div>
+                <h3 class="card-title">Yêu cầu đăng ký mới</h3>
+                <p class="card-subtitle">Các nhân viên đang chờ được cấp quyền truy cập hệ thống</p>
+            </div>
+            <span class="badge @(Model.PendingUsers.Any() ? "badge-warning" : "badge-secondary")">
+                @Model.PendingUsers.Count yêu cầu
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 200px;">Họ tên</th>
+                        <th>Email</th>
+                        <th>Phòng ban</th>
+                        <th>Ngày đăng ký</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.PendingUsers.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-32">
+                                <div class="empty-state">
+                                    <i class="bi bi-inbox" style="font-size: 48px; opacity: 0.2;"></i>
+                                    <p>Không có yêu cầu nào đang chờ xử lý</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model.PendingUsers)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center gap-8">
+                                        <div class="avatar-sm">@user.FullName.Substring(0, 1)</div>
+                                        <strong>@user.FullName</strong>
+                                    </div>
+                                </td>
+                                <td><code class="px-8 py-4 bg-muted border-radius-4">@user.Email</code></td>
+                                <td>@(user.Department?.Name ?? "N/A")</td>
+                                <td>@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-right">
+                                    <div class="d-flex justify-end gap-8">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="showRegistrationDetails('@user.FullName', '@user.Email', '@(user.Department?.Name ?? "N/A")', '@user.CreatedAt.ToString("g")')">
+                                            <i class="bi bi-eye"></i> Chi tiết
+                                        </button>
+                                        <form asp-action="ApproveUser" method="post" style="display:inline">
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-check-lg"></i> Duyệt
+                                            </button>
+                                        </form>
+                                        <form asp-action="RejectUser" method="post" style="display:inline">
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-x-lg"></i> Từ chối
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Danh sách Email đã duyệt (Whitelist)</h3>
+            <p class="card-subtitle">Các tài khoản đang hoạt động trong hệ thống</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Phòng ban</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày duyệt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.ApprovedUsers)
+                    {
+                        <tr>
+                            <td>@user.FullName</td>
+                            <td>@user.Email</td>
+                            <td>@(user.Department?.Name ?? "N/A")</td>
+                            <td>
+                                <span class="status-badge status-approved">
+                                    <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                                </span>
+                            </td>
+                            <td>@user.UpdatedAt.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi tiết -->
+<div id="registrationModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-glass" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h4 class="modal-title">Chi tiết yêu cầu đăng ký</h4>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-row">
+                <span class="detail-label">Họ và Tên:</span>
+                <span class="detail-value" id="modalName"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email đăng ký:</span>
+                <span class="detail-value" id="modalEmail"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phòng ban:</span>
+                <span class="detail-value" id="modalDept"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Ngày đăng ký:</span>
+                <span class="detail-value" id="modalDate"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Mật khẩu:</span>
+                <span class="detail-value text-muted italic">Đã được mã hóa bảo mật (SHA-256)</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease;
+    }
+    .modal-glass {
+        background: rgba(255, 255, 255, 0.95);
+        width: min(500px, 90vw);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        padding: 30px;
+        transform: translateY(20px);
+        animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideUp { to { transform: translateY(0); } }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-title { font-weight: 700; color: #1a1a2e; }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+
+    .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .detail-label { color: #666; font-size: 14px; }
+    .detail-value { font-weight: 600; color: #1a1a2e; text-align: right; }
+    .italic { font-style: italic; font-weight: 400; }
+
+    /* Exisiting styles... */
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        background: #6366f1;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+    }
+    .badge-warning { background: #fffbeb; color: #92400e; border: 1px solid #fef3c7; }
+    .badge-secondary { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .status-approved { background: #ecfdf5; color: #065f46; }
+</style>
+
+<script>
+    function showRegistrationDetails(name, email, dept, date) {
+        document.getElementById('modalName').innerText = name;
+        document.getElementById('modalEmail').innerText = email;
+        document.getElementById('modalDept').innerText = dept;
+        document.getElementById('modalDate').innerText = date;
+        document.getElementById('registrationModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('registrationModal').style.display = 'none';
+    }
+</script>

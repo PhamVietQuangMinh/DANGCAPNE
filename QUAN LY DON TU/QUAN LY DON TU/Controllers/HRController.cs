@@ -5,6 +5,7 @@ using DANGCAPNE.ViewModels;
 
 namespace DANGCAPNE.Controllers
 {
+    [Route("HR/[action]")]
     public class HRController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -14,6 +15,8 @@ namespace DANGCAPNE.Controllers
             _context = context;
         }
 
+        [Route("~/HR")]
+        [Route("")]
         public async Task<IActionResult> Index()
         {
             var userId = HttpContext.Session.GetInt32("UserId");

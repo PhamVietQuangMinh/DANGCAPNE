@@ -95,9 +95,9 @@
         const frameRing = document.getElementById('frameRing');
 
         let faceMatcher;
-        const faceDescriptorModel = '@Html.Raw(ViewBag.FaceDescriptor)';
+        const faceDescriptorModel = '@Html.Raw(ViewBag.FaceDescriptorFront)';
         const avatarUrl = '@ViewBag.AvatarUrl';
-        const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/';
+        const MODEL_URL = '/lib/face-api/models';
 
         async function loadModels() {
             try {

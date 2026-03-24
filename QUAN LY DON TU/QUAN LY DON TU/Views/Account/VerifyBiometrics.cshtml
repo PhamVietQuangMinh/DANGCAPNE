@@ -143,6 +143,9 @@
             faceapi.matchDimensions(canvas, displaySize);
 
             const frame = document.getElementById('faceFrame');
+            let stableFrames = 0;
+            let collectedDescriptors = [];
+            const REQUIRED_STABLE_FRAMES = 3; // Must have 3 forward-looking frames
             
             async function loop() {
                 if (stopScan || video.paused || video.ended || isVerifying) {
@@ -162,6 +165,8 @@
 
                 if (!detections) {
                     frame.style.opacity = '0';
+                    stableFrames = 0;
+                    collectedDescriptors = [];
                     requestAnimationFrame(loop);
                     return;
                 }
@@ -184,8 +189,26 @@
                 const ratio = distLeft / distRight;
 
                 if (ratio > 0.65 && ratio < 1.35 && !isVerifying) {
-                    verifyFace(detections.descriptor);
+                    // Looking straight - collect this frame
+                    stableFrames++;
+                    collectedDescriptors.push(detections.descriptor);
+                    document.getElementById('statusTxt').innerText = `Đang thu thập dữ liệu... (${stableFrames}/${REQUIRED_STABLE_FRAMES})`;
+
+                    if (stableFrames >= REQUIRED_STABLE_FRAMES) {
+                        // Average the descriptors for more stable comparison
+                        const avgDescriptor = new Float32Array(128);
+                        for (let i = 0; i < 128; i++) {
+                            let sum = 0;
+                            for (const d of collectedDescriptors) sum += d[i];
+                            avgDescriptor[i] = sum / collectedDescriptors.length;
+                        }
+                        verifyFace(avgDescriptor);
+                        stableFrames = 0;
+                        collectedDescriptors = [];
+                    }
                 } else if (!isVerifying) {
+                    stableFrames = 0;
+                    collectedDescriptors = [];
                     document.getElementById('statusTxt').innerText = 'Vui lòng nhìn thẳng vào Camera...';
                 }
 

@@ -458,9 +458,12 @@ namespace DANGCAPNE.Controllers
 
                 float minDistance = Math.Min(distFront, Math.Min(distLeft, distRight));
 
-                // Ngưỡng tiêu chuẩn của face-api.js là 0.6. Dưới 0.6 là cùng một người.
-                if (minDistance > 0.55) 
-                    return BadRequest(new { success = false, message = "Khuôn mặt không khớp! Vui lòng thử lại." });
+                Console.WriteLine($"[FaceVerify] User {user.Id} ({user.FullName}) - distFront: {distFront:F4}, distLeft: {distLeft:F4}, distRight: {distRight:F4}, minDist: {minDistance:F4}");
+
+                // Ngưỡng nghiêm ngặt: 0.45 (thay vì 0.55). 
+                // Dưới 0.4 = chắc chắn đúng, 0.4-0.45 = có thể đúng, trên 0.45 = khác người.
+                if (minDistance > 0.45) 
+                    return BadRequest(new { success = false, message = $"Khuôn mặt không khớp! (Độ lệch: {minDistance:F2}). Vui lòng thử lại." });
 
                 // AUTO CHECK-IN: If face matches during login, record it as a check-in
                 var today = DateTime.Today;

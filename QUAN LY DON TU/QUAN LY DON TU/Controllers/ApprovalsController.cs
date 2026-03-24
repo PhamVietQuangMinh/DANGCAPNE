@@ -263,6 +263,64 @@ namespace DANGCAPNE.Controllers
                 {
                     request.Status = "Rejected";
                     request.CompletedAt = DateTime.Now;
+
+                    // Notify requester
+                    _context.Notifications.Add(new Models.SystemModels.Notification
+                    {
+                        TenantId = tenantId,
+                        UserId = request.RequesterId,
+                        Title = "Đơn bị từ chối ✗",
+                        Message = $"Đơn {request.RequestCode} bị từ chối (Duyệt hàng loạt)",
+                        Type = "Info",
+                        ActionUrl = $"/Requests/Detail/{request.Id}",
+                        RelatedRequestId = request.Id
+                    });
+                }
+
+                // If approved and moved to next step, notify next person
+                if (model.Action == "Approve" && request.Status == "InProgress")
+                {
+                    var nextApproval = await _context.RequestApprovals
+                        .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
+                        .OrderBy(a => a.StepOrder)
+                        .FirstOrDefaultAsync();
+
+                    if (nextApproval?.ApproverId != null)
+                    {
+                        _context.Notifications.Add(new Models.SystemModels.Notification
+                        {
+                            TenantId = tenantId,
+                            UserId = nextApproval.ApproverId.Value,
+                            Title = "Đơn cần duyệt",
+                            Message = $"Đơn {request.RequestCode} chuyển đến bạn (Duyệt hàng loạt)",
+                            Type = "Approval",
+                            ActionUrl = $"/Requests/Detail/{request.Id}",
+                            RelatedRequestId = request.Id
+                        });
+
+                        await _hubContext.Clients.Group($"user_{nextApproval.ApproverId}")
+                            .SendAsync("ReceiveNotification", new
+                            {
+                                title = "Đơn cần duyệt",
+                                message = $"Đơn {request.RequestCode} cần bạn xử lý",
+                                type = "Approval",
+                                actionUrl = $"/Requests/Detail/{request.Id}"
+                            });
+                    }
+                }
+                else if (model.Action == "Approve" && request.Status == "Approved")
+                {
+                    // Full approval
+                    _context.Notifications.Add(new Models.SystemModels.Notification
+                    {
+                        TenantId = tenantId,
+                        UserId = request.RequesterId,
+                        Title = "Đơn đã được duyệt ✓",
+                        Message = $"Đơn {request.RequestCode} đã được phê duyệt hoàn tất (Duyệt hàng loạt)",
+                        Type = "Info",
+                        ActionUrl = $"/Requests/Detail/{request.Id}",
+                        RelatedRequestId = request.Id
+                    });
                 }
 
                 request.UpdatedAt = DateTime.Now;

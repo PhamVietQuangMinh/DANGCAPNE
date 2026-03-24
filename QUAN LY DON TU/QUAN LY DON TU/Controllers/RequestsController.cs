@@ -233,6 +233,8 @@ namespace DANGCAPNE.Controllers
                 }
             }
 
+            await _context.SaveChangesAsync();
+
             // Audit log
             _context.RequestAuditLogs.Add(new RequestAuditLog
             {
@@ -247,7 +249,7 @@ namespace DANGCAPNE.Controllers
 
             // Notification for approver
             var firstApproval = await _context.RequestApprovals
-                .Where(ra => ra.RequestId == request.Id && ra.Status == "Pending")
+                .Where(ra => ra.RequestId == request.Id && ra.Status == "Pending" && ra.ApproverId != null)
                 .OrderBy(ra => ra.StepOrder)
                 .FirstOrDefaultAsync();
 

@@ -32,7 +32,11 @@
                             <div class="mb-40" style="font-size: 100px; color: #f1f5f9;"><i class="bi bi-camera-video-off"></i></div>
                             <div style="color: #94a3b8; font-size: 15px; font-weight: 600; margin-bottom: 32px;">Camera đang ở chế độ chờ</div>
                             <button id="btnStartCamera" class="btn-start-mockup">
-                                <i class="bi bi-power me-10"></i> Bắt đầu chấm công
+                                @if (ViewBag.IsCheckInDone) {
+                                    <i class="bi bi-door-open me-10"></i> <span>Bắt đầu Chấm công RA</span>
+                                } else {
+                                    <i class="bi bi-power me-10"></i> <span>Bắt đầu chấm công</span>
+                                }
                             </button>
                         </div>
 
@@ -210,7 +214,7 @@
                     Swal.fire({
                         icon: 'success',
                         title: 'Thông báo',
-                        html: r.type === 'checkin' ? `Đã xác thực GIỜ VÀO: <b>${r.time}</b>` : `Đã xác thực GIỜ RA: <b>${r.time}</b>`,
+                        html: r.type === 'checkin' ? `Đã xác thực GIỜ VÀO: <b>${r.time}</b>` : `Đã xác thực GIỜ RA: <b>${r.time}</b> (Ca làm việc kết thúc lúc 18:00)`,
                         timer: 2000,
                         showConfirmButton: false,
                         willClose: () => { location.reload(); }

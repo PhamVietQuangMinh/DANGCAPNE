@@ -191,8 +191,20 @@ namespace DANGCAPNE.Controllers
                 // Tính giờ làm (đảm bảo >= 0)
                 var workHours = (timesheet.CheckOut.Value - timesheet.CheckIn!.Value).TotalHours;
                 timesheet.WorkHours = Math.Round(Math.Max(workHours, 0), 2);
-                // Trạng thái: 8 tiếng là đủ giờ
-                timesheet.Status = timesheet.WorkHours >= 8 ? "Present" : "EarlyLeave";
+                
+                // Trạng thái dựa trên giờ quy định 18:00
+                var now = DateTime.Now;
+                var targetCheckOut = new DateTime(now.Year, now.Month, now.Day, 18, 0, 0);
+                
+                if (now < targetCheckOut)
+                {
+                    timesheet.Status = "EarlyLeave";
+                }
+                else if (timesheet.Status != "Late")
+                {
+                    timesheet.Status = "Present";
+                }
+                
                 timesheet.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
 

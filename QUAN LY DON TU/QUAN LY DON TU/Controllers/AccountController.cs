@@ -309,9 +309,11 @@ namespace DANGCAPNE.Controllers
                     if (otherFront == null || otherFront.Length == 0) continue;
 
                     float dist = CalculateEuclideanDistance(newFront, otherFront);
-                    if (dist < 0.55) // threshold for matching same person
+                    Console.WriteLine($"[FaceMatch] New vs ID {other.Id}. Distance: {dist}");
+                    if (dist < 0.48) // even stricter threshold
                     {
-                        return BadRequest(new { success = false, message = "Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi một tài khoản khác trong hệ thống!" });
+                        var matchUser = await _context.Users.FindAsync(other.Id);
+                        return BadRequest(new { success = false, message = $"Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi tài khoản: {matchUser?.FullName} ({matchUser?.Email})!" });
                     }
                 }
             }
@@ -339,6 +341,51 @@ namespace DANGCAPNE.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ResetBiometrics(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            user.FaceDescriptorFront = null;
+            user.FaceDescriptorLeft = null;
+            user.FaceDescriptorRight = null;
+            user.IsBiometricEnrolled = false;
+            user.PortraitImage = null;
+            user.AvatarUrl = null;
+            user.TrustedDeviceId = null;
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true, message = $"Đã xóa dữ liệu sinh trắc của {user.FullName}" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFaceDistances()
+        {
+            var users = await _context.Users
+                .Where(u => u.IsBiometricEnrolled && !string.IsNullOrEmpty(u.FaceDescriptorFront))
+                .Select(u => new { u.Id, u.FullName, u.FaceDescriptorFront })
+                .ToListAsync();
+
+            var results = new List<string>();
+            for (int i = 0; i < users.Count; i++)
+            {
+                for (int j = i + 1; j < users.Count; j++)
+                {
+                    try {
+                        var d1 = System.Text.Json.JsonSerializer.Deserialize<float[]>(users[i].FaceDescriptorFront ?? "[]");
+                        var d2 = System.Text.Json.JsonSerializer.Deserialize<float[]>(users[j].FaceDescriptorFront ?? "[]");
+                        float dist = CalculateEuclideanDistance(d1!, d2!);
+                        results.Add($"{users[i].FullName} vs {users[j].FullName}: {dist}");
+                    } catch {
+                        results.Add($"Error calculating distance between UID {users[i].Id} and UID {users[j].Id}");
+                    }
+                }
+            }
+            return Ok(results);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CheckUniqueness([FromBody] UniquenessRequest req)
         {
@@ -360,9 +407,11 @@ namespace DANGCAPNE.Controllers
                 if (otherFront == null || otherFront.Length == 0) continue;
 
                 float dist = CalculateEuclideanDistance(newFront, otherFront);
-                if (dist < 0.55)
+                Console.WriteLine($"[FaceUniqueness] New vs ID {other.Id}. Distance: {dist}");
+                if (dist < 0.48)
                 {
-                    return Ok(new { success = false, message = "Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi một tài khoản khác trong hệ thống!" });
+                    var matchUser = await _context.Users.FindAsync(other.Id);
+                    return Ok(new { success = false, message = $"Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi tài khoản: {matchUser?.FullName} ({matchUser?.Email})!" });
                 }
             }
 
@@ -413,7 +462,30 @@ namespace DANGCAPNE.Controllers
                 if (minDistance > 0.55) 
                     return BadRequest(new { success = false, message = "Khuôn mặt không khớp! Vui lòng thử lại." });
 
-                return Ok(new { success = true, distance = minDistance });
+                // AUTO CHECK-IN: If face matches during login, record it as a check-in
+                var today = DateTime.Today;
+                var existingTimesheet = await _context.Timesheets
+                    .FirstOrDefaultAsync(t => t.UserId == user.Id && t.Date == today);
+
+                if (existingTimesheet == null)
+                {
+                    var now = DateTime.Now;
+                    var targetCheckIn = new DateTime(now.Year, now.Month, now.Day, 8, 0, 0);
+
+                    _context.Timesheets.Add(new DANGCAPNE.Models.Timekeeping.Timesheet
+                    {
+                        TenantId = user.TenantId,
+                        UserId = user.Id,
+                        Date = today,
+                        CheckIn = now,
+                        Source = "FaceRecognition",
+                        Status = now > targetCheckIn ? "Late" : "Present",
+                        UpdatedAt = now
+                    });
+                    await _context.SaveChangesAsync();
+                }
+
+                return Ok(new { success = true, distance = minDistance, checkInDone = (existingTimesheet == null) });
             } catch {
                 return BadRequest(new { success = false, message = "Lỗi xử lý dữ liệu AI." });
             }

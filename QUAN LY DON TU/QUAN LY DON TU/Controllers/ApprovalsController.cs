@@ -24,20 +24,50 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
 
-            var pending = await _context.RequestApprovals
-                .Include(a => a.Request).ThenInclude(r => r!.Requester)
-                .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                .Where(a => a.ApproverId == userId && a.Status == "Pending")
-                .OrderByDescending(a => a.CreatedAt)
-                .ToListAsync();
+            var roles = HttpContext.Session.GetString("Roles") ?? "";
+            var isAdmin = roles.Contains("Admin");
 
-            var processed = await _context.RequestApprovals
-                .Include(a => a.Request).ThenInclude(r => r!.Requester)
-                .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                .Where(a => a.ApproverId == userId && a.Status != "Pending")
-                .OrderByDescending(a => a.ActionDate)
-                .Take(50)
-                .ToListAsync();
+            List<RequestApproval> pending;
+            List<RequestApproval> processed;
+
+            if (isAdmin)
+            {
+                // Admin sees ALL pending approvals system-wide
+                pending = await _context.RequestApprovals
+                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .Include(a => a.Approver)
+                    .Where(a => a.Status == "Pending")
+                    .OrderByDescending(a => a.CreatedAt)
+                    .ToListAsync();
+
+                processed = await _context.RequestApprovals
+                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .Include(a => a.Approver)
+                    .Where(a => a.Status != "Pending")
+                    .OrderByDescending(a => a.ActionDate)
+                    .Take(50)
+                    .ToListAsync();
+            }
+            else
+            {
+                // Normal users only see approvals assigned to them
+                pending = await _context.RequestApprovals
+                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .Where(a => a.ApproverId == userId && a.Status == "Pending")
+                    .OrderByDescending(a => a.CreatedAt)
+                    .ToListAsync();
+
+                processed = await _context.RequestApprovals
+                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .Where(a => a.ApproverId == userId && a.Status != "Pending")
+                    .OrderByDescending(a => a.ActionDate)
+                    .Take(50)
+                    .ToListAsync();
+            }
 
             var model = new ApprovalListViewModel
             {
@@ -56,10 +86,23 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var roles = HttpContext.Session.GetString("Roles") ?? "";
+            var isAdmin = roles.Contains("Admin");
 
-            var approval = await _context.RequestApprovals
-                .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                .FirstOrDefaultAsync(a => a.Id == model.ApprovalId && a.ApproverId == userId);
+            RequestApproval? approval;
+            if (isAdmin)
+            {
+                // Admin can process any approval
+                approval = await _context.RequestApprovals
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .FirstOrDefaultAsync(a => a.Id == model.ApprovalId);
+            }
+            else
+            {
+                approval = await _context.RequestApprovals
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .FirstOrDefaultAsync(a => a.Id == model.ApprovalId && a.ApproverId == userId);
+            }
 
             if (approval == null) return NotFound();
 

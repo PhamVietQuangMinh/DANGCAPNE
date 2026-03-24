@@ -137,8 +137,9 @@ namespace DANGCAPNE.Controllers
                     _context.RequestData.Add(new RequestData
                     {
                         RequestId = request.Id,
-                        FieldName = field.FieldName,
-                        FieldValue = val
+                        FieldKey = field.FieldName,
+                        FieldValue = val,
+                        FieldType = field.FieldType
                     });
                 }
             }
@@ -331,7 +332,7 @@ namespace DANGCAPNE.Controllers
 
             var formData = await _context.RequestData
                 .Where(rd => rd.RequestId == id)
-                .ToDictionaryAsync(rd => rd.FieldName, rd => rd.FieldValue ?? "");
+                .ToDictionaryAsync(rd => rd.FieldKey, rd => rd.FieldValue ?? "");
 
             var currentApproval = approvals.FirstOrDefault(a => a.Status == "Pending" && a.ApproverId == userId);
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");

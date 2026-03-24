@@ -12,8 +12,7 @@ namespace DANGCAPNE.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string? _apiKey;
-        private const string _geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
-
+        private const string _geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
         public GeminiAIService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
@@ -113,13 +112,12 @@ Cấu trúc JSON mẫu:
                      contents = new[]
                      {
                          new { parts = new[] { new { text = systemPrompt } } }
-                     },
-                     generationConfig = new { responseMimeType = "application/json" }
+                     }
                  };
 
                  var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
                  
-                 int maxRetries = 3; // Thử lại tối đa 3 lần
+                 int maxRetries = 2;
                  for (int i = 0; i < maxRetries; i++)
                  {
                      var response = await _httpClient.PostAsync($"{_geminiEndpoint}{_apiKey}", content);
@@ -128,22 +126,24 @@ Cấu trúc JSON mẫu:
                      {
                          var responseString = await response.Content.ReadAsStringAsync();
                          dynamic result = JsonConvert.DeserializeObject(responseString)!;
-                         return result.candidates[0].content.parts[0].text.ToString().Replace("```json", "").Replace("```", "").Trim();
+                         string aiText = result.candidates[0].content.parts[0].text.ToString();
+                         
+                         // Clean up markdown fences
+                         aiText = aiText.Replace("```json", "").Replace("```", "").Trim();
+                         return aiText;
                      }
-                     else if ((int)response.StatusCode == 429) // Lỗi TooManyRequests
+                     else if ((int)response.StatusCode == 429) 
                      {
-                         Console.WriteLine($"[Cảnh báo] Quá tải API. Đang thử lại lần {i + 1}...");
-                         // Đợi 2s ở lần 1, 4s ở lần 2, 6s ở lần 3
                          await Task.Delay(2000 * (i + 1)); 
-                         continue; // Quay lại vòng lặp để gọi lại
                      }
                      else
                      {
-                         // Các lỗi khác thì thoát luôn
-                         return "{}"; 
+                         var errorResponse = await response.Content.ReadAsStringAsync();
+                         Console.WriteLine($"[Gemini API Error] {response.StatusCode} - {errorResponse}");
+                         return $"{{\"error\": \"API Error: {response.StatusCode}\"}}";
                      }
                  }
-                 return "{}"; // Thất bại sau 3 lần thử
+                 return "{}"; 
              }
              catch (Exception ex)
              {

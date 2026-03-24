@@ -1,15 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Hubs;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 // SQL Server connection
+// PostgreSQL (Supabase) connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Session for authentication
 builder.Services.AddHttpClient<DANGCAPNE.Services.GeminiAIService>();

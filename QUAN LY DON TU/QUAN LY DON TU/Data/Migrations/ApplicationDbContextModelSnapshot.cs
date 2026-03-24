@@ -3,8 +3,8 @@ using System;
 using DANGCAPNE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -17,35 +17,35 @@ namespace DANGCAPNE.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("DANGCAPNE.Models.AdminOps.AssetAssignment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AssetId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("ReturnedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -70,33 +70,33 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AssetId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("ReportedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("ReportedByUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.HasKey("Id");
 
@@ -123,40 +123,40 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Destination")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("DriverName")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("PickupLocation")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -183,27 +183,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("MealType")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -227,31 +227,31 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Size")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -276,23 +276,23 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("AcknowledgedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("PolicyDocumentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -317,33 +317,33 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FileUrl")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("PublishedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Version")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -366,46 +366,46 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AssetCode")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("AssignedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("AssignedToUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<decimal>("PurchasePrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -433,22 +433,22 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -489,27 +489,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                        .HasColumnType("character varying(3)");
 
                     b.Property<bool>("IsDefault")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Symbol")
                         .IsRequired()
                         .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
+                        .HasColumnType("character varying(5)");
 
                     b.HasKey("Id");
 
@@ -554,15 +554,15 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("FromCurrencyId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Rate")
                         .HasColumnType("decimal(18,6)");
@@ -570,13 +570,13 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("ToCurrencyId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -591,17 +591,17 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<decimal?>("MaxAmount")
                         .HasColumnType("decimal(18,2)");
@@ -609,13 +609,13 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("RequiresReceipt")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -665,9 +665,9 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Budget")
                         .HasColumnType("decimal(18,2)");
@@ -675,35 +675,35 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("ManagerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("OtCost")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -744,39 +744,39 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int?>("RequestedByUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -805,35 +805,35 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -856,23 +856,23 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("AppliedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("CandidateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("JobRequisitionId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -897,36 +897,36 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("DocumentName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("DocumentType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("FileUrl")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -939,32 +939,32 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CandidateApplicationId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("InterviewerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("ScheduledAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -990,9 +990,9 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal?>("BudgetMax")
                         .HasColumnType("decimal(18,2)");
@@ -1001,32 +1001,32 @@ namespace DANGCAPNE.Data.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Headcount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("JobTitleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -1059,27 +1059,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActionDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("ApproverId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Comments")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("JobRequisitionId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -1105,29 +1105,29 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AssignedToUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TemplateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1155,27 +1155,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("DefaultAssigneeRoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DefaultDueDays")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1199,26 +1199,26 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CandidateApplicationId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("OfferedSalary")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("SentAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -1242,29 +1242,29 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AssignedToUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TemplateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1292,27 +1292,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("DefaultAssigneeRoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DefaultDueDays")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1336,31 +1336,31 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1383,25 +1383,25 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CycleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Weight")
                         .HasColumnType("decimal(5,2)");
@@ -1430,15 +1430,15 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CycleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("ReviewerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("Score")
                         .HasColumnType("decimal(5,2)");
@@ -1446,13 +1446,13 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("SubmittedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1479,19 +1479,19 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Comment")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int?>("GoalId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("ReviewId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("Score")
                         .HasColumnType("decimal(5,2)");
@@ -1519,15 +1519,15 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<decimal>("ProposedSalary")
                         .HasColumnType("decimal(18,2)");
@@ -1535,21 +1535,21 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int?>("RequestedByUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1578,38 +1578,38 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("InsuranceNumber")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("SalaryBasis")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1622,39 +1622,39 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<double>("AllowedRadius")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<double?>("Latitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("Longitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("TimeZone")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -1691,38 +1691,38 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("EnglishName")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("ManagerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("ParentDepartmentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1737,7 +1737,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             Code = "BOD",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(4120),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3620),
                             IsActive = true,
                             Name = "Ban Giám đốc",
                             TenantId = 1
@@ -1746,7 +1746,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 2,
                             Code = "IT",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(4143),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3623),
                             IsActive = true,
                             Name = "Phòng Công nghệ Thông tin",
                             TenantId = 1
@@ -1755,7 +1755,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             Code = "HR",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(4149),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3624),
                             IsActive = true,
                             Name = "Phòng Nhân sự",
                             TenantId = 1
@@ -1764,7 +1764,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 4,
                             Code = "ACC",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(4153),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3625),
                             IsActive = true,
                             Name = "Phòng Kế toán",
                             TenantId = 1
@@ -1773,7 +1773,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 5,
                             Code = "SALES",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(4157),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3626),
                             IsActive = true,
                             Name = "Phòng Kinh doanh",
                             TenantId = 1
@@ -1782,7 +1782,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 6,
                             Code = "MKT",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(4161),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3627),
                             IsActive = true,
                             Name = "Phòng Marketing",
                             TenantId = 1
@@ -1793,23 +1793,23 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Level")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1878,23 +1878,23 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1949,25 +1949,25 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1977,7 +1977,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(3902),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3572),
                             Description = "Quản trị viên hệ thống",
                             Name = "Admin",
                             TenantId = 1
@@ -1985,7 +1985,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(3934),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3576),
                             Description = "Hành chính Nhân sự",
                             Name = "HR",
                             TenantId = 1
@@ -1993,7 +1993,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(3940),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3577),
                             Description = "Quản lý",
                             Name = "Manager",
                             TenantId = 1
@@ -2001,7 +2001,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(3945),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3578),
                             Description = "Nhân viên",
                             Name = "Employee",
                             TenantId = 1
@@ -2012,31 +2012,31 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("LeaderId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2049,23 +2049,23 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("JoinedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TeamId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2080,105 +2080,105 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AvatarUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("BranchId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("EmployeeCode")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("FaceDescriptorFront")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FaceDescriptorLeft")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FaceDescriptorRight")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("HireDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsBiometricEnrolled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("JobTitleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Locale")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("PinHash")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PortraitImage")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("PositionId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("TerminationDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("TimeZone")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("TrustedDeviceId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
@@ -2202,12 +2202,12 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 1,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6248),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7716),
                             DepartmentId = 1,
                             Email = "admin@company.com",
                             EmployeeCode = "NV001",
                             FullName = "Nguyễn Văn Admin",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6246),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7710),
                             IsBiometricEnrolled = false,
                             JobTitleId = 1,
                             Locale = "vi-VN",
@@ -2218,19 +2218,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6249)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7716)
                         },
                         new
                         {
                             Id = 2,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6300),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7725),
                             DepartmentId = 3,
                             Email = "hr@company.com",
                             EmployeeCode = "NV002",
                             FullName = "Trần Thị HR",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6298),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7725),
                             IsBiometricEnrolled = false,
                             JobTitleId = 3,
                             Locale = "vi-VN",
@@ -2241,19 +2241,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6301)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7726)
                         },
                         new
                         {
                             Id = 3,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6314),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7728),
                             DepartmentId = 2,
                             Email = "manager@company.com",
                             EmployeeCode = "NV003",
                             FullName = "Lê Văn Manager",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6313),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7728),
                             IsBiometricEnrolled = false,
                             JobTitleId = 3,
                             Locale = "vi-VN",
@@ -2264,19 +2264,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6315)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7729)
                         },
                         new
                         {
                             Id = 4,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6326),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7731),
                             DepartmentId = 2,
                             Email = "employee@company.com",
                             EmployeeCode = "NV004",
                             FullName = "Phạm Thị Employee",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6325),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7731),
                             IsBiometricEnrolled = false,
                             JobTitleId = 6,
                             Locale = "vi-VN",
@@ -2286,19 +2286,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6327)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7732)
                         },
                         new
                         {
                             Id = 5,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6335),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7734),
                             DepartmentId = 2,
                             Email = "dev@company.com",
                             EmployeeCode = "NV005",
                             FullName = "Hoàng Văn Dev",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6334),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7734),
                             IsBiometricEnrolled = false,
                             JobTitleId = 5,
                             Locale = "vi-VN",
@@ -2308,19 +2308,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6336)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7734)
                         },
                         new
                         {
                             Id = 6,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6357),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7737),
                             DepartmentId = 4,
                             Email = "accountant@company.com",
                             EmployeeCode = "NV006",
                             FullName = "Vũ Thị Kế Toán",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6356),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7736),
                             IsBiometricEnrolled = false,
                             JobTitleId = 3,
                             Locale = "vi-VN",
@@ -2331,19 +2331,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6358)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7737)
                         },
                         new
                         {
                             Id = 7,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6412),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7739),
                             DepartmentId = 5,
                             Email = "sales@company.com",
                             EmployeeCode = "NV007",
                             FullName = "Đỗ Văn Sales",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6383),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7739),
                             IsBiometricEnrolled = false,
                             JobTitleId = 6,
                             Locale = "vi-VN",
@@ -2353,19 +2353,19 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6413)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7740)
                         },
                         new
                         {
                             Id = 8,
                             AvatarUrl = "",
                             BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6423),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7742),
                             DepartmentId = 6,
                             Email = "marketing@company.com",
                             EmployeeCode = "NV008",
                             FullName = "Ngô Thị Marketing",
-                            HireDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6422),
+                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7742),
                             IsBiometricEnrolled = false,
                             JobTitleId = 6,
                             Locale = "vi-VN",
@@ -2375,7 +2375,7 @@ namespace DANGCAPNE.Data.Migrations
                             TenantId = 1,
                             TimeZone = "SE Asia Standard Time",
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6424)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7742)
                         });
                 });
 
@@ -2383,24 +2383,24 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsPrimary")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("ManagerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2416,7 +2416,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 1,
                             IsPrimary = true,
                             ManagerId = 3,
-                            StartDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6634),
+                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7829),
                             UserId = 4
                         },
                         new
@@ -2424,7 +2424,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 2,
                             IsPrimary = true,
                             ManagerId = 3,
-                            StartDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6640),
+                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7831),
                             UserId = 5
                         },
                         new
@@ -2432,7 +2432,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 3,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6644),
+                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7832),
                             UserId = 3
                         },
                         new
@@ -2440,7 +2440,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 4,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6646),
+                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7833),
                             UserId = 2
                         },
                         new
@@ -2448,7 +2448,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 5,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6649),
+                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7834),
                             UserId = 7
                         },
                         new
@@ -2456,7 +2456,7 @@ namespace DANGCAPNE.Data.Migrations
                             Id = 6,
                             IsPrimary = true,
                             ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6652),
+                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7834),
                             UserId = 8
                         });
                 });
@@ -2465,18 +2465,18 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2490,63 +2490,63 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6530),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7798),
                             RoleId = 1,
                             UserId = 1
                         },
                         new
                         {
                             Id = 2,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6535),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7801),
                             RoleId = 2,
                             UserId = 2
                         },
                         new
                         {
                             Id = 3,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6539),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7801),
                             RoleId = 3,
                             UserId = 3
                         },
                         new
                         {
                             Id = 4,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6542),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7802),
                             RoleId = 4,
                             UserId = 4
                         },
                         new
                         {
                             Id = 5,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6545),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7803),
                             RoleId = 4,
                             UserId = 5
                         },
                         new
                         {
                             Id = 6,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6547),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7804),
                             RoleId = 4,
                             UserId = 6
                         },
                         new
                         {
                             Id = 7,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6550),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7804),
                             RoleId = 4,
                             UserId = 7
                         },
                         new
                         {
                             Id = 8,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6553),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7805),
                             RoleId = 4,
                             UserId = 8
                         },
                         new
                         {
                             Id = 9,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(6556),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7806),
                             RoleId = 3,
                             UserId = 1
                         });
@@ -2556,25 +2556,25 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FormDataJson")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("FormTemplateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("LastSavedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2589,50 +2589,50 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("CurrentStepOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("FormTemplateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("RequestCode")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("RequesterId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
@@ -2659,7 +2659,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "Pending",
                             TenantId = 1,
                             Title = "Xin nghỉ phép năm 3 ngày",
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8542)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8326)
                         },
                         new
                         {
@@ -2674,7 +2674,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "Approved",
                             TenantId = 1,
                             Title = "Làm thêm giờ dự án ERP",
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8645)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8333)
                         },
                         new
                         {
@@ -2688,7 +2688,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "InProgress",
                             TenantId = 1,
                             Title = "Tạm ứng đi công tác Đà Nẵng",
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8666)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8338)
                         },
                         new
                         {
@@ -2703,7 +2703,7 @@ namespace DANGCAPNE.Data.Migrations
                             Status = "Rejected",
                             TenantId = 1,
                             Title = "Xin nghỉ phép 1 ngày",
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8677)
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8340)
                         });
                 });
 
@@ -2711,45 +2711,45 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActionDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("ApproverId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Comments")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("RequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("StepName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("StepOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("VerifiedByPin")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -2837,36 +2837,36 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
                     b.Property<int>("RequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("UploadedById")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2879,42 +2879,42 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Action")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Details")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("NewStatus")
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("OldStatus")
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("RequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("UserAgent")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2970,28 +2970,28 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("EditedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("ParentCommentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3008,20 +3008,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("FieldName")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("FieldKey")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FieldType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("FieldValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("RequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3033,91 +3040,104 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            FieldName = "leave_type",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8365),
+                            FieldKey = "leave_type",
                             FieldValue = "AL",
                             RequestId = 1
                         },
                         new
                         {
                             Id = 2,
-                            FieldName = "start_date",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8367),
+                            FieldKey = "start_date",
                             FieldValue = "2026-03-15",
                             RequestId = 1
                         },
                         new
                         {
                             Id = 3,
-                            FieldName = "end_date",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8368),
+                            FieldKey = "end_date",
                             FieldValue = "2026-03-17",
                             RequestId = 1
                         },
                         new
                         {
                             Id = 4,
-                            FieldName = "total_days",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8369),
+                            FieldKey = "total_days",
                             FieldValue = "3",
                             RequestId = 1
                         },
                         new
                         {
                             Id = 5,
-                            FieldName = "reason",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8370),
+                            FieldKey = "reason",
                             FieldValue = "Nghỉ phép cá nhân để đi du lịch",
                             RequestId = 1
                         },
                         new
                         {
                             Id = 6,
-                            FieldName = "ot_date",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8370),
+                            FieldKey = "ot_date",
                             FieldValue = "2026-03-08",
                             RequestId = 2
                         },
                         new
                         {
                             Id = 7,
-                            FieldName = "start_time",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8371),
+                            FieldKey = "start_time",
                             FieldValue = "18:00",
                             RequestId = 2
                         },
                         new
                         {
                             Id = 8,
-                            FieldName = "end_time",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8372),
+                            FieldKey = "end_time",
                             FieldValue = "21:00",
                             RequestId = 2
                         },
                         new
                         {
                             Id = 9,
-                            FieldName = "project",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8373),
+                            FieldKey = "project",
                             FieldValue = "PRJ-001",
                             RequestId = 2
                         },
                         new
                         {
                             Id = 10,
-                            FieldName = "reason",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8374),
+                            FieldKey = "reason",
                             FieldValue = "Deploy module thanh toán",
                             RequestId = 2
                         },
                         new
                         {
                             Id = 11,
-                            FieldName = "amount",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8374),
+                            FieldKey = "amount",
                             FieldValue = "15000000",
                             RequestId = 3
                         },
                         new
                         {
                             Id = 12,
-                            FieldName = "currency",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8375),
+                            FieldKey = "currency",
                             FieldValue = "VND",
                             RequestId = 3
                         },
                         new
                         {
                             Id = 13,
-                            FieldName = "purpose",
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8376),
+                            FieldKey = "purpose",
                             FieldValue = "Công tác gặp khách hàng tại Đà Nẵng",
                             RequestId = 3
                         });
@@ -3127,18 +3147,18 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("FollowedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("RequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3151,33 +3171,33 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3188,7 +3208,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             Code = "REQUEST_CREATE",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9221),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8472),
                             Description = "Create request",
                             IsActive = true,
                             Name = "Create Request",
@@ -3198,7 +3218,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 2,
                             Code = "REQUEST_APPROVE",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9229),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8474),
                             Description = "Approve request",
                             IsActive = true,
                             Name = "Approve Request",
@@ -3208,7 +3228,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             Code = "SYSTEM_ADMIN",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9234),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8475),
                             Description = "System administration",
                             IsActive = true,
                             Name = "System Admin",
@@ -3220,18 +3240,18 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("PermissionId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3245,42 +3265,42 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9310),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8494),
                             PermissionId = 1,
                             RoleId = 4
                         },
                         new
                         {
                             Id = 2,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9315),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8495),
                             PermissionId = 2,
                             RoleId = 3
                         },
                         new
                         {
                             Id = 3,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9318),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8496),
                             PermissionId = 1,
                             RoleId = 1
                         },
                         new
                         {
                             Id = 4,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9321),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8496),
                             PermissionId = 2,
                             RoleId = 1
                         },
                         new
                         {
                             Id = 5,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9324),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8497),
                             PermissionId = 3,
                             RoleId = 1
                         },
                         new
                         {
                             Id = 6,
-                            AssignedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9327),
+                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8498),
                             PermissionId = 2,
                             RoleId = 2
                         });
@@ -3290,24 +3310,24 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("GrantedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("GrantedByUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("PermissionId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3323,7 +3343,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            GrantedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(9395),
+                            GrantedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8515),
                             GrantedByUserId = 1,
                             IsActive = true,
                             PermissionId = 2,
@@ -3335,36 +3355,36 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ErrorMessage")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("RelatedRequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ToEmail")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -3375,29 +3395,29 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("BodyHtml")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3446,46 +3466,46 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ActionUrl")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("RelatedRequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3498,7 +3518,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             ActionUrl = "/Approvals",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8460),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8301),
                             IsRead = false,
                             Message = "Phạm Thị Employee đã tạo đơn xin nghỉ phép",
                             TenantId = 1,
@@ -3509,7 +3529,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8470),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8304),
                             IsRead = false,
                             Message = "Chào mừng bạn đến với hệ thống quản lý đơn từ DANGCAPNE",
                             TenantId = 1,
@@ -3521,7 +3541,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             ActionUrl = "/HR",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8476),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8305),
                             IsRead = false,
                             Message = "Có 5 đơn mới cần HR xử lý trong tuần này",
                             TenantId = 1,
@@ -3535,15 +3555,15 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("LastPaymentDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<decimal>("MonthlyPrice")
                         .HasColumnType("decimal(18,2)");
@@ -3551,23 +3571,23 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Plan")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3580,40 +3600,40 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("OccurredAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Severity")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("StackTrace")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3624,51 +3644,51 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("LogoUrl")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("MaxUsers")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Plan")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
                         .HasMaxLength(7)
-                        .HasColumnType("nvarchar(7)");
+                        .HasColumnType("character varying(7)");
 
                     b.Property<string>("SecondaryColor")
                         .IsRequired()
                         .HasMaxLength(7)
-                        .HasColumnType("nvarchar(7)");
+                        .HasColumnType("character varying(7)");
 
                     b.Property<string>("SubDomain")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -3679,7 +3699,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             CompanyName = "DANGCAPNE Corporation",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(3359),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3403),
                             IsActive = true,
                             LogoUrl = "",
                             MaxUsers = 500,
@@ -3694,26 +3714,26 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -3726,42 +3746,42 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<double?>("AllowedLatitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("AllowedLongitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("AllowedRadiusMeters")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("BranchId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("QrCodeKey")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("RequirePhoto")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("WifiBssid")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("WifiName")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -3774,56 +3794,56 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ActualCheckIn")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("ActualCheckOut")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CalculatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("EarlyLeaveMinutes")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double>("EffectiveHours")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<bool>("HasApprovedLeave")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("HasApprovedOutside")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsEarlyLeave")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsLate")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("LateMinutes")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("ShiftId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3834,28 +3854,28 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsRecurring")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3913,36 +3933,36 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("AccrualDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("AccrualType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<double>("Days")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("LeaveTypeId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("RelatedRequestId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3953,39 +3973,39 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<double>("CarriedOver")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("CompensatoryDays")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("LeaveTypeId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double>("SeniorityBonus")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double>("TotalEntitled")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<double>("Used")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Year")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4005,7 +4025,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8273),
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8253),
                             Used = 3.0,
                             UserId = 4,
                             Year = 2026
@@ -4019,7 +4039,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 30.0,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8283),
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8256),
                             Used = 1.0,
                             UserId = 4,
                             Year = 2026
@@ -4033,7 +4053,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8289),
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8258),
                             Used = 2.0,
                             UserId = 5,
                             Year = 2026
@@ -4047,7 +4067,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 30.0,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8293),
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8259),
                             Used = 0.0,
                             UserId = 5,
                             Year = 2026
@@ -4061,7 +4081,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8297),
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8260),
                             Used = 5.0,
                             UserId = 7,
                             Year = 2026
@@ -4075,7 +4095,7 @@ namespace DANGCAPNE.Data.Migrations
                             SeniorityBonus = 0.0,
                             TenantId = 1,
                             TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(8301),
+                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8261),
                             Used = 1.0,
                             UserId = 8,
                             Year = 2026
@@ -4086,48 +4106,48 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("AllowCarryOver")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("AllowNegativeBalance")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("CarryOverExpiryMonth")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("CarryOverMaxDays")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<double>("DefaultDaysPerYear")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("IconColor")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsPaid")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4215,28 +4235,28 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<double>("Multiplier")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4276,40 +4296,40 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<TimeSpan?>("BreakEndTime")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<TimeSpan?>("BreakStartTime")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<int>("GracePeriodMinutes")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4368,45 +4388,45 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("ApprovedByManagerId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Reason")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("RequesterDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("RequesterId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("RequesterShiftId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("TargetDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("TargetShiftId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TargetUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4421,75 +4441,75 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("CheckIn")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("CheckOut")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<double?>("GpsLatitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("GpsLongitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<bool>("IsValidGps")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsValidWifi")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<double>("OtHours")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("QrCodeKey")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("WifiBssid")
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("WifiName")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<double>("WorkHours")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -4502,21 +4522,21 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EffectiveDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ShiftId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4531,31 +4551,31 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("IssuedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4580,26 +4600,26 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("ApprovedByUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("CertificationId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -4624,34 +4644,34 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Cost")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Provider")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4675,26 +4695,26 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("CourseId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("EnrolledAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4719,35 +4739,35 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("DelegateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DelegatorId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4762,26 +4782,26 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("EscalateAfterHours")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("EscalateToUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("NotificationMessage")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("SlaConfigId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -4796,48 +4816,48 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("DefaultValue")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("FieldName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("FieldType")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("FormTemplateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsRequired")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Placeholder")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("ValidationRules")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int?>("Width")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5085,25 +5105,25 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("FormFieldId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -5222,53 +5242,53 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("EnglishName")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("IconColor")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("RequiresFinancialApproval")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("WorkflowId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5281,7 +5301,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 1,
                             Category = "Leave",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7721),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8119),
                             Description = "",
                             Icon = "bi-calendar-x",
                             IconColor = "#10b981",
@@ -5295,7 +5315,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 2,
                             Category = "OT",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7749),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8122),
                             Description = "",
                             Icon = "bi-clock-history",
                             IconColor = "#f59e0b",
@@ -5309,7 +5329,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 3,
                             Category = "Travel",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7756),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8124),
                             Description = "",
                             Icon = "bi-airplane",
                             IconColor = "#3b82f6",
@@ -5323,7 +5343,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 4,
                             Category = "Expense",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7762),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8125),
                             Description = "",
                             Icon = "bi-cash-stack",
                             IconColor = "#ef4444",
@@ -5337,7 +5357,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 5,
                             Category = "Equipment",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7769),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8127),
                             Description = "",
                             Icon = "bi-laptop",
                             IconColor = "#8b5cf6",
@@ -5351,7 +5371,7 @@ namespace DANGCAPNE.Data.Migrations
                         {
                             Id = 6,
                             Category = "Leave",
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7775),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8128),
                             Description = "",
                             Icon = "bi-box-arrow-right",
                             IconColor = "#dc2626",
@@ -5367,27 +5387,27 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("AutoEscalate")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("AutoRemind")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("EscalationHours")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("FormTemplateId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("ReminderHours")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5422,30 +5442,30 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FieldName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("NextStepId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Operator")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("WorkflowStepId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5458,28 +5478,28 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5489,7 +5509,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7473),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8068),
                             Description = "Quản lý trực tiếp -> HR",
                             IsActive = true,
                             Name = "Luồng duyệt cơ bản",
@@ -5498,7 +5518,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7498),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8070),
                             Description = "Quản lý -> Kế toán -> Giám đốc",
                             IsActive = true,
                             Name = "Luồng duyệt tài chính",
@@ -5507,7 +5527,7 @@ namespace DANGCAPNE.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 19, 21, 47, 38, 534, DateTimeKind.Local).AddTicks(7503),
+                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8071),
                             Description = "Quản lý -> Trưởng phòng -> HR -> Giám đốc",
                             IsActive = true,
                             Name = "Luồng duyệt vượt cấp",
@@ -5519,37 +5539,37 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("ApproverRoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ApproverType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int?>("ApproverUserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("CanSkipIfApplicant")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("StepOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("WorkflowId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5660,18 +5680,18 @@ namespace DANGCAPNE.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("RoleId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("WorkflowStepId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

@@ -22,7 +22,6 @@ namespace DANGCAPNE.Models.Organization
         [MaxLength(20)]
         public string Phone { get; set; } = string.Empty;
 
-        [Column(TypeName = "nvarchar(max)")]
         public string AvatarUrl { get; set; } = string.Empty;
 
         [MaxLength(20)]

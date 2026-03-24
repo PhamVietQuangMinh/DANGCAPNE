@@ -42,15 +42,19 @@
         .alert-box { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 24px; display: none; }
         .warning-box { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-        @@keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+        .face-frame { position: absolute; border: 2px solid #3b82f6; border-radius: 20px; transition: transform 0.1s linear, width 0.1s linear, height 0.1s linear; pointer-events: none; z-index: 25; display: none; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+        .success .face-frame { border-color: #10b981; box-shadow: 0 0 25px rgba(16,185,129,0.5); }
+        .error .face-frame { border-color: #ef4444; }
+
+        @@keyframes scan { 0% { top: -5%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 105%; opacity: 0; } }
         @@keyframes spin { 100% { transform: rotate(360deg); } }
-        @@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+        @@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
     </style>
 </head>
 <body>
     <div class="verify-card">
         <div class="user-info">
-            <img class="user-avatar" src="@(string.IsNullOrEmpty(Model.PortraitImage) ? "/images/avatar-placeholder.png" : Model.PortraitImage)" alt="Avatar" />
+            <img class="user-avatar" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/avatar-placeholder.png" : Model.AvatarUrl)" alt="Avatar" />
             <div style="text-align:left;">
                 <p class="user-name">@Model.FullName</p>
                 <p class="user-email">@Model.Email</p>
@@ -64,14 +68,21 @@
 
         <div class="alert-box" id="errorBox"></div>
 
-        <div class="cam-circle" id="camContainer">
-            <div class="ai-loading-overlay" id="aiLoading">
-                <div class="loader-spinner"></div>
+            <div class="cam-circle" id="camContainer">
+                <div class="ai-loading-overlay" id="aiLoading">
+                    <div class="loader-spinner"></div>
+                    <p style="margin-top:16px; font-size:12px; color:rgba(255,255,255,0.4); font-weight:600; text-transform:uppercase; letter-spacing:1px;">Initializing AI Core...</p>
+                </div>
+                <div class="face-frame" id="faceFrame"></div>
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="overlay"></canvas>
+                <div class="scan-line" id="scanLine"></div>
             </div>
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay"></canvas>
-            <div class="scan-line" id="scanLine"></div>
-        </div>
+
+            <div class="corner c-tl"></div>
+            <div class="corner c-tr"></div>
+            <div class="corner c-bl"></div>
+            <div class="corner c-br"></div>
 
         <h2 id="mainTitle">Xác thực Sinh trắc học</h2>
         <p class="status-text" id="statusTxt">Đang chuẩn bị Camera...</p>
@@ -131,12 +142,17 @@
             const displaySize = { width: video.clientWidth, height: video.clientHeight };
             faceapi.matchDimensions(canvas, displaySize);
 
-            while (!stopScan) {
-                if (video.paused || video.ended || isVerifying) { await new Promise(r => setTimeout(r, 100)); continue; }
-                
+            const frame = document.getElementById('faceFrame');
+            
+            async function loop() {
+                if (stopScan || video.paused || video.ended || isVerifying) {
+                    requestAnimationFrame(loop);
+                    return;
+                }
+
                 let detections;
                 try {
-                    detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.6 }))
+                    detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 }))
                                                 .withFaceLandmarks()
                                                 .withFaceDescriptor();
                 } catch(e) { }
@@ -145,28 +161,38 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (!detections) {
-                    await new Promise(r => setTimeout(r, 100));
-                    continue;
+                    frame.style.opacity = '0';
+                    requestAnimationFrame(loop);
+                    return;
                 }
 
                 const resized = faceapi.resizeResults(detections, displaySize);
-                faceapi.draw.drawDetections(canvas, resized);
+                const box = resized.detection.box;
 
-                // Check angle briefly to ensure they look straight
+                // Smoothly update frame position
+                frame.style.display = 'block';
+                frame.style.opacity = '1';
+                frame.style.left = `${box.x - 10}px`;
+                frame.style.top = `${box.y - 10}px`;
+                frame.style.width = `${box.width + 20}px`;
+                frame.style.height = `${box.height + 20}px`;
+
+                // Verification logic
                 const landmarks = detections.landmarks.positions;
                 const distLeft = Math.abs(landmarks[30].x - landmarks[36].x);
                 const distRight = Math.abs(landmarks[45].x - landmarks[30].x);
                 const ratio = distLeft / distRight;
 
-                if (ratio > 0.6 && ratio < 1.4) {
-                    // Face is straight enough, pause scanning and verify
+                if (ratio > 0.65 && ratio < 1.35 && !isVerifying) {
                     verifyFace(detections.descriptor);
-                } else {
+                } else if (!isVerifying) {
                     document.getElementById('statusTxt').innerText = 'Vui lòng nhìn thẳng vào Camera...';
                 }
 
-                await new Promise(r => setTimeout(r, 100));
+                requestAnimationFrame(loop);
             }
+            
+            requestAnimationFrame(loop);
         }
 
         async function verifyFace(descriptor) {

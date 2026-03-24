@@ -440,12 +440,12 @@ namespace DANGCAPNE.Data
 
             // UserManagers
             modelBuilder.Entity<UserManager>().HasData(
-                new UserManager { Id = 1, UserId = 4, ManagerId = 3 }, // Employee -> Manager
-                new UserManager { Id = 2, UserId = 5, ManagerId = 3 }, // Dev -> Manager
-                new UserManager { Id = 3, UserId = 3, ManagerId = 1 }, // Manager -> Admin/Director
-                new UserManager { Id = 4, UserId = 2, ManagerId = 1 }, // HR -> Admin/Director
-                new UserManager { Id = 5, UserId = 7, ManagerId = 1 }, // Sales -> Director
-                new UserManager { Id = 6, UserId = 8, ManagerId = 1 }  // Marketing -> Director
+                new UserManager { Id = 1, UserId = 4, ManagerId = 3, IsPrimary = true }, // Employee -> Manager
+                new UserManager { Id = 2, UserId = 5, ManagerId = 3, IsPrimary = true }, // Dev -> Manager
+                new UserManager { Id = 3, UserId = 3, ManagerId = 1, IsPrimary = true }, // Manager -> Admin/Director
+                new UserManager { Id = 4, UserId = 2, ManagerId = 1, IsPrimary = true }, // HR -> Admin/Director
+                new UserManager { Id = 5, UserId = 7, ManagerId = 1, IsPrimary = true }, // Sales -> Director
+                new UserManager { Id = 6, UserId = 8, ManagerId = 1, IsPrimary = true }  // Marketing -> Director
             );
 
             // Leave Types
@@ -635,19 +635,19 @@ namespace DANGCAPNE.Data
 
             // Request Data
             modelBuilder.Entity<RequestData>().HasData(
-                new RequestData { Id = 1, RequestId = 1, FieldName = "leave_type", FieldValue = "AL" },
-                new RequestData { Id = 2, RequestId = 1, FieldName = "start_date", FieldValue = "2026-03-15" },
-                new RequestData { Id = 3, RequestId = 1, FieldName = "end_date", FieldValue = "2026-03-17" },
-                new RequestData { Id = 4, RequestId = 1, FieldName = "total_days", FieldValue = "3" },
-                new RequestData { Id = 5, RequestId = 1, FieldName = "reason", FieldValue = "Nghỉ phép cá nhân để đi du lịch" },
-                new RequestData { Id = 6, RequestId = 2, FieldName = "ot_date", FieldValue = "2026-03-08" },
-                new RequestData { Id = 7, RequestId = 2, FieldName = "start_time", FieldValue = "18:00" },
-                new RequestData { Id = 8, RequestId = 2, FieldName = "end_time", FieldValue = "21:00" },
-                new RequestData { Id = 9, RequestId = 2, FieldName = "project", FieldValue = "PRJ-001" },
-                new RequestData { Id = 10, RequestId = 2, FieldName = "reason", FieldValue = "Deploy module thanh toán" },
-                new RequestData { Id = 11, RequestId = 3, FieldName = "amount", FieldValue = "15000000" },
-                new RequestData { Id = 12, RequestId = 3, FieldName = "currency", FieldValue = "VND" },
-                new RequestData { Id = 13, RequestId = 3, FieldName = "purpose", FieldValue = "Công tác gặp khách hàng tại Đà Nẵng" }
+                new RequestData { Id = 1, RequestId = 1, FieldKey = "leave_type", FieldValue = "AL" },
+                new RequestData { Id = 2, RequestId = 1, FieldKey = "start_date", FieldValue = "2026-03-15" },
+                new RequestData { Id = 3, RequestId = 1, FieldKey = "end_date", FieldValue = "2026-03-17" },
+                new RequestData { Id = 4, RequestId = 1, FieldKey = "total_days", FieldValue = "3" },
+                new RequestData { Id = 5, RequestId = 1, FieldKey = "reason", FieldValue = "Nghỉ phép cá nhân để đi du lịch" },
+                new RequestData { Id = 6, RequestId = 2, FieldKey = "ot_date", FieldValue = "2026-03-08" },
+                new RequestData { Id = 7, RequestId = 2, FieldKey = "start_time", FieldValue = "18:00" },
+                new RequestData { Id = 8, RequestId = 2, FieldKey = "end_time", FieldValue = "21:00" },
+                new RequestData { Id = 9, RequestId = 2, FieldKey = "project", FieldValue = "PRJ-001" },
+                new RequestData { Id = 10, RequestId = 2, FieldKey = "reason", FieldValue = "Deploy module thanh toán" },
+                new RequestData { Id = 11, RequestId = 3, FieldKey = "amount", FieldValue = "15000000" },
+                new RequestData { Id = 12, RequestId = 3, FieldKey = "currency", FieldValue = "VND" },
+                new RequestData { Id = 13, RequestId = 3, FieldKey = "purpose", FieldValue = "Công tác gặp khách hàng tại Đà Nẵng" }
             );
 
             // Request Approvals

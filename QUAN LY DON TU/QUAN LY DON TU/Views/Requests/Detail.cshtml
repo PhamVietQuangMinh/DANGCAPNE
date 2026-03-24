@@ -7,7 +7,7 @@
     var statusText = Model.Request?.Status switch { "Pending" => "Chờ duyệt", "Approved" => "Đã duyệt", "Rejected" => "Từ chối", "InProgress" => "Đang xử lý", "Cancelled" => "Đã hủy", "RequestEdit" => "Yêu cầu sửa", _ => Model.Request?.Status ?? "" };
 }
 <div class="page-content">
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+    <div style="display:grid;grid-template-columns:1fr 400px;gap:24px">
         <div>
             <div class="glass-card mb-24">
                 <div class="card-header">
@@ -124,16 +124,18 @@
                         @foreach (var a in Model.ApprovalHistory)
                         {
                             var sCss = a.Status.ToLower();
-                            <div class="timeline-item @sCss">
-                                <div class="step-name">@a.StepName</div>
-                                <div class="step-info">
-                                    <strong>@(a.Approver?.FullName != null ? a.Approver.FullName : "<span data-i18n=\"TblUnknown\">Chưa xác định</span>")</strong><br />
-                                    <span class="status-badge @sCss" style="margin-top:6px;font-size:11px" data-i18n="@(a.Status switch { "Pending" => "TblPending", "Approved" => "TblApproved", "Rejected" => "TblRejected", "Skipped" => "TblSkipped", _ => "" })">
-                                        @(a.Status switch { "Pending" => "Đang chờ", "Approved" => "Đã duyệt", "Rejected" => "Từ chối", "Skipped" => "Bỏ qua", _ => a.Status })
-                                    </span>
+                            <div class="timeline-item @sCss" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed var(--border-glass)">
+                                <div class="step-name" style="font-size:13px; color:var(--text-secondary); width:130px; flex-shrink:0; line-height:1.4;">@a.StepName</div>
+                                <div class="step-info" style="flex:1; display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
+                                    <div style="display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:8px">
+                                        <strong style="font-size:14px; color:var(--text-primary)">@Html.Raw(a.Approver?.FullName != null ? a.Approver.FullName : "<span data-i18n=\"TblUnknown\">Chưa xác định</span>")</strong>
+                                        <span class="status-badge @sCss" style="margin-top:0;font-size:11px" data-i18n="@(a.Status switch { "Pending" => "TblPending", "Approved" => "TblApproved", "Rejected" => "TblRejected", "Skipped" => "TblSkipped", _ => "" })">
+                                            @(a.Status switch { "Pending" => "Đang chờ", "Approved" => "Đã duyệt", "Rejected" => "Từ chối", "Skipped" => "Bỏ qua", _ => a.Status })
+                                        </span>
+                                    </div>
                                     @if (a.ActionDate != null)
                                     {
-                                        <br /><small class="text-muted">@a.ActionDate?.ToString("HH:mm dd/MM/yyyy")</small>
+                                        <small class="text-muted" style="margin-top:4px; font-size:11px;">@a.ActionDate?.ToString("HH:mm dd/MM/yyyy")</small>
                                     }
                                 </div>
                                 @if (!string.IsNullOrEmpty(a.Comments))

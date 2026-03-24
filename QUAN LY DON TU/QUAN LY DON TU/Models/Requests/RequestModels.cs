@@ -40,9 +40,17 @@ namespace DANGCAPNE.Models.Requests
         [Key]
         public int Id { get; set; }
         public int RequestId { get; set; }
+        
         [MaxLength(100)]
-        public string FieldName { get; set; } = string.Empty;
+        public string FieldKey { get; set; } = string.Empty;
+        
         public string? FieldValue { get; set; }
+        
+        [MaxLength(50)]
+        public string? FieldType { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        
         public virtual Request? Request { get; set; }
     }
 

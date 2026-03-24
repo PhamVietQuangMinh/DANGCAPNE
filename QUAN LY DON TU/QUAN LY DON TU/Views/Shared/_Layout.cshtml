@@ -14,9 +14,9 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <div class="brand-icon"><i class="bi bi-building"></i></div>
+                <img src="~/img/unnamed.jpg" style="width:40px; height:40px; border-radius:var(--radius-md); object-fit:cover; flex-shrink:0; box-shadow:var(--shadow-sm);" alt="Logo" />
                 <div>
-                    <h1>DANGCAPNE<small>Quản trị nhân sự</small></h1>
+                    <h1 style="font-size:16px; text-transform:uppercase; margin:0; line-height:1.2;">Approval<small style="display:block; font-size:11px; text-transform:none; color:var(--text-muted); font-weight:500; margin-top:2px;">Quản trị đơn từ</small></h1>
                 </div>
             </div>
             <div class="sidebar-nav">
@@ -30,7 +30,7 @@
                 }
                 <div class="nav-section">
                     <div class="nav-section-title" data-i18n="TitleDashboard">Tổng quan</div>
-                    <a href="@Url.Action("Index", "Home")" class="nav-link @(currentController == "Home" ? "active" : "")" data-i18n="NavOverview">
+                    <a href="@Url.Action("Index", "Home")" class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" data-i18n="NavOverview">
                         <i class="bi bi-grid-1x2-fill"></i> Tổng quan
                     </a>
                     <a href="@Url.Action("Index", "Notifications")" class="nav-link @(currentController == "Notifications" ? "active" : "")" data-i18n="NavNotif">
@@ -69,7 +69,7 @@
                 {
                     <div class="nav-section">
                         <div class="nav-section-title" data-i18n="NavApproval">Phê duyệt</div>
-                        <a href="@Url.Action("Index", "Approvals")" class="nav-link @(currentController == "Approvals" ? "active" : "")" data-i18n="NavApproval">
+                        <a href="@Url.Action("Index", "Approvals")" class="nav-link @(currentController == "Approvals" && currentAction == "Index" ? "active" : "")" data-i18n="NavApproval">
                             <i class="bi bi-check2-circle"></i> Duyệt đơn
                             <span class="badge-count" id="sidebarApprovalCount" style="display:none"></span>
                         </a>
@@ -218,15 +218,53 @@
 
             @if (TempData["Success"] != null)
             {
-                <div class="page-content" style="padding-bottom:0">
-                    <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> @TempData["Success"]</div>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        if (typeof Swal !== 'undefined') {
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true,
+                                customClass: { popup: 'glass-card' },
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                }
+                            });
+                            Toast.fire({
+                                icon: 'success',
+                                title: '@Html.Raw(TempData["Success"])'
+                            });
+                        }
+                    });
+                </script>
             }
             @if (TempData["Error"] != null)
             {
-                <div class="page-content" style="padding-bottom:0">
-                    <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]</div>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        if (typeof Swal !== 'undefined') {
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 4000,
+                                timerProgressBar: true,
+                                customClass: { popup: 'glass-card' },
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                }
+                            });
+                            Toast.fire({
+                                icon: 'error',
+                                title: '@Html.Raw(TempData["Error"])'
+                            });
+                        }
+                    });
+                </script>
             }
 
             @RenderBody()
@@ -240,6 +278,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
     <script>
         function toggleSidebar() {

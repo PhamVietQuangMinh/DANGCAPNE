@@ -118,7 +118,7 @@ namespace DANGCAPNE.Controllers
             // Notify HR, Admin, and Managers
             var hrAdmins = await _context.UserRoles
                 .Include(ur => ur.Role)
-                .Where(ur => ur.Role.Name == "Admin" || ur.Role.Name == "HR" || ur.Role.Name == "Manager")
+                .Where(ur => ur.Role!.Name == "Admin" || ur.Role!.Name == "HR" || ur.Role!.Name == "Manager")
                 .Select(ur => ur.UserId)
                 .Distinct()
                 .ToListAsync();
@@ -322,7 +322,7 @@ namespace DANGCAPNE.Controllers
             user.FaceDescriptorLeft = req.Left;
             user.FaceDescriptorRight = req.Right;
             user.PortraitImage = req.Portrait;
-            user.AvatarUrl = req.Portrait; // Set as account avatar as requested
+            user.AvatarUrl = req.Portrait ?? string.Empty; // Set as account avatar as requested
             user.TrustedDeviceId = Guid.NewGuid().ToString();
             user.IsBiometricEnrolled = true;
             user.UpdatedAt = DateTime.Now;
@@ -352,7 +352,7 @@ namespace DANGCAPNE.Controllers
             user.FaceDescriptorRight = null;
             user.IsBiometricEnrolled = false;
             user.PortraitImage = null;
-            user.AvatarUrl = null;
+            user.AvatarUrl = string.Empty;
             user.TrustedDeviceId = null;
             user.UpdatedAt = DateTime.Now;
 
@@ -452,9 +452,9 @@ namespace DANGCAPNE.Controllers
                     return BadRequest(new { success = false, message = "Dữ liệu sinh trắc không hợp lệ." });
 
                 // Tính khoảng cách Euclidean
-                float distFront = CalculateEuclideanDistance(live, front);
-                float distLeft = CalculateEuclideanDistance(live, left);
-                float distRight = CalculateEuclideanDistance(live, right);
+                float distFront = CalculateEuclideanDistance(live!, front!);
+                float distLeft = left != null ? CalculateEuclideanDistance(live!, left!) : 99f;
+                float distRight = right != null ? CalculateEuclideanDistance(live!, right!) : 99f;
 
                 float minDistance = Math.Min(distFront, Math.Min(distLeft, distRight));
 

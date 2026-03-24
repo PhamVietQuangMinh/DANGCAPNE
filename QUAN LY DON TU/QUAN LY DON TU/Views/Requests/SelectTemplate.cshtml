@@ -145,12 +145,14 @@
                         const data = await response.json();
                         if (data.error) {
                             alert(data.error);
-                        } else if (data.TemplateId) {
+                        } else if (data.TemplateId || data.templateId) {
+                            const tId = data.TemplateId || data.templateId;
+                            const fData = data.FormData || data.formData;
                             // Store formData in sessionStorage to be read by Create page
-                            if(data.FormData) {
-                                sessionStorage.setItem('ai_formData_' + data.TemplateId, JSON.stringify(data.FormData));
+                            if(fData) {
+                                sessionStorage.setItem('ai_formData_' + tId, JSON.stringify(fData));
                             }
-                            window.location.href = '/Requests/Create?templateId=' + data.TemplateId;
+                            window.location.href = '/Requests/Create?templateId=' + tId;
                         } else {
                             const lang = localStorage.getItem('dangcapne_lang') || 'vi';
                             const msg = typeof dict !== 'undefined' && dict[lang]?.AIErrorNoTemplate ? dict[lang].AIErrorNoTemplate : "A.I không tìm thấy biểu mẫu phù hợp với yêu cầu của bạn. Vui lòng thử cách diễn đạt khác.";

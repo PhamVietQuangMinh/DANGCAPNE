@@ -116,9 +116,10 @@ h6 {
 }
 
 .nav-link.active {
-    background: rgba(92, 103, 242, 0.08);
+    background: rgba(92, 103, 242, 0.12);
     color: var(--accent-primary);
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(92, 103, 242, 0.2);
 }
 
 .form-control {
@@ -2151,3 +2152,204 @@ select.form-control option {
 
 /* Professional button style */
 .btn-pill { border-radius:999px; padding:8px 14px; font-weight:600; }
+
+/* ========================================
+   GLOBAL SMOOTH ANIMATIONS UTILITIES
+   ======================================== */
+
+/* Reveal Animations */
+.reveal-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-fade {
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+}
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-visible {
+    opacity: 1 !important;
+    transform: translate(0, 0) !important;
+}
+
+/* Page Transition Fade */
+body.page-fade-out {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+body.page-fade-in {
+    opacity: 1;
+    transition: opacity 0.4s ease-in;
+}
+
+/* Ripple Effect */
+.ripple-container {
+    position: relative;
+    overflow: hidden;
+}
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-anim 0.6s linear;
+    background-color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+}
+.ripple-dark {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+@keyframes ripple-anim {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Mouse Tracking Glow Effect */
+.glow-card {
+    position: relative;
+    overflow: hidden;
+}
+.glow-card::before {
+    content: '';
+    position: absolute;
+    inset: 0px;
+    z-index: 0;
+    background: radial-gradient(
+        300px circle at var(--mouse-x) var(--mouse-y),
+        rgba(92, 103, 242, 0.1),
+        transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+}
+.glow-card:hover::before {
+    opacity: 1;
+}
+
+/* Skeleton Shimmer */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+}
+.skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Premium Card Lift */
+.card-lift {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.card-lift:hover {
+    transform: translateY(-5px) scale(1.01);
+}
+
+/* Vertical Indicator for Active Nav Link */
+.nav-link {
+    position: relative;
+}
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 20%;
+    height: 60%;
+    width: 4px;
+    background: var(--accent-primary);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 2px 0 10px rgba(92, 103, 242, 0.4);
+}
+/* Top Progress Bar (NProgress style) */
+#top-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    z-index: 10000;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Button Loading State */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-top: -9px;
+    margin-left: -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Page Loader Overlay (Optional, used for major transitions) */
+#page-loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+#page-loader.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+
+/* Smooth Table Row Hovers */
+.data-table tbody tr {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.data-table tbody tr:hover {
+    transform: scale(1.005);
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Enhancing existing transitions */
+.btn, .nav-link, .glass-card, .form-control {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}

@@ -1,0 +1,154 @@
+﻿@model DANGCAPNE.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Đổi ca";
+    var currentUserId = Context.Session.GetInt32("UserId") ?? 0;
+    var shiftMap = Model.Shifts.ToDictionary(s => s.Id, s => s);
+}
+<div class="page-content">
+    <div class="glass-card" id="emp-swap">
+        <div class="card-header"><h3><i class="bi bi-arrow-left-right text-warning"></i> Đổi ca</h3></div>
+        <div class="card-body">
+            <form id="swapForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label class="form-label">Đồng nghiệp</label>
+                    <select id="swapTargetUser" class="form-control">
+                        <option value="">-- Chọn người --</option>
+                        @foreach (var u in Model.Colleagues)
+                        {
+                            <option value="@u.Id">@u.FullName (@u.EmployeeCode)</option>
+                        }
+                    </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label class="form-label">Ngày/ca của bạn</label>
+                        <input type="date" id="swapRequesterDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        <select id="swapRequesterShift" class="form-control" style="margin-top:6px">
+                            <option value="">-- Chọn ca --</option>
+                            @foreach (var s in Model.Shifts)
+                            {
+                                <option value="@s.Id">@s.Name (@s.StartTime.ToString(@"hh\:mm")-@s.EndTime.ToString(@"hh\:mm"))</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ngày/ca muốn đổi</label>
+                        <input type="date" id="swapTargetDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        <select id="swapTargetShift" class="form-control" style="margin-top:6px">
+                            <option value="">-- Chọn ca --</option>
+                            @foreach (var s in Model.Shifts)
+                            {
+                                <option value="@s.Id">@s.Name (@s.StartTime.ToString(@"hh\:mm")-@s.EndTime.ToString(@"hh\:mm"))</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lý do</label>
+                    <textarea id="swapReason" class="form-control" rows="2" placeholder="Ví dụ: Có việc cá nhân..."></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="submitSwap()"><i class="bi bi-send"></i> Gửi yêu cầu đổi ca</button>
+            </form>
+
+            <div style="margin-top:16px">
+                <div class="fw-700" style="margin-bottom:8px">Đơn đổi ca gần đây</div>
+                @if (Model.ShiftSwapRequests.Any())
+                {
+                    <div class="swap-list">
+                        @foreach (var r in Model.ShiftSwapRequests)
+                        {
+                            var reqShift = shiftMap.ContainsKey(r.RequesterShiftId) ? shiftMap[r.RequesterShiftId].Name : "--";
+                            var tgtShift = shiftMap.ContainsKey(r.TargetShiftId) ? shiftMap[r.TargetShiftId].Name : "--";
+                            var stCls = r.Status == "Pending" ? "pending" : r.Status == "Approved" ? "approved" : r.Status == "ApprovedByTarget" ? "in-progress" : "rejected";
+                            <div class="swap-item">
+                                <div>
+                                    <div class="fw-600">@r.Requester?.FullName ↔ @r.TargetUser?.FullName</div>
+                                    <div class="text-muted" style="font-size:12px">
+                                        @r.RequesterDate.ToString("dd/MM") (@reqShift) → @r.TargetDate.ToString("dd/MM") (@tgtShift)
+                                    </div>
+                                </div>
+                                <div class="swap-actions">
+                                    <span class="status-badge @stCls">@r.Status</span>
+                                    @if (r.TargetUserId == currentUserId && r.Status == "Pending")
+                                    {
+                                        <button class="btn btn-outline btn-sm" onclick="respondSwap(@r.Id, true)">Đồng ý</button>
+                                        <button class="btn btn-ghost btn-sm" onclick="respondSwap(@r.Id, false)">Từ chối</button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">Chưa có đơn đổi ca nào.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    async function submitSwap() {
+        const targetUserId = document.getElementById('swapTargetUser').value;
+        const requesterDate = document.getElementById('swapRequesterDate').value;
+        const requesterShiftId = document.getElementById('swapRequesterShift').value;
+        const targetDate = document.getElementById('swapTargetDate').value;
+        const targetShiftId = document.getElementById('swapTargetShift').value;
+        const reason = document.getElementById('swapReason').value;
+
+        if (!targetUserId || !requesterDate || !requesterShiftId || !targetDate || !targetShiftId) {
+            Swal.fire('Thiếu thông tin', 'Vui lòng chọn đầy đủ người, ngày và ca.', 'warning');
+            return;
+        }
+
+        const body = new URLSearchParams({
+            targetUserId,
+            requesterShiftId,
+            requesterDate,
+            targetShiftId,
+            targetDate,
+            reason: reason || ''
+        });
+
+        try {
+            const res = await fetch('/Shift/CreateSwapRequest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Thành công', data.message || 'Đã gửi yêu cầu đổi ca.', 'success')
+                    .then(() => location.reload());
+            } else {
+                Swal.fire('Lỗi', data.message || 'Không thể gửi yêu cầu.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
+        }
+    }
+
+    async function respondSwap(requestId, accept) {
+        try {
+            const res = await fetch('/Shift/RespondToSwap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ requestId, accept })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Thành công', data.message || 'Đã xử lý.', 'success')
+                    .then(() => location.reload());
+            } else {
+                Swal.fire('Lỗi', data.message || 'Không thể xử lý.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
+        }
+    }
+</script>
+}
+
+

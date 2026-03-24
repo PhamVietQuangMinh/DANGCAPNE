@@ -1,0 +1,104 @@
+﻿@model DANGCAPNE.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Lịch biểu & ca làm";
+    var today = DateTime.Today;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
+    var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+    var firstDayIndex = (int)monthStart.DayOfWeek; // Sunday = 0
+    var totalDays = DateTime.DaysInMonth(today.Year, today.Month);
+    var tsByDate = Model.CalendarTimesheets
+        .GroupBy(t => t.Date.Date)
+        .ToDictionary(g => g.Key, g => g.First());
+}
+<div class="page-content">
+    <div class="glass-card" id="emp-schedule">
+        <div class="card-header"><h3><i class="bi bi-calendar-week text-success"></i> Lịch biểu & ca làm (14 ngày)</h3></div>
+        <div class="card-body">
+            @if (Model.UpcomingShifts.Any())
+            {
+                <div class="shift-list">
+                    @foreach (var us in Model.UpcomingShifts)
+                    {
+                        var s = us.Shift;
+                        <div class="shift-item">
+                            <div>
+                                <div class="shift-title">@s?.Name</div>
+                                <div class="text-muted" style="font-size:12px">
+                                    Hiệu lực: @us.EffectiveDate.ToString("dd/MM")
+                                    @if (us.EndDate != null)
+                                    {
+                                        <span> - @us.EndDate.Value.ToString("dd/MM")</span>
+                                    }
+                                    else
+                                    {
+                                        <span> - Đang áp dụng</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="shift-time">@((s != null) ? s.StartTime.ToString(@"hh\:mm") + " - " + s.EndTime.ToString(@"hh\:mm") : "--:--")</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:24px">
+                    <i class="bi bi-calendar-x"></i>
+                    <p>Chưa có ca làm được phân công.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="glass-card mt-24">
+        <div class="card-header">
+            <h3><i class="bi bi-clock-history text-primary"></i> Chấm công (tháng @today.ToString("MM/yyyy"))</h3>
+        </div>
+        <div class="card-body">
+            <div class="calendar-grid">
+                <div class="cal-head">CN</div>
+                <div class="cal-head">T2</div>
+                <div class="cal-head">T3</div>
+                <div class="cal-head">T4</div>
+                <div class="cal-head">T5</div>
+                <div class="cal-head">T6</div>
+                <div class="cal-head">T7</div>
+
+                @for (int i = 0; i < firstDayIndex; i++)
+                {
+                    <div class="cal-cell empty"></div>
+                }
+
+                @for (int day = 1; day <= totalDays; day++)
+                {
+                    var date = new DateTime(today.Year, today.Month, day);
+                    tsByDate.TryGetValue(date.Date, out var ts);
+                    var st = ts?.Status ?? "";
+                    var cls = st == "Absent" ? "bad" : st == "Late" || st == "EarlyLeave" ? "warn" : st == "" ? "na" : "ok";
+                    <div class="cal-cell @cls @(date.Date == today ? "today" : "")">
+                        <div class="cal-day">@day</div>
+                        <div class="cal-status">
+                            @if (ts != null)
+                            {
+                                <span class="dot"></span>
+                                <span>@(st == "Present" ? "Có mặt" : st == "Late" ? "Đi muộn" : st == "EarlyLeave" ? "Thiếu giờ" : st == "Absent" ? "Vắng" : st)</span>
+                            }
+                            else
+                            {
+                                <span class="muted">--</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="cal-legend">
+                <span class="lg ok"><span class="dot"></span> Có mặt</span>
+                <span class="lg warn"><span class="dot"></span> Đi muộn/Thiếu giờ</span>
+                <span class="lg bad"><span class="dot"></span> Vắng</span>
+                <span class="lg na"><span class="dot"></span> Chưa có dữ liệu</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+

@@ -39,6 +39,13 @@ namespace DANGCAPNE.ViewModels
         public bool IsCheckInDone { get; set; }    // Chỉ mới Check-in, chưa Check-out
         public string? CheckInTime { get; set; }   // Giờ vào để hiển thị
         public List<LeaveBalanceSummary> TeamLeaveBalances { get; set; } = new();
+        // Employee page additions
+        public List<Timesheet> RecentTimesheets { get; set; } = new();
+        public List<Timesheet> CalendarTimesheets { get; set; } = new();
+        public List<UserShift> UpcomingShifts { get; set; } = new();
+        public List<Shift> Shifts { get; set; } = new();
+        public List<User> Colleagues { get; set; } = new();
+        public List<ShiftSwapRequest> ShiftSwapRequests { get; set; } = new();
     }
 
     public class LeaveBalanceSummary

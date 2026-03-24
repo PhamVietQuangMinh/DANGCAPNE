@@ -1,0 +1,42 @@
+﻿@model DANGCAPNE.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Timeline chấm công";
+}
+<div class="page-content">
+    <div class="glass-card" id="emp-timeline">
+        <div class="card-header"><h3><i class="bi bi-clock-history text-info"></i> Timeline chấm công</h3></div>
+        <div class="card-body">
+            @if (Model.RecentTimesheets.Any())
+            {
+                <div class="timeline">
+                    @foreach (var t in Model.RecentTimesheets)
+                    {
+                        var statusText = t.Status == "EarlyLeave" ? "Thiếu giờ" : t.Status == "Late" ? "Đi muộn" : t.Status == "Absent" ? "Vắng" : "Có mặt";
+                        var statusClass = t.Status == "EarlyLeave" || t.Status == "Late" ? "pending" : t.Status == "Absent" ? "rejected" : "approved";
+                        <div class="timeline-item">
+                            <div class="timeline-dot @statusClass"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-between">
+                                    <strong>@t.Date.ToString("dd/MM/yyyy")</strong>
+                                    <span class="status-badge @statusClass">@statusText</span>
+                                </div>
+                                <div class="text-muted" style="font-size:12px; margin-top:4px;">
+                                    Vào: @(t.CheckIn?.ToString("HH:mm") ?? "--:--") · Ra: @(t.CheckOut?.ToString("HH:mm") ?? "--:--") · Giờ làm: @(t.WorkHours > 0 ? t.WorkHours.ToString("0.#") + "h" : "--")
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:24px">
+                    <i class="bi bi-clock"></i>
+                    <p>Chưa có dữ liệu chấm công.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+

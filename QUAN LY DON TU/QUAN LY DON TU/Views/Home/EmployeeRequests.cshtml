@@ -1,0 +1,38 @@
+﻿@model DANGCAPNE.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Quản lý đơn từ";
+}
+<div class="page-content">
+    <div class="glass-card" id="emp-requests">
+        <div class="card-header" style="align-items:center;justify-content:space-between">
+            <h3><i class="bi bi-clipboard-check text-primary"></i> Quản lý đơn từ</h3>
+            <div class="d-flex gap-8">
+                <a href="@Url.Action("SelectTemplate", "Requests")" class="btn btn-primary btn-sm btn-pill"><i class="bi bi-plus-circle"></i> Tạo đơn</a>
+                <a href="@Url.Action("Index", "Requests")" class="btn btn-outline btn-sm btn-pill"><i class="bi bi-file-earmark-text"></i> Đơn của tôi</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mini-stat-grid">
+                <div class="mini-stat">
+                    <div class="mini-stat-value">@Model.TotalMyRequests</div>
+                    <div class="mini-stat-label">Tổng đơn của tôi</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-stat-value text-warning">@Model.TotalPendingRequests</div>
+                    <div class="mini-stat-label">Chờ xử lý</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-stat-value text-success">@Model.TotalApprovedRequests</div>
+                    <div class="mini-stat-label">Đã duyệt</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-stat-value text-danger">@Model.TotalRejectedRequests</div>
+                    <div class="mini-stat-label">Từ chối</div>
+                </div>
+            </div>
+            <div style="margin-top:12px" class="text-muted">Bạn có thể tạo mới, theo dõi và quản lý trạng thái đơn từ ngay tại đây.</div>
+        </div>
+    </div>
+</div>
+
+

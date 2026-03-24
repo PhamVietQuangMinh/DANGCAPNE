@@ -39,6 +39,24 @@
                     </a>
                 </div>
                 <div class="nav-section">
+                    <div class="nav-section-title" data-i18n="NavEmp">Nhân viên</div>
+                    <a href="@Url.Action("EmployeeRequests", "Home")" class="nav-link @(currentAction == "EmployeeRequests" ? "active" : "")" data-i18n="NavEmpRequests">
+                        <i class="bi bi-clipboard-check"></i> Quản lý đơn từ
+                    </a>
+                    <a href="@Url.Action("EmployeeTimeline", "Home")" class="nav-link @(currentAction == "EmployeeTimeline" ? "active" : "")" data-i18n="NavEmpTimeline">
+                        <i class="bi bi-clock-history"></i> Timeline chấm công
+                    </a>
+                    <a href="@Url.Action("EmployeeSchedule", "Home")" class="nav-link @(currentAction == "EmployeeSchedule" ? "active" : "")" data-i18n="NavEmpSchedule">
+                        <i class="bi bi-calendar-week"></i> Lịch biểu & ca làm
+                    </a>
+                    <a href="@Url.Action("EmployeeSwap", "Home")" class="nav-link @(currentAction == "EmployeeSwap" ? "active" : "")" data-i18n="NavEmpSwap">
+                        <i class="bi bi-arrow-left-right"></i> Đổi ca
+                    </a>
+                    <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpAttendance">
+                        <i class="bi bi-clock-fill"></i> Chấm công
+                    </a>
+                </div>
+                <div class="nav-section">
                     <div class="nav-section-title" data-i18n="NavRequests">Đơn từ</div>
                     <a href="@Url.Action("SelectTemplate", "Requests")" class="nav-link @(currentAction == "SelectTemplate" ? "active" : "")" data-i18n="NavCreate">
                         <i class="bi bi-plus-circle-fill"></i> Tạo đơn mới
@@ -241,6 +259,7 @@
             "vi": {
                 // Sidebar
                 "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ của tôi", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý người dùng", "NavBuilder": "Trình tạo biểu mẫu",
+                "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline chấm công", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpSwap": "Đổi ca", "NavEmpAttendance": "Chấm công",
                 // Dashboard & Shared
                 "DashPending": "Đang chờ xử lý", "DashApproved": "Đã duyệt", "DashRejected": "Bị từ chối", "DashLeave": "Ngày phép còn lại",
                 "DashWelcome": "Xin chào, ", "DashDatePfx": "", "DashNoReq": "Chưa có đơn nào", "BtnCreateReq": "Tạo đơn",
@@ -300,6 +319,7 @@
             "en": {
                 // Sidebar
                 "TitleDashboard": "Dashboard", "NavOverview": "Overview", "NavNotif": "Notifications", "NavRequests": "Requests", "NavCreate": "Create Request", "NavMyReq": "My Requests", "NavApproval": "Approvals", "NavHR": "HR Menu", "NavLeave": "Leave Mgmt", "NavTime": "Timekeeping", "NavModules": "Extra Modules", "NavAdmin": "Administration", "NavUsers": "User Management", "NavBuilder": "Form Builder",
+                "NavEmp": "Employee", "NavEmpRequests": "Request Management", "NavEmpTimeline": "Attendance Timeline", "NavEmpSchedule": "Schedule & Shifts", "NavEmpSwap": "Shift Swap", "NavEmpAttendance": "Timekeeping",
                 // Dashboard & Shared
                 "DashPending": "Pending Action", "DashApproved": "Approved", "DashRejected": "Rejected", "DashLeave": "Leave Balance",
                 "DashWelcome": "Welcome, ", "DashDatePfx": "", "DashNoReq": "No requests found", "BtnCreateReq": "Create Request",

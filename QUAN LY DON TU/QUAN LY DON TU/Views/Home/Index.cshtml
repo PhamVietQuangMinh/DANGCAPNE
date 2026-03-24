@@ -1,59 +1,71 @@
 @model DANGCAPNE.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Tổng quan";
+    var currentUserId = Context.Session.GetInt32("UserId") ?? 0;
+    var shiftMap = Model.Shifts.ToDictionary(s => s.Id, s => s);
 }
 <div class="page-content">
-    <div style="margin-bottom:32px">
-        <h2 style="font-size:28px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
-            <span data-i18n="DashWelcome">Xin chào, </span> @Model.CurrentUser?.FullName! <i class="bi bi-stars" style="color:var(--warning);font-size:24px;"></i>
-        </h2>
-        <p class="text-muted"><span data-i18n="DashDatePfx"></span>@DateTime.Now.ToString("dd/MM/yyyy") · @Model.RoleName</p>
+    <div style="margin-bottom:24px">
+        <div class="glass-card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div class="text-muted" style="font-size:12px">Thời gian hiện tại</div>
+                <div style="font-size:28px;font-weight:800" id="clockTime">@DateTime.Now.ToString("HH:mm")</div>
+                <div class="text-muted" style="font-size:12px">@DateTime.Now.ToString("dd/MM/yyyy") · @Model.RoleName</div>
+            </div>
+            <div class="d-flex align-center gap-12">
+                <div class="stat-pill">
+                    <div class="pill-label">Chờ xử lý</div>
+                    <div class="pill-value">@Model.TotalPendingRequests</div>
+                </div>
+                <div class="stat-pill success">
+                    <div class="pill-label">Đã duyệt</div>
+                    <div class="pill-value">@Model.TotalApprovedRequests</div>
+                </div>
+                <div class="stat-pill danger">
+                    <div class="pill-label">Từ chối</div>
+                    <div class="pill-value">@Model.TotalRejectedRequests</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="stat-grid">
-        @if (Model.IsAttendanceDone)
-        {
-            <div class="stat-card" style="background: white; border: 1px solid #e2e8f0;">
-                <div class="stat-icon" style="background: #f0fdf4; color: #10b981;"><i class="bi bi-check-all"></i></div>
-                <div class="stat-value" style="font-size: 20px; color: #10b981;">Hoàn tất ca</div>
-                <div class="stat-label">Vào: @Model.CheckInTime · @DateTime.Now.ToString("dd/MM")</div>
+    <div class="glass-card">
+        <div class="card-header"><h3><i class="bi bi-lightning-charge-fill text-primary"></i> Lối tắt nhanh</h3></div>
+        <div class="card-body">
+            <div class="shortcut-grid">
+                <a class="shortcut-item" href="@Url.Action("Index", "Attendance")">
+                    <i class="bi bi-clock-fill"></i>
+                    <span>Chấm công</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("SelectTemplate", "Requests")">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Tạo đơn</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("Index", "Requests")">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Đơn của tôi</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("EmployeeSchedule", "Home")">
+                    <i class="bi bi-calendar-week"></i>
+                    <span>Lịch biểu</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("EmployeeTimeline", "Home")">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Timeline</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("EmployeeSwap", "Home")">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Đổi ca</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("EmployeeRequests", "Home")">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Quản lý đơn</span>
+                </a>
+                <a class="shortcut-item" href="@Url.Action("Index", "Notifications")">
+                    <i class="bi bi-bell"></i>
+                    <span>Thông báo</span>
+                </a>
             </div>
-        }
-        else if (Model.IsCheckInDone)
-        {
-            <div class="stat-card" onclick="location.href='@Url.Action("Index", "Attendance")'" style="cursor:pointer; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.25);"><i class="bi bi-box-arrow-right"></i></div>
-                <div class="stat-value" style="font-size: 18px;">Chấm công RA</div>
-                <div class="stat-label" style="color: rgba(255,255,255,0.85);">Đã vào lúc @Model.CheckInTime · Bấm để Check-out</div>
-            </div>
-        }
-        else
-        {
-            <div class="stat-card primary" onclick="location.href='@Url.Action("Index", "Attendance")'" style="cursor:pointer; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white;">
-                <div class="stat-icon" style="background: rgba(255,255,255,0.2);"><i class="bi bi-camera-fill"></i></div>
-                <div class="stat-value" style="font-size: 20px;">Quét khuôn mặt</div>
-                <div class="stat-label" style="color: rgba(255,255,255,0.8);">Chấm công ngay</div>
-            </div>
-        }
-        <div class="stat-card" style="background: white;">
-            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-value">@Model.TotalPendingRequests</div>
-            <div class="stat-label" data-i18n="DashPending">Đang chờ xử lý</div>
-        </div>
-        <div class="stat-card success">
-            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-            <div class="stat-value">@Model.TotalApprovedRequests</div>
-            <div class="stat-label" data-i18n="DashApproved">Đã duyệt</div>
-        </div>
-        <div class="stat-card danger">
-            <div class="stat-icon"><i class="bi bi-x-circle"></i></div>
-            <div class="stat-value">@Model.TotalRejectedRequests</div>
-            <div class="stat-label" data-i18n="DashRejected">Bị từ chối</div>
-        </div>
-        <div class="stat-card info">
-            <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
-            <div class="stat-value">@Model.LeaveBalance.ToString("0.#")</div>
-            <div class="stat-label" data-i18n="DashLeave">Ngày phép còn lại</div>
         </div>
     </div>
 
@@ -339,6 +351,76 @@
         chartT.options.plugins.legend.labels.color = c_txt;
         chartT.data.datasets[0].borderColor = c_bord;
         chartT.update();
+    }
+
+    // Live clock
+    (function syncClock() {
+        const el = document.getElementById('clockTime');
+        if (!el) return;
+        const pad = (n) => n.toString().padStart(2, '0');
+        setInterval(() => {
+            const d = new Date();
+            el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }, 1000);
+    })();
+
+    async function submitSwap() {
+        const targetUserId = document.getElementById('swapTargetUser').value;
+        const requesterDate = document.getElementById('swapRequesterDate').value;
+        const requesterShiftId = document.getElementById('swapRequesterShift').value;
+        const targetDate = document.getElementById('swapTargetDate').value;
+        const targetShiftId = document.getElementById('swapTargetShift').value;
+        const reason = document.getElementById('swapReason').value;
+
+        if (!targetUserId || !requesterDate || !requesterShiftId || !targetDate || !targetShiftId) {
+            Swal.fire('Thiếu thông tin', 'Vui lòng chọn đầy đủ người, ngày và ca.', 'warning');
+            return;
+        }
+
+        const body = new URLSearchParams({
+            targetUserId,
+            requesterShiftId,
+            requesterDate,
+            targetShiftId,
+            targetDate,
+            reason: reason || ''
+        });
+
+        try {
+            const res = await fetch('/Shift/CreateSwapRequest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Thành công', data.message || 'Đã gửi yêu cầu đổi ca.', 'success')
+                    .then(() => location.reload());
+            } else {
+                Swal.fire('Lỗi', data.message || 'Không thể gửi yêu cầu.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
+        }
+    }
+
+    async function respondSwap(requestId, accept) {
+        try {
+            const res = await fetch('/Shift/RespondToSwap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ requestId, accept })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Thành công', data.message || 'Đã xử lý.', 'success')
+                    .then(() => location.reload());
+            } else {
+                Swal.fire('Lỗi', data.message || 'Không thể xử lý.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
+        }
     }
 </script>
 }

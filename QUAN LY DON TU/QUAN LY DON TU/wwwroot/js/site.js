@@ -76,8 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         button.appendChild(ripple);
 
-        // Cleanup
-        setTimeout(() => ripple.remove(), 600);
+        // Cleanup - Faster (300ms instead of 600ms)
+        setTimeout(() => ripple.remove(), 350);
     };
 
     // Attach ripple to common interactive elements
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 setTimeout(() => {
                     window.location.href = href;
-                }, 250); // Matches CSS page-fade-out timing
+                }, 150); // Faster exit (150ms instead of 250ms)
             }
         });
     });

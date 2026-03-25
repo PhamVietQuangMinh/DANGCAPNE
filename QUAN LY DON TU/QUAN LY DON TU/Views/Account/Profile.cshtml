@@ -25,7 +25,11 @@
                 </div>
                 
                 <h2 class="fw-800 mb-4">@Model.User?.FullName</h2>
-                <p class="text-muted mb-24">@Model.User?.Email · @Model.User?.EmployeeCode</p>
+                <p class="text-muted mb-24">
+                    @Model.User?.Email · 
+                    <span class="color-primary fw-600">@(string.IsNullOrEmpty(Model.User?.Phone) ? "Chưa cập nhật SĐT" : Model.User?.Phone)</span> · 
+                    @Model.User?.EmployeeCode
+                </p>
                 
                 <div class="d-flex justify-content-center" style="gap: 48px;">
                     <div class="text-center">

@@ -69,24 +69,208 @@
         </div>
     </div>
 
-    <div class="charts-grid">
-        <div class="glass-card">
-            <div class="card-header"><h3 data-i18n="ChartMonthly"><i class="bi bi-bar-chart-fill text-primary"></i> Đơn từ theo tháng</h3></div>
-            <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+    @if (Context.Session.GetString("PrimaryRole") == "Admin" || Context.Session.GetString("PrimaryRole") == "HR" || Context.Session.GetString("PrimaryRole") == "Manager")
+    {
+        <div class="charts-grid">
+            <div class="glass-card">
+                <div class="card-header"><h3 data-i18n="ChartMonthly"><i class="bi bi-bar-chart-fill text-primary"></i> Đơn từ theo tháng</h3></div>
+                <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+            </div>
+            <div class="glass-card">
+                <div class="card-header"><h3 data-i18n="ChartStatus"><i class="bi bi-pie-chart-fill text-info"></i> Theo trạng thái</h3></div>
+                <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            </div>
+            <div class="glass-card">
+                <div class="card-header"><h3 data-i18n="ChartDept"><i class="bi bi-building text-warning"></i> Theo phòng ban</h3></div>
+                <div class="chart-container"><canvas id="deptChart"></canvas></div>
+            </div>
+            <div class="glass-card">
+                <div class="card-header"><h3 data-i18n="ChartType"><i class="bi bi-file-earmark-text text-success"></i> Theo loại đơn</h3></div>
+                <div class="chart-container"><canvas id="typeChart"></canvas></div>
+            </div>
         </div>
-        <div class="glass-card">
-            <div class="card-header"><h3 data-i18n="ChartStatus"><i class="bi bi-pie-chart-fill text-info"></i> Theo trạng thái</h3></div>
-            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+    }
+    else
+    {
+        <div class="emp-stats-grid">
+            <!-- Card 1: Trạng thái hôm nay -->
+            <div class="emp-stat-card emp-stat-blue">
+                <div class="emp-stat-bg-icon"><i class="bi bi-person-bounding-box"></i></div>
+                <div class="emp-stat-content">
+                    <div class="emp-stat-label">Trạng thái hôm nay</div>
+                    <div class="emp-stat-value emp-stat-value-sm">
+                        @(Model.IsAttendanceDone ? "Đã Check-out ✓" : (Model.IsCheckInDone ? $"Check-in lúc {Model.CheckInTime}" : "Chưa Check-in"))
+                    </div>
+                    <div class="emp-stat-badge @(Model.IsAttendanceDone ? "badge-success" : Model.IsCheckInDone ? "badge-info" : "badge-warn")">
+                        <i class="bi @(Model.IsAttendanceDone ? "bi-check-circle-fill" : Model.IsCheckInDone ? "bi-clock-fill" : "bi-x-circle-fill")"></i>
+                        @(Model.IsAttendanceDone ? "Hoàn thành" : Model.IsCheckInDone ? "Đang làm việc" : "Vắng mặt")
+                    </div>
+                </div>
+                <div class="emp-stat-icon-wrap blue"><i class="bi bi-person-bounding-box"></i></div>
+            </div>
+
+            <!-- Card 2: Phép năm -->
+            <div class="emp-stat-card emp-stat-green">
+                <div class="emp-stat-bg-icon"><i class="bi bi-calendar2-check"></i></div>
+                <div class="emp-stat-content">
+                    <div class="emp-stat-label">Phép năm còn lại</div>
+                    <div class="emp-stat-value">@Model.LeaveBalance <span class="emp-stat-unit">ngày</span></div>
+                    <div class="emp-stat-mini-bar">
+                        <div class="emp-stat-mini-bar-fill green" style="width: @Math.Min(100, Model.LeaveBalance * 100 / 12)%"></div>
+                    </div>
+                    <div class="emp-stat-sub">/ 12 ngày/năm</div>
+                </div>
+                <div class="emp-stat-icon-wrap green"><i class="bi bi-calendar2-check"></i></div>
+            </div>
+
+            <!-- Card 3: Tăng ca -->
+            <div class="emp-stat-card emp-stat-amber">
+                <div class="emp-stat-bg-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="emp-stat-content">
+                    <div class="emp-stat-label">Tăng ca tháng này</div>
+                    <div class="emp-stat-value">@Model.OvertimeThisMonth <span class="emp-stat-unit">giờ</span></div>
+                    <div class="emp-stat-sub">Tháng @DateTime.Now.Month/@DateTime.Now.Year</div>
+                </div>
+                <div class="emp-stat-icon-wrap amber"><i class="bi bi-clock-history"></i></div>
+            </div>
+
+            <!-- Card 4: Tổng đơn -->
+            <div class="emp-stat-card emp-stat-purple">
+                <div class="emp-stat-bg-icon"><i class="bi bi-file-earmark-text"></i></div>
+                <div class="emp-stat-content">
+                    <div class="emp-stat-label">Tổng đơn của tôi</div>
+                    <div class="emp-stat-value">@Model.TotalMyRequests <span class="emp-stat-unit">đơn</span></div>
+                    <div class="emp-stat-sub">@Model.TotalPendingRequests đang chờ · @Model.TotalApprovedRequests đã duyệt</div>
+                </div>
+                <div class="emp-stat-icon-wrap purple"><i class="bi bi-file-earmark-text"></i></div>
+            </div>
         </div>
-        <div class="glass-card">
-            <div class="card-header"><h3 data-i18n="ChartDept"><i class="bi bi-building text-warning"></i> Theo phòng ban</h3></div>
-            <div class="chart-container"><canvas id="deptChart"></canvas></div>
-        </div>
-        <div class="glass-card">
-            <div class="card-header"><h3 data-i18n="ChartType"><i class="bi bi-file-earmark-text text-success"></i> Theo loại đơn</h3></div>
-            <div class="chart-container"><canvas id="typeChart"></canvas></div>
-        </div>
-    </div>
+
+        <style>
+        .emp-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .emp-stat-card {
+            position: relative;
+            border-radius: 20px;
+            padding: 24px 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: default;
+        }
+        .emp-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+        }
+        .emp-stat-blue  { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: #fff; }
+        .emp-stat-green { background: linear-gradient(135deg, #065f46 0%, #10b981 100%); color: #fff; }
+        .emp-stat-amber { background: linear-gradient(135deg, #92400e 0%, #f59e0b 100%); color: #fff; }
+        .emp-stat-purple{ background: linear-gradient(135deg, #4c1d95 0%, #8b5cf6 100%); color: #fff; }
+
+        .emp-stat-bg-icon {
+            position: absolute;
+            right: -10px;
+            bottom: -10px;
+            font-size: 90px;
+            opacity: 0.08;
+            line-height: 1;
+            pointer-events: none;
+        }
+        .emp-stat-content { flex: 1; position: relative; z-index: 1; }
+        .emp-stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+        .emp-stat-value {
+            font-size: 38px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+        .emp-stat-value-sm { font-size: 20px; font-weight: 800; }
+        .emp-stat-unit { font-size: 16px; font-weight: 500; opacity: 0.7; }
+        .emp-stat-sub {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .emp-stat-mini-bar {
+            height: 5px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 10px;
+            margin: 8px 0 4px;
+            overflow: hidden;
+        }
+        .emp-stat-mini-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.9);
+            transition: width 1s ease;
+        }
+        .emp-stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+        .badge-success { background: rgba(16,185,129,0.25); }
+        .badge-info    { background: rgba(59,130,246,0.25); }
+        .badge-warn    { background: rgba(239,68,68,0.25); }
+        .emp-stat-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .emp-stat-icon-wrap.blue   { background: rgba(255,255,255,0.15); }
+        .emp-stat-icon-wrap.green  { background: rgba(255,255,255,0.15); }
+        .emp-stat-icon-wrap.amber  { background: rgba(255,255,255,0.15); }
+        .emp-stat-icon-wrap.purple { background: rgba(255,255,255,0.15); }
+        @@media (max-width: 900px) {
+            .emp-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @@media (max-width: 540px) {
+            .emp-stats-grid { grid-template-columns: 1fr; }
+        }
+        .data-table th, .data-table td {
+            text-align: left !important;
+            padding: 12px 16px !important;
+            vertical-align: middle;
+        }
+        .data-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-glass);
+        }
+        .data-table tr:hover {
+            background: rgba(92, 103, 242, 0.03);
+        }
+        </style>
+    }
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
         @if (Model.PendingApprovals.Any())
@@ -115,7 +299,7 @@
             </div>
         }
 
-        <div class="glass-card">
+        <div class="glass-card" style="@(!Model.PendingApprovals.Any() ? "grid-column: 1 / -1;" : "")">
             <div class="card-header">
                 <h3 data-i18n="TitleRecent"><i class="bi bi-file-text-fill text-info"></i> Đơn gần đây</h3>
                 <a href="@Url.Action("Index", "Requests")" class="btn btn-outline btn-sm" data-i18n="BtnViewAll">Xem tất cả</a>

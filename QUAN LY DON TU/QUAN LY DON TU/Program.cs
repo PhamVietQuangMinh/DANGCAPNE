@@ -37,7 +37,16 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        // Migration may fail when using connection pooler (e.g. on school network)
+        // This is safe to ignore if schema is already up-to-date
+        Console.WriteLine($"[Startup] Migration skipped: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.

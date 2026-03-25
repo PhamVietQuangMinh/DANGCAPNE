@@ -408,7 +408,9 @@ namespace DANGCAPNE.Controllers
 
                 float dist = CalculateEuclideanDistance(newFront, otherFront);
                 Console.WriteLine($"[FaceUniqueness] New vs ID {other.Id}. Distance: {dist}");
-                if (dist < 0.48)
+                
+                // Ngưỡng độc nhất rất nghiêm ngặt: < 0.38 mới coi là trùng lặp.
+                if (dist < 0.38)
                 {
                     var matchUser = await _context.Users.FindAsync(other.Id);
                     return Ok(new { success = false, message = $"Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi tài khoản: {matchUser?.FullName} ({matchUser?.Email})!" });
@@ -460,9 +462,8 @@ namespace DANGCAPNE.Controllers
 
                 Console.WriteLine($"[FaceVerify] User {user.Id} ({user.FullName}) - distFront: {distFront:F4}, distLeft: {distLeft:F4}, distRight: {distRight:F4}, minDist: {minDistance:F4}");
 
-                // Ngưỡng nghiêm ngặt: 0.45 (thay vì 0.55). 
-                // Dưới 0.4 = chắc chắn đúng, 0.4-0.45 = có thể đúng, trên 0.45 = khác người.
-                if (minDistance > 0.45) 
+                // Ngưỡng lỏng hơn: 0.52 (để người thật không bị kẹt vì cam/ánh sáng).
+                if (minDistance > 0.52) 
                     return BadRequest(new { success = false, message = $"Khuôn mặt không khớp! (Độ lệch: {minDistance:F2}). Vui lòng thử lại." });
 
                 // AUTO CHECK-IN: If face matches during login, record it as a check-in

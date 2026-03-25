@@ -51,7 +51,7 @@
         .c-br { bottom: 12px; right: 12px; border-left: none; border-top: none; border-radius: 0 0 8px 0; }
         .scan-line { position: absolute; height: 2px; width: 100%; background: #3b82f6; box-shadow: 0 0 15px 2px rgba(59,130,246,0.8); top: 0; animation: scan 3s ease-in-out infinite; z-index: 15; pointer-events: none; opacity: 0.6; }
         
-        .face-box { position: absolute; border: 2px dashed rgba(255,255,255,0.5); border-radius: 12px; transition: all 0.1s; pointer-events: none; }
+        .face-box { position: absolute; border: 2px dashed rgba(255,255,255,0.5); border-radius: 12px; transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94); pointer-events: none; }
         .face-box.good { border-color: #10b981; background: rgba(16, 185, 129, 0.1); border-style: solid; box-shadow: 0 0 15px rgba(16,185,129,0.4); }
         
         /* 2-Column layout for Step 3 */
@@ -592,7 +592,36 @@
                 if(ratio > 1.4) poseEnum = 'right';
                 else if(ratio < 0.7) poseEnum = 'left';
 
-                checkCaptureRequirement(poseEnum, detections.descriptor, video);
+                if (poseEnum === window.currentTargetPose) {
+                    window.collectedEnrolls = window.collectedEnrolls || [];
+                    window.collectedEnrolls.push(detections.descriptor);
+                    
+                    if (window.collectedEnrolls.length >= 4) {
+                        // Average the 4 descriptors
+                        const avgDescriptor = new Float32Array(128);
+                        let norm = 0;
+                        for (let i = 0; i < 128; i++) {
+                            let sum = 0;
+                            for (const d of window.collectedEnrolls) sum += d[i];
+                            avgDescriptor[i] = sum / window.collectedEnrolls.length;
+                            norm += avgDescriptor[i] * avgDescriptor[i];
+                        }
+                        // Normalize vector to maintain unit length
+                        norm = Math.sqrt(norm);
+                        if (norm > 0) {
+                            for (let i = 0; i < 128; i++) avgDescriptor[i] /= norm;
+                        }
+
+                        checkCaptureRequirement(poseEnum, avgDescriptor, video);
+                        window.collectedEnrolls = [];
+                    } else {
+                        document.getElementById('aiHint').innerHTML = `<i class="bi bi-cpu"></i> Đang trích xuất đặc điểm... (${window.collectedEnrolls.length}/4)`;
+                        document.getElementById('aiHint').className = 'hint-box ok';
+                    }
+                } else {
+                    window.collectedEnrolls = []; // Reset if pose changes before 4 frames
+                }
+
                 requestAnimationFrame(loop);
             }
             

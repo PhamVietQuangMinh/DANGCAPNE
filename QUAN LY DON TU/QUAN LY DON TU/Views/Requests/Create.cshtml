@@ -29,7 +29,7 @@
                     {
                         var colClass = field.Width == 6 ? "col-6" : field.Width == 4 ? "col-4" : "col-12";
                         var savedVal = Model.FormData.ContainsKey(field.FieldName) ? Model.FormData[field.FieldName] : "";
-                        <div class="@colClass">
+                        <div class="@colClass" data-field-name="@field.FieldName">
                             <div class="form-group">
                                 <label class="form-label">
                                     @field.Label
@@ -161,6 +161,40 @@
                 }
             } catch(e) {
                 console.error('Error parsing AI data', e);
+            }
+        }
+
+        // Dynamic visibility for Template 7
+        if ('@Model.FormTemplate?.Id' === '7') {
+            const updateTypeSelect = document.querySelector('[name="update_type"]');
+            const fields = {
+                fullname: document.querySelector('[data-field-name="new_fullname"]'),
+                phone: document.querySelector('[data-field-name="new_phone"]'),
+                email: document.querySelector('[data-field-name="new_email"]')
+            };
+
+            function updateVisibility() {
+                const val = updateTypeSelect.value;
+                // Hide all and reset required
+                Object.values(fields).forEach(f => {
+                    if (f) {
+                        f.style.display = 'none';
+                        const input = f.querySelector('input');
+                        if (input) input.required = false;
+                    }
+                });
+                
+                // Show selected and set required if needed
+                if (val && fields[val]) {
+                    fields[val].style.display = 'block';
+                    const input = fields[val].querySelector('input');
+                    if (input) input.required = true;
+                }
+            }
+
+            if (updateTypeSelect) {
+                updateTypeSelect.addEventListener('change', updateVisibility);
+                updateVisibility(); // Initial state
             }
         }
     });

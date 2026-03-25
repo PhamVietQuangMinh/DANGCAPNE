@@ -49,9 +49,6 @@
                     <a href="@Url.Action("EmployeeSchedule", "Home")" class="nav-link @(currentAction == "EmployeeSchedule" ? "active" : "")" data-i18n="NavEmpSchedule">
                         <i class="bi bi-calendar-week"></i> Lịch biểu & ca làm
                     </a>
-                    <a href="@Url.Action("EmployeeSwap", "Home")" class="nav-link @(currentAction == "EmployeeSwap" ? "active" : "")" data-i18n="NavEmpSwap">
-                        <i class="bi bi-arrow-left-right"></i> Đổi ca
-                    </a>
                     <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpAttendance">
                         <i class="bi bi-clock-fill"></i> Chấm công
                     </a>
@@ -298,7 +295,7 @@
             "vi": {
                 // Sidebar
                 "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ của tôi", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý người dùng", "NavBuilder": "Trình tạo biểu mẫu",
-                "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline chấm công", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpSwap": "Đổi ca", "NavEmpAttendance": "Chấm công",
+                "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline chấm công", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpAttendance": "Chấm công",
                 // Dashboard & Shared
                 "DashPending": "Đang chờ xử lý", "DashApproved": "Đã duyệt", "DashRejected": "Bị từ chối", "DashLeave": "Ngày phép còn lại",
                 "DashWelcome": "Xin chào, ", "DashDatePfx": "", "DashNoReq": "Chưa có đơn nào", "BtnCreateReq": "Tạo đơn",
@@ -323,7 +320,7 @@
                 // Select Template
                 "TitleSelectCategory": "Chọn loại đơn", "SubtitleSelectCategory": "Tạo đơn mới nhanh chóng theo đúng quy trình", "PlaceholderSearchCat": "Tìm loại đơn...",
                 "TitleAIPrompt": "Tạo đơn thông minh bằng A.I", "DescAIPrompt": "Nhập yêu cầu của bạn bằng ngôn ngữ tự nhiên, trợ lý ảo sẽ tự động chọn biểu mẫu và điền sẵn thông tin. Ví dụ: \"Cho tôi xin nghỉ phép chiều mai vì đi khám bệnh\".", "PlaceholderAIPrompt": "Bạn muốn tạo đơn gì hôm nay?", "BtnAIPrompt": "Phân tích",
-                "Cat_Leave": "Nghỉ phép", "Cat_OT": "Làm thêm giờ", "Cat_Travel": "Công tác", "Cat_Expense": "Chi phí", "Cat_Equipment": "Thiết bị",
+                "Cat_Leave": "Nghỉ phép", "Cat_OT": "Làm thêm giờ", "Cat_Travel": "Công tác", "Cat_Expense": "Chi phí", "Cat_Equipment": "Thiết bị", "Cat_Attendance": "Chấm công",
                 "FilterAllCat": "Tất cả", "BadgeFinance": "Tài chính", "BadgeSuspended": "Tạm ngưng", "ActionCreateReq": "Tạo đơn", "DescStdForm": "Biểu mẫu tiêu chuẩn, điền nhanh và gửi duyệt.", "BtnAIAnalyzing": "Đang phân tích...",
                 // Create
                 "LabelReqTitle": "Tiêu đề đơn", "PlaceholderReqTitle": "Nhập tiêu đề cho đơn này", "LabelPriority": "Mức độ ưu tiên", "PriNormal": "Bình thường", "PriLow": "Thấp", "PriHigh": "Cao", "PriUrgent": "Khẩn cấp", "BtnBack": "Quay lại", "BtnSaveDraft": "Lưu nháp", "BtnSubmitReq": "Gửi đơn",
@@ -358,7 +355,7 @@
             "en": {
                 // Sidebar
                 "TitleDashboard": "Dashboard", "NavOverview": "Overview", "NavNotif": "Notifications", "NavRequests": "Requests", "NavCreate": "Create Request", "NavMyReq": "My Requests", "NavApproval": "Approvals", "NavHR": "HR Menu", "NavLeave": "Leave Mgmt", "NavTime": "Timekeeping", "NavModules": "Extra Modules", "NavAdmin": "Administration", "NavUsers": "User Management", "NavBuilder": "Form Builder",
-                "NavEmp": "Employee", "NavEmpRequests": "Request Management", "NavEmpTimeline": "Attendance Timeline", "NavEmpSchedule": "Schedule & Shifts", "NavEmpSwap": "Shift Swap", "NavEmpAttendance": "Timekeeping",
+                "NavEmp": "Employee", "NavEmpRequests": "Request Management", "NavEmpTimeline": "Attendance Timeline", "NavEmpSchedule": "Schedule & Shifts", "NavEmpAttendance": "Timekeeping",
                 // Dashboard & Shared
                 "DashPending": "Pending Action", "DashApproved": "Approved", "DashRejected": "Rejected", "DashLeave": "Leave Balance",
                 "DashWelcome": "Welcome, ", "DashDatePfx": "", "DashNoReq": "No requests found", "BtnCreateReq": "Create Request",
@@ -383,7 +380,7 @@
                 // Select Template
                 "TitleSelectCategory": "Select Template", "SubtitleSelectCategory": "Create a new request efficiently", "PlaceholderSearchCat": "Search templates...",
                 "TitleAIPrompt": "Smart A.I Request Generation", "DescAIPrompt": "Enter your request in natural language, and the virtual assistant will automatically pick the form and fill in the details. Example: \"I want to take leave tomorrow afternoon for a medical checkup.\"", "PlaceholderAIPrompt": "What type of request do you want to create today?", "BtnAIPrompt": "Analyze",
-                "Cat_Leave": "Leave", "Cat_OT": "Overtime", "Cat_Travel": "Business Trip", "Cat_Expense": "Expenses", "Cat_Equipment": "Equipment",
+                "Cat_Leave": "Leave", "Cat_OT": "Overtime", "Cat_Travel": "Business Trip", "Cat_Expense": "Expenses", "Cat_Equipment": "Equipment", "Cat_Attendance": "Attendance",
                 "FilterAllCat": "All", "BadgeFinance": "Finance", "BadgeSuspended": "Suspended", "ActionCreateReq": "Create Request", "DescStdForm": "Standard request form.", "BtnAIAnalyzing": "Analyzing...",
                 // Create
                 "LabelReqTitle": "Request Title", "PlaceholderReqTitle": "Enter a title for this request", "LabelPriority": "Priority Level", "PriNormal": "Normal", "PriLow": "Low", "PriHigh": "High", "PriUrgent": "Urgent", "BtnBack": "Back", "BtnSaveDraft": "Save Draft", "BtnSubmitReq": "Submit Request",
@@ -456,6 +453,9 @@
             
             const savedLang = localStorage.getItem('dangcapne_lang') || 'vi';
             applyLanguage(savedLang);
+
+            // Initial notification load to show badge on refresh (F5)
+            loadNotifications();
         });
 
         document.addEventListener('click', function (e) {
@@ -498,14 +498,14 @@
 
         async function markRead(id) {
             try {
-                await fetch(`/Notifications/MarkRead/${id}`, { method: 'POST' });
+                await fetch(`/Notifications/MarkAsRead/${id}`, { method: 'POST' });
                 loadNotifications();
             } catch (e) { }
         }
 
         async function markAllRead() {
             try {
-                await fetch('/Notifications/MarkAllRead', { method: 'POST' });
+                await fetch('/Notifications/MarkAllAsRead', { method: 'POST' });
                 loadNotifications();
             } catch (e) { }
         }

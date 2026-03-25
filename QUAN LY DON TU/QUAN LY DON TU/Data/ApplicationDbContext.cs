@@ -459,10 +459,10 @@ namespace DANGCAPNE.Data
 
             // Shifts
             modelBuilder.Entity<Shift>().HasData(
-                new Shift { Id = 1, TenantId = 1, Name = "Ca hành chính", Code = "HC", StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(17, 0, 0), BreakStartTime = new TimeSpan(12, 0, 0), BreakEndTime = new TimeSpan(13, 0, 0), GracePeriodMinutes = 15 },
-                new Shift { Id = 2, TenantId = 1, Name = "Ca sáng", Code = "S", StartTime = new TimeSpan(6, 0, 0), EndTime = new TimeSpan(14, 0, 0), GracePeriodMinutes = 10 },
-                new Shift { Id = 3, TenantId = 1, Name = "Ca chiều", Code = "C", StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(22, 0, 0), GracePeriodMinutes = 10 },
-                new Shift { Id = 4, TenantId = 1, Name = "Ca đêm", Code = "D", StartTime = new TimeSpan(22, 0, 0), EndTime = new TimeSpan(6, 0, 0), GracePeriodMinutes = 10 }
+                new Shift { Id = 1, TenantId = 1, Name = "Ca làm việc chính", Code = "OFFICE", StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(18, 0, 0), BreakStartTime = new TimeSpan(12, 0, 0), BreakEndTime = new TimeSpan(13, 0, 0), GracePeriodMinutes = 15, IsActive = true },
+                new Shift { Id = 2, TenantId = 1, Name = "Ca sáng (Không dùng)", Code = "S", StartTime = new TimeSpan(6, 0, 0), EndTime = new TimeSpan(14, 0, 0), IsActive = false },
+                new Shift { Id = 3, TenantId = 1, Name = "Ca chiều (Không dùng)", Code = "C", StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(22, 0, 0), IsActive = false },
+                new Shift { Id = 4, TenantId = 1, Name = "Ca đêm (Không dùng)", Code = "D", StartTime = new TimeSpan(22, 0, 0), EndTime = new TimeSpan(6, 0, 0), IsActive = false }
             );
 
             // OT Rates
@@ -513,25 +513,23 @@ namespace DANGCAPNE.Data
 
             // Workflow Definitions
             modelBuilder.Entity<WorkflowDef>().HasData(
-                new WorkflowDef { Id = 1, TenantId = 1, Name = "Luồng duyệt cơ bản", Description = "Quản lý trực tiếp -> HR" },
-                new WorkflowDef { Id = 2, TenantId = 1, Name = "Luồng duyệt tài chính", Description = "Quản lý -> Kế toán -> Giám đốc" },
-                new WorkflowDef { Id = 3, TenantId = 1, Name = "Luồng duyệt vượt cấp", Description = "Quản lý -> Trưởng phòng -> HR -> Giám đốc" }
+                new WorkflowDef { Id = 1, TenantId = 1, Name = "Luồng duyệt cơ bản", Description = "Trưởng phòng -> HR" },
+                new WorkflowDef { Id = 2, TenantId = 1, Name = "Luồng duyệt tài chính", Description = "Kế toán -> Giám đốc" },
+                new WorkflowDef { Id = 3, TenantId = 1, Name = "Luồng duyệt vượt cấp", Description = "Trưởng phòng -> HR -> Giám đốc" }
             );
 
-            // Workflow Steps
+            // Workflow Steps (No DirectManager step)
             modelBuilder.Entity<WorkflowStep>().HasData(
-                // Basic flow
-                new WorkflowStep { Id = 1, WorkflowId = 1, Name = "Quản lý trực tiếp duyệt", StepOrder = 1, ApproverType = "DirectManager" },
-                new WorkflowStep { Id = 2, WorkflowId = 1, Name = "HR duyệt", StepOrder = 2, ApproverType = "Role", ApproverRoleId = 2 },
-                // Finance flow
-                new WorkflowStep { Id = 3, WorkflowId = 2, Name = "Quản lý trực tiếp duyệt", StepOrder = 1, ApproverType = "DirectManager" },
-                new WorkflowStep { Id = 4, WorkflowId = 2, Name = "Kế toán trưởng duyệt", StepOrder = 2, ApproverType = "SpecificUser", ApproverUserId = 6 },
-                new WorkflowStep { Id = 5, WorkflowId = 2, Name = "Giám đốc duyệt", StepOrder = 3, ApproverType = "SpecificUser", ApproverUserId = 1 },
-                // Escalation flow
-                new WorkflowStep { Id = 6, WorkflowId = 3, Name = "Quản lý trực tiếp duyệt", StepOrder = 1, ApproverType = "DirectManager", CanSkipIfApplicant = true },
-                new WorkflowStep { Id = 7, WorkflowId = 3, Name = "Trưởng phòng duyệt", StepOrder = 2, ApproverType = "Role", ApproverRoleId = 3, CanSkipIfApplicant = true },
-                new WorkflowStep { Id = 8, WorkflowId = 3, Name = "HR duyệt", StepOrder = 3, ApproverType = "Role", ApproverRoleId = 2 },
-                new WorkflowStep { Id = 9, WorkflowId = 3, Name = "Giám đốc duyệt", StepOrder = 4, ApproverType = "SpecificUser", ApproverUserId = 1 }
+                // Basic flow: Trưởng phòng -> HR
+                new WorkflowStep { Id = 2, WorkflowId = 1, Name = "Trưởng phòng duyệt", StepOrder = 1, ApproverType = "Role", ApproverRoleId = 3 },
+                new WorkflowStep { Id = 10, WorkflowId = 1, Name = "HR duyệt", StepOrder = 2, ApproverType = "Role", ApproverRoleId = 2 },
+                // Finance flow: Kế toán -> Giám đốc
+                new WorkflowStep { Id = 4, WorkflowId = 2, Name = "Kế toán trưởng duyệt", StepOrder = 1, ApproverType = "SpecificUser", ApproverUserId = 6 },
+                new WorkflowStep { Id = 5, WorkflowId = 2, Name = "Giám đốc duyệt", StepOrder = 2, ApproverType = "SpecificUser", ApproverUserId = 1 },
+                // Escalation flow: Trưởng phòng -> HR -> Giám đốc
+                new WorkflowStep { Id = 7, WorkflowId = 3, Name = "Trưởng phòng duyệt", StepOrder = 1, ApproverType = "Role", ApproverRoleId = 3, CanSkipIfApplicant = true },
+                new WorkflowStep { Id = 8, WorkflowId = 3, Name = "HR duyệt", StepOrder = 2, ApproverType = "Role", ApproverRoleId = 2 },
+                new WorkflowStep { Id = 9, WorkflowId = 3, Name = "Giám đốc duyệt", StepOrder = 3, ApproverType = "SpecificUser", ApproverUserId = 1 }
             );
 
             // Form Templates
@@ -541,7 +539,11 @@ namespace DANGCAPNE.Data
                 new FormTemplate { Id = 3, TenantId = 1, Name = "Đơn đi công tác", Category = "Travel", Icon = "bi-airplane", IconColor = "#3b82f6", WorkflowId = 1 },
                 new FormTemplate { Id = 4, TenantId = 1, Name = "Đơn tạm ứng chi phí", Category = "Expense", Icon = "bi-cash-stack", IconColor = "#ef4444", WorkflowId = 2, RequiresFinancialApproval = true },
                 new FormTemplate { Id = 5, TenantId = 1, Name = "Đơn yêu cầu cấp phát thiết bị", Category = "Equipment", Icon = "bi-laptop", IconColor = "#8b5cf6", WorkflowId = 1 },
-                new FormTemplate { Id = 6, TenantId = 1, Name = "Đơn xin nghỉ việc", Category = "Leave", Icon = "bi-box-arrow-right", IconColor = "#dc2626", WorkflowId = 3 }
+                new FormTemplate { Id = 6, TenantId = 1, Name = "Đơn xin nghỉ việc", Category = "Leave", Icon = "bi-box-arrow-right", IconColor = "#dc2626", WorkflowId = 3 },
+                new FormTemplate { Id = 7, TenantId = 1, Name = "Đơn cập nhật thông tin nhân sự", Category = "Other", Icon = "bi-person-gear", IconColor = "#6366f1", WorkflowId = 3 },
+                new FormTemplate { Id = 8, TenantId = 1, Name = "Đơn khiếu nại công ca", Category = "Attendance", Icon = "bi-clock-fill", IconColor = "#f59e0b", WorkflowId = 1 },
+                new FormTemplate { Id = 9, TenantId = 1, Name = "Đơn đăng ký tài sản/văn phòng phẩm", Category = "Equipment", Icon = "bi-box-seam", IconColor = "#3b82f6", WorkflowId = 1 },
+                new FormTemplate { Id = 10, TenantId = 1, Name = "Đơn đề xuất/Đổi ca làm việc", Category = "Other", Icon = "bi-arrow-repeat", IconColor = "#8b5cf6", WorkflowId = 3 }
             );
 
             // Form Fields for Leave Request (Template 1)
@@ -570,7 +572,25 @@ namespace DANGCAPNE.Data
                 new FormField { Id = 19, FormTemplateId = 4, Label = "Hóa đơn đính kèm", FieldName = "receipt", FieldType = "FileUpload", IsRequired = false, DisplayOrder = 4, Width = 12 },
                 // Equipment Form (Template 5)
                 new FormField { Id = 20, FormTemplateId = 5, Label = "Loại thiết bị", FieldName = "equipment_type", FieldType = "Dropdown", IsRequired = true, DisplayOrder = 1, Width = 6 },
-                new FormField { Id = 21, FormTemplateId = 5, Label = "Lý do cần cấp phát", FieldName = "reason", FieldType = "Textarea", IsRequired = true, DisplayOrder = 2, Width = 12 }
+                new FormField { Id = 21, FormTemplateId = 5, Label = "Lý do cần cấp phát", FieldName = "reason", FieldType = "Textarea", IsRequired = true, DisplayOrder = 2, Width = 12 },
+                // Update Info Form (Template 7)
+                new FormField { Id = 22, FormTemplateId = 7, Label = "Họ và tên mới", FieldName = "new_fullname", FieldType = "Text", IsRequired = true, DisplayOrder = 1, Width = 12 },
+                new FormField { Id = 23, FormTemplateId = 7, Label = "Số điện thoại mới", FieldName = "new_phone", FieldType = "Text", IsRequired = true, DisplayOrder = 2, Width = 12 },
+                new FormField { Id = 24, FormTemplateId = 7, Label = "Lý do thay đổi", FieldName = "reason", FieldType = "Textarea", IsRequired = true, DisplayOrder = 3, Width = 12 },
+                new FormField { Id = 25, FormTemplateId = 7, Label = "Minh chứng đính kèm", FieldName = "attachment", FieldType = "FileUpload", IsRequired = false, DisplayOrder = 4, Width = 12 },
+                // Attendance Correction (Template 8)
+                new FormField { Id = 26, FormTemplateId = 8, Label = "Ngày muốn điều chỉnh", FieldName = "date_to_correct", FieldType = "Date", IsRequired = true, DisplayOrder = 1, Width = 6 },
+                new FormField { Id = 27, FormTemplateId = 8, Label = "Giờ vào/ra muốn sửa", FieldName = "time_to_correct", FieldType = "Text", IsRequired = true, DisplayOrder = 2, Width = 6, Placeholder = "Ví dụ: Check-in 08:30" },
+                new FormField { Id = 28, FormTemplateId = 8, Label = "Lý do khiếu nại", FieldName = "reason", FieldType = "Textarea", IsRequired = true, DisplayOrder = 3, Width = 12, Placeholder = "Ghi rõ lý do quên chấm công hoặc lỗi máy..." },
+                // Supply Request (Template 9)
+                new FormField { Id = 29, FormTemplateId = 9, Label = "Loại tài sản/Vật tư", FieldName = "item_type", FieldType = "Dropdown", IsRequired = true, DisplayOrder = 1, Width = 6 },
+                new FormField { Id = 30, FormTemplateId = 9, Label = "Chi tiết mặt hàng/Số phòng/Xe", FieldName = "item_detail", FieldType = "Text", IsRequired = true, DisplayOrder = 2, Width = 6 },
+                new FormField { Id = 31, FormTemplateId = 9, Label = "Số lượng/Thời gian sử dụng", FieldName = "usage_info", FieldType = "Text", IsRequired = true, DisplayOrder = 3, Width = 6 },
+                new FormField { Id = 32, FormTemplateId = 9, Label = "Mục đích sử dụng", FieldName = "purpose", FieldType = "Textarea", IsRequired = true, DisplayOrder = 4, Width = 12 },
+                // General Proposal / Shift Swap (Template 10)
+                new FormField { Id = 33, FormTemplateId = 10, Label = "Loại yêu cầu", FieldName = "proposal_type", FieldType = "Dropdown", IsRequired = true, DisplayOrder = 1, Width = 6 },
+                new FormField { Id = 34, FormTemplateId = 10, Label = "Ngày áp dụng", FieldName = "effective_date", FieldType = "Date", IsRequired = true, DisplayOrder = 2, Width = 6 },
+                new FormField { Id = 35, FormTemplateId = 10, Label = "Nội dung chi tiết/Đồng nghiệp đổi ca", FieldName = "proposal_content", FieldType = "Textarea", IsRequired = true, DisplayOrder = 3, Width = 12, Placeholder = "Mô tả ý tưởng hoặc ghi tên đồng nghiệp muốn đổi ca..." }
             );
 
             // Form Field Options
@@ -591,7 +611,17 @@ namespace DANGCAPNE.Data
                 new FormFieldOption { Id = 10, FormFieldId = 20, Label = "Laptop", Value = "LAPTOP", DisplayOrder = 1 },
                 new FormFieldOption { Id = 11, FormFieldId = 20, Label = "Màn hình", Value = "MONITOR", DisplayOrder = 2 },
                 new FormFieldOption { Id = 12, FormFieldId = 20, Label = "Điện thoại", Value = "PHONE", DisplayOrder = 3 },
-                new FormFieldOption { Id = 13, FormFieldId = 20, Label = "Khác", Value = "OTHER", DisplayOrder = 4 }
+                new FormFieldOption { Id = 13, FormFieldId = 20, Label = "Khác", Value = "OTHER", DisplayOrder = 4 },
+                // Supply Request Options (Field 29)
+                new FormFieldOption { Id = 14, FormFieldId = 29, Label = "Văn phòng phẩm", Value = "STATIONERY", DisplayOrder = 1 },
+                new FormFieldOption { Id = 15, FormFieldId = 29, Label = "Thẻ đeo/Badge", Value = "BADGE", DisplayOrder = 2 },
+                new FormFieldOption { Id = 16, FormFieldId = 29, Label = "Phòng họp", Value = "MEETING_ROOM", DisplayOrder = 3 },
+                new FormFieldOption { Id = 17, FormFieldId = 29, Label = "Xe công ty", Value = "COMPANY_CAR", DisplayOrder = 4 },
+                new FormFieldOption { Id = 18, FormFieldId = 29, Label = "Khác", Value = "OTHER", DisplayOrder = 5 },
+                // Proposal Type Options (Field 33)
+                new FormFieldOption { Id = 19, FormFieldId = 33, Label = "Đề xuất ý tưởng mới", Value = "IDEA", DisplayOrder = 1 },
+                new FormFieldOption { Id = 20, FormFieldId = 33, Label = "Đổi ca trực/Lịch làm việc", Value = "SHIFT_SWAP", DisplayOrder = 2 },
+                new FormFieldOption { Id = 21, FormFieldId = 33, Label = "Kiến nghị khác", Value = "OTHER", DisplayOrder = 3 }
             );
 
             // SLA Configs
@@ -652,12 +682,12 @@ namespace DANGCAPNE.Data
 
             // Request Approvals
             modelBuilder.Entity<RequestApproval>().HasData(
-                new RequestApproval { Id = 1, RequestId = 1, StepOrder = 1, StepName = "Quản lý trực tiếp duyệt", ApproverId = 3, Status = "Pending", CreatedAt = new DateTime(2026, 3, 5) },
-                new RequestApproval { Id = 2, RequestId = 2, StepOrder = 1, StepName = "Quản lý trực tiếp duyệt", ApproverId = 3, Status = "Approved", ActionDate = new DateTime(2026, 3, 7), CreatedAt = new DateTime(2026, 3, 7) },
+                new RequestApproval { Id = 1, RequestId = 1, StepOrder = 1, StepName = "Trưởng phòng duyệt", ApproverId = 3, Status = "Pending", CreatedAt = new DateTime(2026, 3, 5) },
+                new RequestApproval { Id = 2, RequestId = 2, StepOrder = 1, StepName = "Trưởng phòng duyệt", ApproverId = 3, Status = "Approved", ActionDate = new DateTime(2026, 3, 7), CreatedAt = new DateTime(2026, 3, 7) },
                 new RequestApproval { Id = 3, RequestId = 2, StepOrder = 2, StepName = "HR duyệt", ApproverId = 2, Status = "Approved", ActionDate = new DateTime(2026, 3, 8), CreatedAt = new DateTime(2026, 3, 8) },
-                new RequestApproval { Id = 4, RequestId = 3, StepOrder = 1, StepName = "Quản lý trực tiếp duyệt", ApproverId = 1, Status = "Approved", ActionDate = new DateTime(2026, 3, 10), CreatedAt = new DateTime(2026, 3, 10) },
+                new RequestApproval { Id = 4, RequestId = 3, StepOrder = 1, StepName = "Trưởng phòng duyệt", ApproverId = 1, Status = "Approved", ActionDate = new DateTime(2026, 3, 10), CreatedAt = new DateTime(2026, 3, 10) },
                 new RequestApproval { Id = 5, RequestId = 3, StepOrder = 2, StepName = "Kế toán trưởng duyệt", ApproverId = 6, Status = "Pending", CreatedAt = new DateTime(2026, 3, 10) },
-                new RequestApproval { Id = 6, RequestId = 4, StepOrder = 1, StepName = "Quản lý trực tiếp duyệt", ApproverId = 1, Status = "Rejected", Comments = "Phòng đang có nhiều người nghỉ, vui lòng chọn ngày khác", ActionDate = new DateTime(2026, 3, 11), CreatedAt = new DateTime(2026, 3, 11) }
+                new RequestApproval { Id = 6, RequestId = 4, StepOrder = 1, StepName = "Trưởng phòng duyệt", ApproverId = 1, Status = "Rejected", Comments = "Phòng đang có nhiều người nghỉ, vui lòng chọn ngày khác", ActionDate = new DateTime(2026, 3, 11), CreatedAt = new DateTime(2026, 3, 11) }
             );
 
             // Audit Logs

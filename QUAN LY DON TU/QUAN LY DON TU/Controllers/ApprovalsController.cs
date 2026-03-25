@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using DANGCAPNE.Data;
 using DANGCAPNE.Hubs;
 using DANGCAPNE.Models.Requests;
+using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.ViewModels;
 
 namespace DANGCAPNE.Controllers
@@ -177,6 +178,33 @@ namespace DANGCAPNE.Controllers
                     // All steps approved
                     request.Status = "Approved";
                     request.CompletedAt = DateTime.Now;
+
+                    // Auto-update profile for "Update Information Request"
+                    var templateName = request.FormTemplate?.Name ?? "";
+                    if (request.FormTemplateId == 7 || templateName.Contains("cập nhật thông tin"))
+                    {
+                        Console.WriteLine($"[ProfileUpdate] Processing approval for Request {request.RequestCode}");
+                        var dataEntries = await _context.RequestData
+                            .Where(rd => rd.RequestId == request.Id)
+                            .ToListAsync();
+
+                        var requester = await _context.Users.FindAsync(request.RequesterId);
+                        if (requester != null)
+                        {
+                            var newFullName = dataEntries.FirstOrDefault(d => (d.FieldKey == "new_fullname" || d.FieldKey == "fullName"))?.FieldValue;
+                            var newPhone = dataEntries.FirstOrDefault(d => (d.FieldKey == "new_phone" || d.FieldKey == "phone"))?.FieldValue;
+                            var newEmail = dataEntries.FirstOrDefault(d => (d.FieldKey == "new_email" || d.FieldKey == "email"))?.FieldValue;
+
+                            Console.WriteLine($"[ProfileUpdate] Fields extracted - Name: {newFullName}, Phone: {newPhone}, Email: {newEmail}");
+
+                            if (!string.IsNullOrWhiteSpace(newFullName)) requester.FullName = newFullName.Trim();
+                            if (!string.IsNullOrWhiteSpace(newPhone)) requester.Phone = newPhone.Trim();
+                            if (!string.IsNullOrWhiteSpace(newEmail)) requester.Email = newEmail.Trim();
+                            
+                            _context.Users.Update(requester);
+                            Console.WriteLine($"[ProfileUpdate] Sync completed for User {requester.Email}");
+                        }
+                    }
 
                     // Notify requester
                     _context.Notifications.Add(new Models.SystemModels.Notification

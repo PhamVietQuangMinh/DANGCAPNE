@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Models.Requests;
+using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.ViewModels;
 using Newtonsoft.Json;
 
@@ -66,6 +67,47 @@ namespace DANGCAPNE.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            // Self-healing seed for Template 7 (Update Info Request)
+            if (templateId == 7)
+            {
+                var hasUpdateTypeField = await _context.FormFields.AnyAsync(f => f.FormTemplateId == 7 && f.FieldName == "update_type");
+                if (!hasUpdateTypeField)
+                {
+                    try
+                    {
+                        await _context.Database.ExecuteSqlRawAsync($@"
+                            INSERT INTO ""FormTemplates"" (""Id"", ""TenantId"", ""Name"", ""Category"", ""Icon"", ""IconColor"", ""WorkflowId"", ""IsActive"", ""Description"", ""RequiresFinancialApproval"", ""CreatedAt"")
+                            VALUES (7, {tenantId}, 'Đơn cập nhật thông tin nhân sự', 'Other', 'bi-person-gear', '#6366f1', 3, true, 'Biểu mẫu thay đổi thông tin cá nhân. Vui lòng chọn loại thông tin cần cập nhật.', false, NOW())
+                            ON CONFLICT (""Id"") DO UPDATE SET ""Description"" = 'Biểu mẫu thay đổi thông tin cá nhân. Vui lòng chọn loại thông tin cần cập nhật.', ""IsActive"" = true;
+
+                            DELETE FROM ""FormFieldOptions"" WHERE ""FormFieldId"" = 27;
+                            DELETE FROM ""FormFields"" WHERE ""FormTemplateId"" = 7;
+
+                            INSERT INTO ""FormFields"" (""Id"", ""FormTemplateId"", ""Label"", ""FieldName"", ""FieldType"", ""IsRequired"", ""DisplayOrder"", ""Width"")
+                            VALUES 
+                            (27, 7, 'Thông tin muốn thay đổi', 'update_type', 'Dropdown', true, 1, 12),
+                            (22, 7, 'Họ và tên mới', 'new_fullname', 'Text', false, 2, 12),
+                            (23, 7, 'Số điện thoại mới', 'new_phone', 'Text', false, 3, 12),
+                            (26, 7, 'Email mới', 'new_email', 'Text', false, 4, 12),
+                            (24, 7, 'Lý do thay đổi', 'reason', 'Textarea', true, 5, 12),
+                            (25, 7, 'Minh chứng đính kèm', 'attachment', 'FileUpload', false, 6, 12);
+
+                            INSERT INTO ""FormFieldOptions"" (""Id"", ""FormFieldId"", ""Label"", ""Value"", ""DisplayOrder"")
+                            VALUES 
+                            (100, 27, 'Họ và tên', 'fullname', 1),
+                            (101, 27, 'Số điện thoại', 'phone', 2),
+                            (102, 27, 'Email cá nhân', 'email', 3);
+                        ");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[SeedError] Template 7 seed failed: {ex.Message}");
+                    }
+                }
+            }
 
             var template = await _context.FormTemplates
                 .Include(f => f.Fields.OrderBy(ff => ff.DisplayOrder))
@@ -448,8 +490,69 @@ namespace DANGCAPNE.Controllers
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
+            // Self-healing seed for Template 7 (Update Info Request)
+            var hasUpdateTypeField = await _context.FormFields.AnyAsync(f => f.FormTemplateId == 7 && f.FieldName == "update_type");
+            if (!hasUpdateTypeField)
+            {
+                try
+                {
+                    await _context.Database.ExecuteSqlRawAsync($@"
+                        INSERT INTO ""FormTemplates"" (""Id"", ""TenantId"", ""Name"", ""Category"", ""Icon"", ""IconColor"", ""WorkflowId"", ""IsActive"", ""Description"", ""RequiresFinancialApproval"", ""CreatedAt"")
+                        VALUES (7, {tenantId}, 'Đơn cập nhật thông tin nhân sự', 'Other', 'bi-person-gear', '#6366f1', 3, true, 'Biểu mẫu thay đổi thông tin cá nhân. Vui lòng chọn loại thông tin cần cập nhật.', false, NOW())
+                        ON CONFLICT (""Id"") DO UPDATE SET ""Description"" = 'Biểu mẫu thay đổi thông tin cá nhân. Vui lòng chọn loại thông tin cần cập nhật.', ""IsActive"" = true;
+
+                        DELETE FROM ""FormFieldOptions"" WHERE ""FormFieldId"" = 27;
+                        DELETE FROM ""FormFields"" WHERE ""FormTemplateId"" = 7;
+
+                        INSERT INTO ""FormFields"" (""Id"", ""FormTemplateId"", ""Label"", ""FieldName"", ""FieldType"", ""IsRequired"", ""DisplayOrder"", ""Width"")
+                        VALUES 
+                        (27, 7, 'Thông tin muốn thay đổi', 'update_type', 'Dropdown', true, 1, 12),
+                        (22, 7, 'Họ và tên mới', 'new_fullname', 'Text', false, 2, 12),
+                        (23, 7, 'Số điện thoại mới', 'new_phone', 'Text', false, 3, 12),
+                        (26, 7, 'Email mới', 'new_email', 'Text', false, 4, 12),
+                        (24, 7, 'Lý do thay đổi', 'reason', 'Textarea', true, 5, 12),
+                        (25, 7, 'Minh chứng đính kèm', 'attachment', 'FileUpload', false, 6, 12);
+
+                        INSERT INTO ""FormFieldOptions"" (""Id"", ""FormFieldId"", ""Label"", ""Value"", ""DisplayOrder"")
+                        VALUES 
+                        (100, 27, 'Họ và tên', 'fullname', 1),
+                        (101, 27, 'Số điện thoại', 'phone', 2),
+                        (102, 27, 'Email cá nhân', 'email', 3);
+                    ");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SeedError] Template 7 seed failed: {ex.Message}");
+                    if (ex.InnerException != null) Console.WriteLine($"[SeedError] Inner: {ex.InnerException.Message}");
+                }
+            }
+
+            // Self-healing for Workflow 3 (Update Info Request)
+            var workflow3 = await _context.Workflows.Include(w => w.Steps).FirstOrDefaultAsync(w => w.Id == 3);
+            if (workflow3 != null)
+            {
+                var steps = workflow3.Steps.OrderBy(s => s.StepOrder).ToList();
+                var hasDirectManager = steps.Any(s => s.Name.Contains("Quản lý trực tiếp"));
+                
+                if (hasDirectManager || steps.Count > 3)
+                {
+                    // Clean up and reset Workflow 3 steps
+                    _context.WorkflowSteps.RemoveRange(steps);
+                    await _context.SaveChangesAsync();
+
+                    _context.WorkflowSteps.AddRange(
+                        new DANGCAPNE.Models.Workflow.WorkflowStep { WorkflowId = 3, Name = "Trưởng phòng duyệt", StepOrder = 1, ApproverType = "Role", ApproverRoleId = 3, CanSkipIfApplicant = true },
+                        new DANGCAPNE.Models.Workflow.WorkflowStep { WorkflowId = 3, Name = "HR duyệt", StepOrder = 2, ApproverType = "Role", ApproverRoleId = 2 },
+                        new DANGCAPNE.Models.Workflow.WorkflowStep { WorkflowId = 3, Name = "Giám đốc duyệt", StepOrder = 3, ApproverType = "SpecificUser", ApproverUserId = 1 }
+                    );
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("[SelfHealing] Workflow 3 steps reset to: Trưởng phòng -> HR -> Giám đốc");
+                }
+            }
+
             var templates = await _context.FormTemplates
                 .Where(f => f.TenantId == tenantId && f.IsActive)
+                .OrderBy(f => f.Id)
                 .ToListAsync();
 
             return View(templates);

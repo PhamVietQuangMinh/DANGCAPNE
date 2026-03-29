@@ -1,146 +1,199 @@
 @model DANGCAPNE.ViewModels.AdminViewModel
 @{
-    ViewData["TitleI18n"] = "TitleAdminSys";
-    ViewData["Title"] = "Quản trị hệ thống";
+    var activeTab = (Model.ActiveTab ?? "users").ToLowerInvariant();
+    var pageTitle = activeTab == "timekeeping" ? "Quản lý chấm công" : "Quản lý nhân viên";
+    var pageSubtitle = activeTab == "timekeeping"
+        ? "Theo dõi lịch sử chấm công, bộ lọc phòng ban và chỉnh sửa bản ghi công."
+        : "Xem danh sách nhân viên và dữ liệu được tải trực tiếp từ cơ sở dữ liệu trên server.";
+    ViewData["Title"] = pageTitle;
 }
+
 <div class="page-content">
-    <div class="d-flex justify-between align-center mb-24">
+    <div class="d-flex justify-between align-center mb-24" style="gap:16px; flex-wrap:wrap;">
         <div>
-            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px" data-i18n="TitleAdminSys">Quản trị hệ thống</h2>
-            <p class="text-muted" data-i18n="SubtitleAdminSys">Quản lý người dùng, phòng ban và cấu hình</p>
+            <h2 style="margin:0; font-size:28px; font-weight:800;">@pageTitle</h2>
+            <p class="text-muted" style="margin-top:6px;">@pageSubtitle</p>
         </div>
-        <div class="d-flex gap-8">
-            <a href="@Url.Action("Delegation")" class="btn btn-outline"><i class="bi bi-arrow-left-right"></i> <span data-i18n="BtnDelegation">Ủy quyền</span></a>
-            <a href="@Url.Action("AuditLogs")" class="btn btn-outline"><i class="bi bi-shield-lock"></i> <span data-i18n="BtnAuditLogs">Nhật ký hệ thống</span></a>
+        <div class="d-flex gap-12 flex-wrap">
+            <a class="btn @(activeTab == "users" ? "btn-primary" : "btn-outline")" href="@Url.Action("Index", new { tab = "users", employeeSearch = Model.EmployeeSearch, employeeDepartmentId = Model.EmployeeDepartmentId })">
+                <i class="bi bi-people-fill"></i> Nhân viên
+            </a>
+            <a class="btn @(activeTab == "timekeeping" ? "btn-primary" : "btn-outline")" href="@Url.Action("Index", new { tab = "timekeeping", attendanceSearch = Model.AttendanceSearch, attendanceDepartmentId = Model.AttendanceDepartmentId, attendanceFromDate = Model.AttendanceFromDate?.ToString("yyyy-MM-dd"), attendanceToDate = Model.AttendanceToDate?.ToString("yyyy-MM-dd") })">
+                <i class="bi bi-calendar-check"></i> Chấm công
+            </a>
         </div>
     </div>
 
-    <div class="tab-nav">
-        <a href="@Url.Action("Index", new { tab = "users" })" class="tab-link @(Model.ActiveTab == "users" ? "active" : "")"><i class="bi bi-people"></i> <span data-i18n="TabUsers">Người dùng</span> (@Model.Users.Count)</a>
-        <a href="@Url.Action("Index", new { tab = "departments" })" class="tab-link @(Model.ActiveTab == "departments" ? "active" : "")"><i class="bi bi-building"></i> <span data-i18n="TabDepts">Phòng ban</span> (@Model.Departments.Count)</a>
-        <a href="@Url.Action("Index", new { tab = "forms" })" class="tab-link @(Model.ActiveTab == "forms" ? "active" : "")"><i class="bi bi-ui-checks-grid"></i> <span data-i18n="TabForms">Biểu mẫu</span> (@Model.FormTemplates.Count)</a>
-        <a href="@Url.Action("Index", new { tab = "workflows" })" class="tab-link @(Model.ActiveTab == "workflows" ? "active" : "")"><i class="bi bi-diagram-3"></i> <span data-i18n="TabWorkflows">Luồng duyệt</span> (@Model.Workflows.Count)</a>
-    </div>
-
-    @if (Model.ActiveTab == "users")
+    @if (activeTab == "timekeeping")
     {
-        <div class="glass-card">
+        <div class="glass-card mb-24">
             <div class="card-header">
-                <h3><i class="bi bi-people-fill text-primary"></i> <span data-i18n="TitleManageUsers">Quản lý nhân viên</span></h3>
-                <a href="@Url.Action("EditUser", new { id = 0 })" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> <span data-i18n="LabelAddUser">Thêm nhân viên</span></a>
-            </div>
-            <div class="card-body" style="padding:0">
-                <table class="data-table">
-                    <thead><tr><th data-i18n="ColCode">Mã NV</th><th data-i18n="ColName">Họ tên</th><th data-i18n="ColEmail">Email</th><th data-i18n="ColDept">Phòng ban</th><th data-i18n="ColRole">Vai trò</th><th data-i18n="ColStatus">Trạng thái</th><th></th></tr></thead>
-                    <tbody>
-                        @foreach (var u in Model.Users)
-                        {
-                            var statusText = u.Status == "Active" ? "Hoạt động" : "Vô hiệu";
-                            var statusI18n = u.Status == "Active" ? "ColActive" : "ColInactive";
-                            <tr>
-                                <td><strong>@u.EmployeeCode</strong></td>
-                                <td>
-                                    <div class="d-flex align-center gap-8">
-                                        <div class="user-avatar" style="width:32px;height:32px;font-size:12px">@u.FullName.Substring(0, 1)</div>
-                                        @u.FullName
-                                    </div>
-                                </td>
-                                <td class="text-muted">@u.Email</td>
-                                <td>@u.Department?.Name</td>
-                                <td>
-                                    @foreach (var ur in u.UserRoles)
-                                    {
-                                        var roleCss = ur.Role?.Name switch { "Admin" => "danger", "HR" => "warning", "Manager" => "info", _ => "primary" };
-                                        <span class="priority-badge @roleCss">@ur.Role?.Name</span>
-                                    }
-                                </td>
-                                <td><span class="status-badge @(u.Status == "Active" ? "approved" : "rejected")" data-i18n="@statusI18n">@statusText</span></td>
-                                <td><a href="@Url.Action("EditUser", new { id = u.Id })" class="btn btn-ghost btn-sm"><i class="bi bi-pencil"></i></a></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-    else if (Model.ActiveTab == "departments")
-    {
-        <div class="glass-card">
-            <div class="card-header">
-                <h3><i class="bi bi-building text-warning"></i> <span data-i18n="TabDepts">Phòng ban</span></h3>
+                <h3><i class="bi bi-funnel"></i> Bộ lọc chấm công</h3>
             </div>
             <div class="card-body">
-                <form method="post" asp-action="CreateDepartment" class="d-flex gap-8 mb-24">
-                    <input type="text" name="name" class="form-control" placeholder="Tên phòng ban" data-i18n="PlaceholderDeptName" required />
-                    <input type="text" name="code" class="form-control" placeholder="Mã phòng ban" data-i18n="PlaceholderDeptCode" style="max-width:120px" required />
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus"></i> <span data-i18n="BtnAdd">Thêm</span></button>
-                </form>
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px">
-                    @foreach (var d in Model.Departments)
-                    {
-                        <div style="background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:20px">
-                            <div style="font-size:15px;font-weight:600">@d.Name</div>
-                            <div class="text-muted" style="font-size:12px"><span data-i18n="ColCode">Mã NV</span>: @d.Code · @Model.Users.Count(u => u.DepartmentId == d.Id) <span data-i18n="LabelEmp">nhân viên</span></div>
+                <form method="get" asp-action="Index">
+                    <input type="hidden" name="tab" value="timekeeping" />
+                    <div class="form-row">
+                        <div class="col-3">
+                            <label class="form-label">Từ ngày</label>
+                            <input type="date" class="form-control" name="attendanceFromDate" value="@Model.AttendanceFromDate?.ToString("yyyy-MM-dd")" />
                         </div>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-    else if (Model.ActiveTab == "forms")
-    {
-        <div class="glass-card">
-            <div class="card-header">
-                <h3><i class="bi bi-ui-checks-grid text-info"></i> <span data-i18n="TitleDynamicForms">Biểu mẫu động</span></h3>
-                <a href="@Url.Action("FormBuilder")" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> <span data-i18n="TitleCreateForm">Tạo biểu mẫu</span></a>
-            </div>
-            <div class="card-body" style="padding:0">
-                <table class="data-table">
-                    <thead><tr><th data-i18n="ColFormName">Tên</th><th data-i18n="ColCategory">Danh mục</th><th data-i18n="ColWorkflow">Luồng duyệt</th><th data-i18n="ColFinance">Tài chính</th><th data-i18n="ColStatus">Trạng thái</th><th></th></tr></thead>
-                    <tbody>
-                        @foreach (var f in Model.FormTemplates)
-                        {
-                            <tr>
-                                <td><i class="bi @f.Icon" style="color:@f.IconColor"></i> <strong>@f.Name</strong></td>
-                                <td>@f.Category</td>
-                                <td>@f.Workflow?.Name</td>
-                                <td>@(f.RequiresFinancialApproval ? Html.Raw("✓ <span data-i18n='LabelReqPin'>Cần PIN</span>") : Html.Raw("—"))</td>
-                                <td><span class="status-badge @(f.IsActive ? "approved" : "rejected")" data-i18n="@(f.IsActive ? "ColActive" : "ColInactive")">@(f.IsActive ? "Hoạt động" : "Ẩn")</span></td>
-                                <td><a href="@Url.Action("FormBuilder", new { id = f.Id })" class="btn btn-ghost btn-sm"><i class="bi bi-pencil"></i></a></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-    else if (Model.ActiveTab == "workflows")
-    {
-        <div class="glass-card">
-            <div class="card-header"><h3><i class="bi bi-diagram-3 text-success"></i> <span data-i18n="NavApprovalFlow">Luồng phê duyệt</span></h3></div>
-            <div class="card-body">
-                @foreach (var w in Model.Workflows)
-                {
-                    <div style="margin-bottom:24px;padding:20px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-md)">
-                        <h4 style="font-size:16px;font-weight:600;margin-bottom:12px">@w.Name</h4>
-                        <p class="text-muted" style="font-size:13px;margin-bottom:12px">@w.Description</p>
-                        <div class="d-flex gap-8 flex-wrap">
-                            @foreach (var step in w.Steps.OrderBy(s => s.StepOrder))
-                            {
-                                <div class="d-flex align-center gap-8">
-                                    <div style="background:rgba(99,102,241,0.15);padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500">
-                                        <span class="text-muted">#@step.StepOrder</span> @step.Name
-                                        @if (step.CanSkipIfApplicant) { <span class="text-warning" style="font-size:11px">(<span data-i18n="LabelAutoSkip">tự bỏ qua</span>)</span> }
-                                    </div>
-                                    @if (step != w.Steps.OrderBy(s => s.StepOrder).Last())
-                                    {
-                                        <i class="bi bi-arrow-right text-muted"></i>
-                                    }
-                                </div>
-                            }
+                        <div class="col-3">
+                            <label class="form-label">Đến ngày</label>
+                            <input type="date" class="form-control" name="attendanceToDate" value="@Model.AttendanceToDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Phòng ban</label>
+                            <select class="form-control" name="attendanceDepartmentId">
+                                <option value="">Tất cả phòng ban</option>
+                                @foreach (var dept in Model.Departments.OrderBy(d => d.Name))
+                                {
+                                    <option value="@dept.Id" selected="@(Model.AttendanceDepartmentId == dept.Id)">@dept.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Tìm nhân viên</label>
+                            <input type="text" class="form-control" name="attendanceSearch" value="@Model.AttendanceSearch" placeholder="Tên, email, mã NV" />
                         </div>
                     </div>
-                }
+                    <div class="d-flex gap-12 flex-wrap" style="margin-top:16px;">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Lọc dữ liệu</button>
+                        <a href="@Url.Action("Index", new { tab = "timekeeping" })" class="btn btn-outline">Đặt lại</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header d-flex justify-between align-center">
+                <h3><i class="bi bi-table"></i> Bảng Chấm công</h3>
+                <span class="text-muted">@Model.Timesheets.Count bản ghi</span>
+            </div>
+            <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Nhân viên</th>
+                            <th>Phòng ban</th>
+                            <th>Giờ vào</th>
+                            <th>Giờ ra</th>
+                            <th>Giờ công</th>
+                            <th>Ghi chú</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Timesheets.Any())
+                        {
+                            @foreach (var item in Model.Timesheets)
+                            {
+                                <tr>
+                                    <td>@item.Date.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <div style="font-weight:600;">@item.User?.FullName</div>
+                                        <div class="text-muted" style="font-size:12px;">@item.User?.EmployeeCode</div>
+                                    </td>
+                                    <td>@(item.User?.Department?.Name ?? "--")</td>
+                                    <td>@(item.CheckIn?.ToString("HH:mm") ?? "--:--")</td>
+                                    <td>@(item.CheckOut?.ToString("HH:mm") ?? "--:--")</td>
+                                    <td>@(item.WorkHours > 0 ? $"{item.WorkHours:0.##}h" : "--")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "--" : item.Notes)</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline" href="@Url.Action("TimekeepingDetails", new { id = item.Id })">Chi tiết</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted" style="padding:32px;">Không có dữ liệu chấm công phù hợp bộ lọc hiện tại.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="glass-card mb-24">
+            <div class="card-header">
+                <h3><i class="bi bi-search"></i> Tìm kiếm nhân viên</h3>
+            </div>
+            <div class="card-body">
+                <form method="get" asp-action="Index">
+                    <input type="hidden" name="tab" value="users" />
+                    <div class="form-row">
+                        <div class="col-4">
+                            <label class="form-label">Từ khóa</label>
+                            <input type="text" class="form-control" name="employeeSearch" value="@Model.EmployeeSearch" placeholder="Tên, email, mã NV" />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Phòng ban</label>
+                            <select class="form-control" name="employeeDepartmentId">
+                                <option value="">Tất cả phòng ban</option>
+                                @foreach (var dept in Model.Departments.OrderBy(d => d.Name))
+                                {
+                                    <option value="@dept.Id" selected="@(Model.EmployeeDepartmentId == dept.Id)">@dept.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-12 flex-wrap" style="margin-top:16px;">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm kiếm</button>
+                        <a href="@Url.Action("Index", new { tab = "users" })" class="btn btn-outline">Đặt lại</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header d-flex justify-between align-center">
+                <h3><i class="bi bi-people-fill"></i> Quản lý nhân viên</h3>
+                <span class="text-muted">@Model.Users.Count nhân viên</span>
+            </div>
+            <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mã NV</th>
+                            <th>Họ Tên</th>
+                            <th>Chức vụ</th>
+                            <th>Phòng ban</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Users.Any())
+                        {
+                            @foreach (var e in Model.Users)
+                            {
+                                <tr>
+                                    <td>@e.EmployeeCode</td>
+                                    <td>
+                                        <div style="font-weight:700;">@e.FullName</div>
+                                        <div class="text-muted" style="font-size:12px;">@e.Email</div>
+                                    </td>
+                                    <td>@(e.Position?.Name ?? e.JobTitle?.Name ?? "--")</td>
+                                    <td>@(e.Department?.Name ?? "--")</td>
+                                    <td>
+                                        <a href="@Url.Action("EmployeeDetails", new { id = e.Id })">Chi tiết</a> |
+                                        <a href="@Url.Action("EditUser", new { id = e.Id })">Sửa</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding:32px;">Không tìm thấy nhân viên phù hợp.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     }

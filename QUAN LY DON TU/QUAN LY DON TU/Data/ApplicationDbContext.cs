@@ -348,7 +348,7 @@ namespace DANGCAPNE.Data
             modelBuilder.Entity<LeaveBalance>().HasIndex(lb => new { lb.UserId, lb.Year });
 
             // Seed data
-            const bool SeedDemoData = true;
+            const bool SeedDemoData = false;
             if (SeedDemoData)
                 SeedData(modelBuilder);
         }

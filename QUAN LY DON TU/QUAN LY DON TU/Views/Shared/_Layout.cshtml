@@ -138,10 +138,17 @@
                             <i class="bi bi-shield-check"></i> Phê duyệt Email
                         </a>
                         <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" data-i18n="NavUsers">
-                            <i class="bi bi-people-fill"></i> Quản lý người dùng
+                            <i class="bi bi-people-fill"></i> Quản lý nhân viên
                         </a>
+                        @if (isAdmin || isHR)
+                        {
+                            <a href="@Url.Action("Index", "Admin", new { tab = "timekeeping" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && Context.Request.Query["tab"] == "timekeeping" ? "active" : "")">
+                                <i class="bi bi-calendar-check"></i> Quản lý chấm công
+                            </a>
+                        }
                     </div>
                 }
+
             </div>
             <div class="sidebar-footer">
                 <a href="@Url.Action("Profile", "Account")" class="user-card">
@@ -294,7 +301,7 @@
         const dict = {
             "vi": {
                 // Sidebar
-                "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ của tôi", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý người dùng", "NavBuilder": "Trình tạo biểu mẫu",
+                "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ của tôi", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý nhân viên", "NavBuilder": "Trình tạo biểu mẫu",
                 "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline chấm công", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpAttendance": "Chấm công",
                 // Dashboard & Shared
                 "DashPending": "Đang chờ xử lý", "DashApproved": "Đã duyệt", "DashRejected": "Bị từ chối", "DashLeave": "Ngày phép còn lại",
@@ -325,7 +332,7 @@
                 // Create
                 "LabelReqTitle": "Tiêu đề đơn", "PlaceholderReqTitle": "Nhập tiêu đề cho đơn này", "LabelPriority": "Mức độ ưu tiên", "PriNormal": "Bình thường", "PriLow": "Thấp", "PriHigh": "Cao", "PriUrgent": "Khẩn cấp", "BtnBack": "Quay lại", "BtnSaveDraft": "Lưu nháp", "BtnSubmitReq": "Gửi đơn",
                 // Admin
-                "TitleAdminSys": "Quản trị hệ thống", "SubtitleAdminSys": "Quản lý người dùng, phòng ban và cấu hình", "BtnDelegation": "Ủy quyền", "BtnAuditLogs": "Nhật ký hệ thống", "TabUsers": "Người dùng", "TabDepts": "Phòng ban", "TabForms": "Biểu mẫu", "TabWorkflows": "Luồng duyệt", "ColCode": "Mã NV", "ColName": "Họ tên", "ColEmail": "Email", "ColRole": "Vai trò", "ColActive": "Hoạt động", "ColInactive": "Vô hiệu", "LabelAddUser": "Thêm nhân viên",
+                "TitleAdminSys": "Quản trị hệ thống", "SubtitleAdminSys": "Quản lý nhân viên, phòng ban và cấu hình", "BtnDelegation": "Ủy quyền", "BtnAuditLogs": "Nhật ký hệ thống", "TabUsers": "Nhân viên", "TabDepts": "Phòng ban", "TabForms": "Biểu mẫu", "TabWorkflows": "Luồng duyệt", "ColCode": "Mã NV", "ColName": "Họ tên", "ColEmail": "Email", "ColRole": "Vai trò", "ColActive": "Hoạt động", "ColInactive": "Vô hiệu", "LabelAddUser": "Thêm nhân viên",
                 // Common wording
                 "TblPending": "Chờ duyệt", "TblApproved": "Đã duyệt", "TblRejected": "Từ chối", "TblInProgress": "Đang xử lý", "TblCancelled": "Đã hủy", "TblSkipped": "Bỏ qua", "TblUnknown": "Chưa xác định",
                 "LayoutAITitle": "Trợ lý DANGCAPNE", "LayoutAISub": "Luôn sẵn sàng hỗ trợ bạn", "LayoutAITooltip": "Trợ lý AI (Kéo để di chuyển)", "LayoutAIClose": "Xóa cuộc trò chuyện", "LayoutAIGreet": "Xin chào! Em là trợ lý ảo của hệ thống DANGCAPNE. Anh/chị cần em giúp gì ạ?", "LayoutAIPlaceholder": "Nhắn tin cho trợ lý ảo...", "LayoutAITyping": "Đang suy nghĩ...", "LayoutAIConfirmClear": "Bạn có chắc muốn xóa lịch sử trò chuyện này?", "LayoutAIErrorConn": "Xin lỗi, đã xảy ra lỗi kết nối.", "LayoutAINoServer": "Không thể kết nối với máy chủ AI.",
@@ -354,7 +361,7 @@
             },
             "en": {
                 // Sidebar
-                "TitleDashboard": "Dashboard", "NavOverview": "Overview", "NavNotif": "Notifications", "NavRequests": "Requests", "NavCreate": "Create Request", "NavMyReq": "My Requests", "NavApproval": "Approvals", "NavHR": "HR Menu", "NavLeave": "Leave Mgmt", "NavTime": "Timekeeping", "NavModules": "Extra Modules", "NavAdmin": "Administration", "NavUsers": "User Management", "NavBuilder": "Form Builder",
+                "TitleDashboard": "Dashboard", "NavOverview": "Overview", "NavNotif": "Notifications", "NavRequests": "Requests", "NavCreate": "Create Request", "NavMyReq": "My Requests", "NavApproval": "Approvals", "NavHR": "HR Menu", "NavLeave": "Leave Mgmt", "NavTime": "Timekeeping", "NavModules": "Extra Modules", "NavAdmin": "Administration", "NavUsers": "Employee Management", "NavBuilder": "Form Builder",
                 "NavEmp": "Employee", "NavEmpRequests": "Request Management", "NavEmpTimeline": "Attendance Timeline", "NavEmpSchedule": "Schedule & Shifts", "NavEmpAttendance": "Timekeeping",
                 // Dashboard & Shared
                 "DashPending": "Pending Action", "DashApproved": "Approved", "DashRejected": "Rejected", "DashLeave": "Leave Balance",
@@ -385,7 +392,7 @@
                 // Create
                 "LabelReqTitle": "Request Title", "PlaceholderReqTitle": "Enter a title for this request", "LabelPriority": "Priority Level", "PriNormal": "Normal", "PriLow": "Low", "PriHigh": "High", "PriUrgent": "Urgent", "BtnBack": "Back", "BtnSaveDraft": "Save Draft", "BtnSubmitReq": "Submit Request",
                 // Admin
-                "TitleAdminSys": "System Administration", "SubtitleAdminSys": "Manage users, departments and configuration", "BtnDelegation": "Delegation", "BtnAuditLogs": "Audit Logs", "TabUsers": "Users", "TabDepts": "Departments", "TabForms": "Forms", "TabWorkflows": "Workflows", "ColCode": "Emp Code", "ColName": "Name", "ColEmail": "Email", "ColRole": "Role", "ColActive": "Active", "ColInactive": "Inactive", "LabelAddUser": "Add User",
+                "TitleAdminSys": "System Administration", "SubtitleAdminSys": "Manage employees, departments and configuration", "BtnDelegation": "Delegation", "BtnAuditLogs": "Audit Logs", "TabUsers": "Employees", "TabDepts": "Departments", "TabForms": "Forms", "TabWorkflows": "Workflows", "ColCode": "Emp Code", "ColName": "Name", "ColEmail": "Email", "ColRole": "Role", "ColActive": "Active", "ColInactive": "Inactive", "LabelAddUser": "Add User",
                 // Common wording
                 "TblPending": "Pending", "TblApproved": "Approved", "TblRejected": "Rejected", "TblInProgress": "In Progress", "TblCancelled": "Cancelled", "TblSkipped": "Skipped", "TblUnknown": "Unknown",
                 "LayoutAITitle": "DANGCAPNE Assistant", "LayoutAISub": "Always ready to support you", "LayoutAITooltip": "AI Assistant (Drag to move)", "LayoutAIClose": "Clear chat history", "LayoutAIGreet": "Hello! I am DANGCAPNE's virtual assistant. How can I help you today?", "LayoutAIPlaceholder": "Message the virtual assistant...", "LayoutAITyping": "Thinking...", "LayoutAIConfirmClear": "Are you sure you want to clear this chat history?", "LayoutAIErrorConn": "Sorry, a connection error occurred.", "LayoutAINoServer": "Cannot connect to AI server.",
@@ -396,7 +403,7 @@
                 "HRKanbanTitle": "HR Kanban Board", "HRTotalReqPfx": "Total", "HRTotalReqSfx": "requests · Employees", "HRAnomalyWarn": "Anomaly Alerts", "HRColWait": "Pending", "HRColInProg": "In Progress", "HRColDone": "Completed", "HRColRej": "Rejected / Cancelled", "HRDeptStats": "Department Statistics",
                 "LeaveTitleYearPrefix": "Leave Management Year", "LeaveTotalRecordsPfx": "Total", "LeaveTotalRecordsSfx": "leave records", "ColType": "Leave Type",
                 "TkTitle": "Timekeeping Management", "TkSub": "Track employee working hours", "FilterAllEmp": "All Employees", "BtnFilter": "Filter", "TkTimeIn": "Check In", "TkTimeOut": "Check Out", "TkWorkHours": "Work Hours", "TkPresent": "Present", "TkAbsent": "Absent", "TkHoliday": "Holiday",
-                "NotifUnreadSfx": "unread", "TitleManageUsers": "User Management", "PlaceholderDeptName": "Department Name", "PlaceholderDeptCode": "Department Code", "BtnAdd": "Add", "LabelEmp": "employees", "TitleDynamicForms": "Dynamic Forms", "TitleCreateForm": "Create Form", "ColFormName": "Name", "ColCategory": "Category", "ColWorkflow": "Workflow", "ColFinance": "Finance", "LabelReqPin": "Requires PIN", "LabelAutoSkip": "auto-skip", "NavApprovalFlow": "Approval Workflows", "EditUserTitle": "Edit User", "AddUserTitle": "Add User", "LabelPhone": "Phone Number", "LabelBranch": "Branch", "LabelJobTitle": "Job Title", "LabelDirectMgr": "Direct Manager", "OptActive": "Active", "OptInactive": "Inactive", "BtnSaveInfo": "Save Information",
+                "NotifUnreadSfx": "unread", "TitleManageUsers": "Employee Management", "PlaceholderDeptName": "Department Name", "PlaceholderDeptCode": "Department Code", "BtnAdd": "Add", "LabelEmp": "employees", "TitleDynamicForms": "Dynamic Forms", "TitleCreateForm": "Create Form", "ColFormName": "Name", "ColCategory": "Category", "ColWorkflow": "Workflow", "ColFinance": "Finance", "LabelReqPin": "Requires PIN", "LabelAutoSkip": "auto-skip", "NavApprovalFlow": "Approval Workflows", "EditUserTitle": "Edit User", "AddUserTitle": "Add User", "LabelPhone": "Phone Number", "LabelBranch": "Branch", "LabelJobTitle": "Job Title", "LabelDirectMgr": "Direct Manager", "OptActive": "Active", "OptInactive": "Inactive", "BtnSaveInfo": "Save Information",
                 "ModulesExt": "Extension Modules", "BtnManage": "Manage", "ModulesNoAccess": "You do not have access to any modules.",
                 "NavHRKanban": "HR Kanban Board", "NavRbac": "Permissions", "NavRecruit": "Recruitment", "NavTraining": "Training & Compliance", "NavAdminOps": "Administration", "NavDelegate": "Delegation", "NavAudit": "Audit Logs",
                 // Profile

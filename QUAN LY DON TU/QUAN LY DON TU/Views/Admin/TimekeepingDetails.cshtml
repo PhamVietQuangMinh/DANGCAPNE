@@ -1,0 +1,109 @@
+@model DANGCAPNE.Models.Timekeeping.Timesheet
+@{
+    ViewData["Title"] = "Chi tiết chấm công";
+    var statusMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Present"] = "Có mặt",
+        ["Late"] = "Đi trễ",
+        ["EarlyLeave"] = "Về sớm",
+        ["Absent"] = "Vắng mặt",
+        ["Leave"] = "Nghỉ phép"
+    };
+    var currentStatus = string.IsNullOrWhiteSpace(Model.Status) ? "--" : (statusMap.TryGetValue(Model.Status, out var displayStatus) ? displayStatus : Model.Status);
+}
+
+<div class="page-content">
+    <div class="d-flex justify-between align-center mb-24" style="gap:16px; flex-wrap:wrap;">
+        <div>
+            <h2 style="margin:0; font-size:28px; font-weight:800;">Chi tiết chấm công</h2>
+            <p class="text-muted" style="margin-top:6px;">Cập nhật thủ công giờ vào, giờ ra và ghi chú cho bản ghi chấm công.</p>
+        </div>
+        <a href="@Url.Action("Index", new { tab = "timekeeping" })" class="btn btn-outline">Quay lại bảng chấm công</a>
+    </div>
+
+    <div class="form-row">
+        <div class="col-5">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-info-circle"></i> Thông tin bản ghi</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="row" style="margin:0;">
+                        <dt class="col-sm-4">Nhân viên</dt>
+                        <dd class="col-sm-8">@Model.User?.FullName</dd>
+
+                        <dt class="col-sm-4">Mã NV</dt>
+                        <dd class="col-sm-8">@Model.User?.EmployeeCode</dd>
+
+                        <dt class="col-sm-4">Phòng ban</dt>
+                        <dd class="col-sm-8">@(Model.User?.Department?.Name ?? "--")</dd>
+
+                        <dt class="col-sm-4">Ngày</dt>
+                        <dd class="col-sm-8">@Model.Date.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-4">Nguồn</dt>
+                        <dd class="col-sm-8">@Model.Source</dd>
+
+                        <dt class="col-sm-4">Trạng thái</dt>
+                        <dd class="col-sm-8">@currentStatus</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-7">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-pencil-square"></i> Chỉnh sửa chấm công</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="ManualUpdateTimekeeping">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="form-row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Giờ vào</label>
+                                    <input type="datetime-local" class="form-control" name="checkIn" value="@Model.CheckIn?.ToString("yyyy-MM-ddTHH:mm")" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Giờ ra</label>
+                                    <input type="datetime-local" class="form-control" name="checkOut" value="@Model.CheckOut?.ToString("yyyy-MM-ddTHH:mm")" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Trạng thái</label>
+                                    <select class="form-control" name="status">
+                                        <option value="Present" selected="@(Model.Status == "Present")">Có mặt</option>
+                                        <option value="Late" selected="@(Model.Status == "Late")">Đi trễ</option>
+                                        <option value="EarlyLeave" selected="@(Model.Status == "EarlyLeave")">Về sớm</option>
+                                        <option value="Absent" selected="@(Model.Status == "Absent")">Vắng mặt</option>
+                                        <option value="Leave" selected="@(Model.Status == "Leave")">Nghỉ phép</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Giờ công</label>
+                                    <input type="number" step="0.01" min="0" class="form-control" name="workHours" value="@(Model.WorkHours > 0 ? Model.WorkHours.ToString("0.##") : "")" />
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Ghi chú</label>
+                                    <textarea class="form-control" name="notes" rows="4" placeholder="Có thể để trống">@Model.Notes</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-12 flex-wrap">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu cập nhật</button>
+                            <a href="@Url.Action("Index", new { tab = "timekeeping" })" class="btn btn-outline">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

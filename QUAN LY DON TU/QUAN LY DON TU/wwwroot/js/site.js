@@ -2,8 +2,41 @@
 // Automatically runs on every page that includes site.js
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Page Load Fade-In Transition
+    // 1. Page Load Fade-In Transition & Dashboard Intro
     document.body.classList.add("page-fade-in");
+
+    const path = window.location.pathname.toLowerCase();
+    const isDashboard = path === '/' || path === '/home' || path === '/home/index';
+
+    if (isDashboard) {
+        // Trigger a highly prominent 3D staggered fade-in for individual dashboard elements
+        // Exclude the parent wrappers if we are animating children, so we don't double-animate
+        const cards = document.querySelectorAll('.glass-card, .emp-stat-card, .stat-pill, .shortcut-item');
+        
+        const filteredCards = Array.from(cards).filter(el => {
+            // If this glass-card has shortcut items or stat pills inside it, don't animate the whole card, let the children animate
+            if (el.classList.contains('glass-card') && el.querySelector('.shortcut-item, .stat-pill')) return false;
+            return true;
+        });
+
+        filteredCards.forEach((card, i) => {
+            // Set striking initial state: dropped back, rotated, scaled down
+            card.style.opacity = '0';
+            card.style.transform = 'perspective(1000px) rotateX(-15deg) translateY(40px) scale(0.9)';
+            card.style.transformOrigin = 'bottom center';
+            card.style.transition = 'opacity 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        });
+        
+        // Stagger them rapidly like a deck of cards (interval 60ms)
+        setTimeout(() => {
+            filteredCards.forEach((card, i) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) translateY(0) scale(1)';
+                }, i * 60); 
+            });
+        }, 50);
+    }
 
     // 2. Intersection Observer for Smooth Reveal on Scroll
     const observerOptions = {

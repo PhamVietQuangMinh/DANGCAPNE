@@ -56,6 +56,17 @@
                 </div>
             </div>
 
+            @if (Model.CanEdit)
+            {
+                <div class="glass-card mb-24">
+                    <div class="card-body">
+                        <a href="@Url.Action("Edit", "Requests", new { id = Model.Request?.Id })" class="btn btn-warning" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <i class="bi bi-pencil-square"></i> <span data-i18n="BtnEditRedo">Sửa đơn & Gửi lại</span>
+                        </a>
+                    </div>
+                </div>
+            }
+
             @if (Model.CanApprove)
             {
                 <div class="glass-card mb-24">
@@ -116,38 +127,269 @@
             </div>
         </div>
 
+        @* ====================== CỘT PHẢI ======================*@
         <div>
-            <div class="glass-card mb-24">
-                <div class="card-header"><h3><i class="bi bi-signpost-split-fill"></i> <span data-i18n="CardFlow">Luồng duyệt</span></h3></div>
-                <div class="card-body">
-                    <div class="approval-timeline">
-                        @foreach (var a in Model.ApprovalHistory)
-                        {
-                            var sCss = a.Status.ToLower();
-                            <div class="timeline-item @sCss" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed var(--border-glass)">
-                                <div class="step-name" style="font-size:13px; color:var(--text-secondary); width:130px; flex-shrink:0; line-height:1.4;">@a.StepName</div>
-                                <div class="step-info" style="flex:1; display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
-                                    <div style="display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:8px">
-                                        <strong style="font-size:14px; color:var(--text-primary)">@Html.Raw(a.Approver?.FullName != null ? a.Approver.FullName : "<span data-i18n=\"TblUnknown\">Chưa xác định</span>")</strong>
-                                        <span class="status-badge @sCss" style="margin-top:0;font-size:11px" data-i18n="@(a.Status switch { "Pending" => "TblPending", "Approved" => "TblApproved", "Rejected" => "TblRejected", "Skipped" => "TblSkipped", _ => "" })">
-                                            @(a.Status switch { "Pending" => "Đang chờ", "Approved" => "Đã duyệt", "Rejected" => "Từ chối", "Skipped" => "Bỏ qua", _ => a.Status })
-                                        </span>
-                                    </div>
-                                    @if (a.ActionDate != null)
-                                    {
-                                        <small class="text-muted" style="margin-top:4px; font-size:11px;">@a.ActionDate?.ToString("HH:mm dd/MM/yyyy")</small>
-                                    }
-                                </div>
-                                @if (!string.IsNullOrEmpty(a.Comments))
-                                {
-                                    <div class="step-comment">"@a.Comments"</div>
+
+            @* ===== LUỒNG DUYỆT =====*@
+            @{
+                var currentUserId = Context.Session.GetInt32("UserId");
+                var userRoles = (Context.Session.GetString("Roles") ?? "").Split(",");
+                bool isRequester = Model.Request?.RequesterId == currentUserId;
+            }
+
+            @if (isRequester)
+            {
+                @* ═══════════ EMPLOYEE VIEW: Zigzag 5-Step Stepper ═══════════ *@
+                <div class="glass-card mb-24">
+                    <div class="card-header">
+                        <h3><i class="bi bi-signpost-split-fill"></i> <span data-i18n="CardFlow">Luồng duyệt</span></h3>
+                    </div>
+                    <div class="card-body" style="padding:0">
+                        <style>
+                            .flow-wrap { display:flex; flex-direction:column; padding:20px 20px 24px; }
+                            .flow-row { display:flex; align-items:center; width:100%; min-height:58px; }
+                            .flow-row.left { justify-content:flex-start; }
+                            .flow-row.right { justify-content:flex-end; }
+                            .flow-node { display:flex; align-items:center; gap:14px; width:230px; max-width:230px; }
+                            .flow-row.right .flow-node { flex-direction:row-reverse; text-align:right; }
+                            .flow-icon { width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; background:var(--bg-glass); border:2px solid rgba(150,150,160,0.2); filter:grayscale(1) opacity(0.5); transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1); color: #888; z-index:2; position:relative; }
+                            .flow-text { padding: 0; box-shadow: none; position: relative; z-index: 2; margin-left: 4px; }
+                            .flow-row.right .flow-text { margin-left: 0; margin-right: 4px; }
+                            .flow-label { font-size:14px; font-weight:800; line-height:1.4; color:#222; transition:color 0.3s; }
+                            .flow-sub { font-size:12px; color:#999; font-weight:500; margin-top:4px; line-height:1.4; }
+                            
+                            .flow-node.waiting .flow-label { color:#82868b; }
+                            
+                            .flow-conn { width:100%; height:50px; position:relative; z-index:1; }
+                            .flow-conn svg { width:100%; height:100%; display:block; }
+                            .flow-row { display:flex; align-items:center; width:100%; min-height:52px; position:relative; z-index:2; }
+                            
+                            .fc-line { fill:none; stroke-linecap:round; transition: all 0.5s; }
+                            .fc-done { stroke: url(#gradientDone) #28c76f; stroke-width:3; } 
+                            .fc-pend { stroke:rgba(150,150,160,0.3); stroke-dasharray:6 6; stroke-width:2; } 
+                            .fc-rej { stroke:#ff4c4c; stroke-width:3; }
+                            
+                            /* "Skipped" steps now look just like "Completed" (Green) per user request */
+                            .flow-node.is-completed .flow-icon, .flow-node.is-skipped .flow-icon { background: linear-gradient(135deg, #28c76f, #48e58f); border:none; filter:none; box-shadow:0 4px 15px rgba(40,199,111,0.4); color: #fff; }
+                            
+                            .flow-node.is-active .flow-icon { background: linear-gradient(135deg, #ff9800, #ffc107); border:none; filter:none; color: #fff; animation:flowActivePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+                            
+                            .flow-node.is-rejected .flow-icon { background: linear-gradient(135deg, #ea5455, #ff8a8a); border:none; filter:none; color: #fff; box-shadow:0 4px 15px rgba(234,84,85,0.4); }
+                            
+                            /* Hoàn tất is-final now just uses a larger green icon instead of gold */
+                            .flow-node.is-final.is-completed .flow-icon { font-size: 28px; transform: scale(1.05); }
+                            
+                            @@keyframes flowActivePulse { 0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.6); } 70% { box-shadow: 0 0 0 15px rgba(255, 152, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); } }
+                        </style>
+                        <svg width="0" height="0" style="position:absolute;">
+                            <defs>
+                                <linearGradient id="gradientDone" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#28c76f" />
+                                    <stop offset="100%" stop-color="#48e58f" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+
+                        @{
+                            var dbSteps2 = Model.ApprovalHistory.OrderBy(a => a.StepOrder).ToList();
+                            bool isOk2 = Model.Request?.Status == "Approved";
+                            bool hasPend2 = dbSteps2.Any(s => s.Status == "Pending" || s.Status == "RequestEdit");
+                            var nodes2 = new List<(string t, string s, string em, string st)>();
+                            
+                            nodes2.Add(("Gửi thành công", Model.Request?.CreatedAt.ToString("HH:mm dd/MM") ?? "", "<i class=\"bi bi-file-earmark-check\"></i>", "is-completed"));
+                            
+                            string xemSt2 = "waiting";
+                            if (isOk2 || dbSteps2.Any(s => s.Status == "Approved" || s.Status == "Rejected")) xemSt2 = "is-completed";
+                            else if (hasPend2) xemSt2 = "is-active";
+                            nodes2.Add(("Đang xem xét", "", "<i class=\"bi bi-search\"></i>", xemSt2));
+                            
+                            var admSteps2 = dbSteps2.Where(s => s.StepName != null && s.StepName.ToLower().Contains("admin")).ToList();
+                            var hrSteps2 = dbSteps2.Where(s => !admSteps2.Contains(s)).ToList();
+                            
+                            string hrSt2 = "waiting", hrSub2 = "";
+                            if (hrSteps2.Any()) {
+                                hrSub2 = string.Join(", ", hrSteps2.Select(s => s.Approver?.FullName ?? "?"));
+                                if (hrSteps2.All(s => s.Status == "Approved" || s.Status == "Skipped")) { 
+                                    if (hrSteps2.Any(s => s.Status == "Skipped")) hrSt2 = "is-skipped";
+                                    else hrSt2 = "is-completed";
                                 }
-                            </div>
+                                else if (hrSteps2.Any(s => s.Status == "Rejected")) hrSt2 = "is-rejected";
+                                else if (hrSteps2.Any(s => s.Status == "Pending" || s.Status == "RequestEdit")) hrSt2 = "is-active";
+                            }
+                            nodes2.Add(("HR/Trưởng Phòng duyệt", hrSub2, "<i class=\"bi bi-person-check\"></i>", hrSt2));
+                            
+                            string admSt2 = "waiting", admSub2 = "";
+                            if (admSteps2.Any()) {
+                                var adm2 = admSteps2.First();
+                                admSub2 = adm2.Approver?.FullName ?? "Admin";
+                                if (adm2.Status == "Approved") admSt2 = "is-completed";
+                                else if (adm2.Status == "Skipped") admSt2 = "is-skipped";
+                                else if (adm2.Status == "Rejected") admSt2 = "is-rejected";
+                                else if ((adm2.Status == "Pending" || adm2.Status == "RequestEdit") && hrSteps2.All(s => s.Status == "Approved" || s.Status == "Skipped")) admSt2 = "is-active";
+                            }
+                            nodes2.Add(("Admin duyệt", admSub2, "<i class=\"bi bi-shield-check\"></i>", admSt2));
+                            
+                            // If request is fully Approved, ensure ALL preceding steps are marked completed visually
+                            if (isOk2) {
+                                for(int i=0; i<nodes2.Count; i++) {
+                                    var n_item = nodes2[i];
+                                    if (n_item.st != "is-completed" && n_item.st != "is-completed is-final") {
+                                        nodes2[i] = (n_item.t, n_item.s, n_item.em, "is-completed");
+                                    }
+                                }
+                            }
+
+                            nodes2.Add(("Hoàn tất", isOk2 ? "Đơn đã được duyệt" : "", "<i class=\"bi bi-check-circle-fill\"></i>", isOk2 ? "is-completed is-final" : "waiting is-final"));
                         }
+
+                        <div class="flow-wrap">
+                            @for (int n = 0; n < nodes2.Count; n++)
+                            {
+                                var nd2 = nodes2[n]; var side2 = (n % 2 == 0) ? "left" : "right";
+                                if (n > 0)
+                                {
+                                    var pSt2 = nodes2[n - 1].st; var pSide2 = ((n - 1) % 2 == 0) ? "left" : "right";
+                                    string lc2 = "fc-pend";
+                                    if ((pSt2.Contains("is-completed") || pSt2.Contains("is-skipped")) && 
+                                        (nd2.st.Contains("is-completed") || nd2.st.Contains("is-active") || nd2.st.Contains("is-skipped"))) lc2 = "fc-done";
+                                    else if (nd2.st.Contains("is-rejected") || pSt2.Contains("is-rejected")) lc2 = "fc-rej";
+                                    <div class="flow-conn">
+                                        <svg viewBox="0 0 360 50" preserveAspectRatio="none">
+                                            @if (pSide2 == "left") { <line class="fc-line @lc2" x1="26" y1="0" x2="334" y2="50" /> }
+                                            else { <line class="fc-line @lc2" x1="334" y1="0" x2="26" y2="50" /> }
+                                        </svg>
+                                    </div>
+                                }
+                                <div class="flow-row @side2">
+                                    <div class="flow-node @nd2.st">
+                                        <div class="flow-icon">@Html.Raw(nd2.em)</div>
+                                        <div class="flow-text">
+                                            <div class="flow-label">@nd2.t</div>
+                                            @if (!string.IsNullOrEmpty(nd2.s)) { <div class="flow-sub">@nd2.s</div> }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                @* ═══════════ APPROVER VIEW: Compact Professional Timeline ═══════════ *@
+                <div class="glass-card mb-24">
+                    <div class="card-header">
+                        <h3><i class="bi bi-diagram-3-fill"></i> <span data-i18n="CardFlow">Tiến trình duyệt</span></h3>
+                    </div>
+                    <div class="card-body" style="padding:16px 20px;">
+                        <style>
+                            .atl-wrap { display:flex; flex-direction:column; gap:0; }
+                            .atl-item { display:flex; gap:14px; position:relative; padding-bottom:20px; }
+                            .atl-item:last-child { padding-bottom:0; }
+                            /* Vertical line */
+                            .atl-item::before {
+                                content:''; position:absolute; left:19px; top:42px; bottom:0;
+                                width:2px; background:rgba(150,150,160,0.15);
+                            }
+                            .atl-item:last-child::before { display:none; }
+                            .atl-item.atl-done::before { background:#28c76f; }
+                            .atl-item.atl-rej::before { background:#ff4c4c; }
+                            /* Avatar */
+                            .atl-avatar {
+                                width:40px; height:40px; border-radius:50%; flex-shrink:0;
+                                display:flex; align-items:center; justify-content:center;
+                                font-size:16px; font-weight:700; color:#fff;
+                                background:rgba(150,150,160,0.25);
+                                z-index:1; position:relative;
+                                transition:all 0.3s;
+                            }
+                            .atl-done .atl-avatar { background:#28c76f; box-shadow:0 2px 8px rgba(40,199,111,0.3); }
+                            .atl-skip .atl-avatar { background:#e2e2e9; color:#82868b; }
+                            .atl-active .atl-avatar { background:#ffc107; color:#333; box-shadow:0 0 0 4px rgba(255,193,7,0.25); animation:atlPulse 2s infinite; }
+                            .atl-rej .atl-avatar { background:#ff4c4c; box-shadow:0 2px 8px rgba(255,76,76,0.3); }
+                            .atl-wait .atl-avatar { background:rgba(150,150,160,0.2); color:rgba(150,150,160,0.5); }
+                            /* Content */
+                            .atl-content { flex:1; min-width:0; }
+                            .atl-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+                            .atl-name { font-size:13px; font-weight:700; color:var(--text-primary); }
+                            .atl-badge {
+                                font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px;
+                                text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;
+                            }
+                            .atl-badge.b-approved { background:rgba(40,199,111,0.12); color:#28c76f; }
+                            .atl-badge.b-skipped { background:rgba(150,150,160,0.1); color:#82868b; }
+                            .atl-badge.b-pending { background:rgba(255,193,7,0.12); color:#e6a600; }
+                            .atl-badge.b-rejected { background:rgba(255,76,76,0.12); color:#ff4c4c; }
+                            .atl-badge.b-waiting { background:rgba(150,150,160,0.1); color:rgba(150,150,160,0.5); }
+                            .atl-badge.b-reqedit { background:rgba(255,152,0,0.12); color:#ff9800; }
+                            .atl-role { font-size:11px; color:var(--text-muted); margin-top:2px; }
+                            .atl-comment { font-size:11px; color:var(--text-muted); font-style:italic; margin-top:4px; padding:6px 10px; background:rgba(150,150,160,0.06); border-radius:var(--radius-sm); border-left:3px solid rgba(150,150,160,0.2); }
+                            .atl-done .atl-comment { border-left-color:#28c76f; }
+                            .atl-skip .atl-comment { border-left-color:#cdd1d5; }
+                            .atl-rej .atl-comment { border-left-color:#ff4c4c; }
+                            .atl-time { font-size:10px; color:var(--text-muted); margin-top:3px; }
 
+                            @@keyframes atlPulse { 0%{box-shadow:0 0 0 0 rgba(255,193,7,0.5)} 70%{box-shadow:0 0 0 10px rgba(255,193,7,0)} 100%{box-shadow:0 0 0 0 rgba(255,193,7,0)} }
+                        </style>
+
+                        @{
+                            var stepsA = Model.ApprovalHistory.OrderBy(a => a.StepOrder).ToList();
+                            int firstPendA = -1;
+                            for (int ia = 0; ia < stepsA.Count; ia++) {
+                                if ((stepsA[ia].Status == "Pending" || stepsA[ia].Status == "RequestEdit") && firstPendA < 0) firstPendA = ia;
+                            }
+                        }
+
+                        <div class="atl-wrap">
+                            @for (int ia = 0; ia < stepsA.Count; ia++)
+                            {
+                                var sa = stepsA[ia];
+                                string itemCls = "atl-wait";
+                                string badgeCls = "b-waiting"; string badgeText = "Chờ";
+                                string avatarIcon = "⏳";
+
+                                if (sa.Status == "Approved")
+                                { itemCls = "atl-done"; badgeCls = "b-approved"; badgeText = "Đã duyệt"; avatarIcon = "✓"; }
+                                else if (sa.Status == "Skipped")
+                                { itemCls = "atl-done"; badgeCls = "b-approved"; badgeText = "Bỏ qua"; avatarIcon = "✓"; }
+                                else if (sa.Status == "Rejected")
+                                { itemCls = "atl-rej"; badgeCls = "b-rejected"; badgeText = "Từ chối"; avatarIcon = "✗"; }
+                                else if (sa.Status == "RequestEdit")
+                                { itemCls = "atl-active"; badgeCls = "b-reqedit"; badgeText = "Yêu cầu sửa"; avatarIcon = "✎"; }
+                                else if (ia == firstPendA)
+                                { itemCls = "atl-active"; badgeCls = "b-pending"; badgeText = "Đang chờ"; avatarIcon = "⟳"; }
+
+
+                                var initial = sa.Approver?.FullName?.Length > 0 ? sa.Approver.FullName.Substring(0, 1).ToUpper() : "?";
+
+                                <div class="atl-item @itemCls">
+                                    <div class="atl-avatar">
+                                        @if (itemCls == "atl-done") { <text>✓</text> }
+                                        else if (itemCls == "atl-rej") { <text>✗</text> }
+                                        else { @initial }
+                                    </div>
+                                    <div class="atl-content">
+                                        <div class="atl-header">
+                                            <span class="atl-name">@(sa.Approver?.FullName ?? "Chưa xác định")</span>
+                                            <span class="atl-badge @badgeCls">@badgeText</span>
+                                        </div>
+                                        <div class="atl-role">@(sa.StepName ?? $"Bước {sa.StepOrder}")</div>
+                                        @if (!string.IsNullOrEmpty(sa.Comments))
+                                        {
+                                            <div class="atl-comment">"@sa.Comments"</div>
+                                        }
+                                        @if (sa.ActionDate != null)
+                                        {
+                                            <div class="atl-time"><i class="bi bi-clock"></i> @sa.ActionDate?.ToString("HH:mm dd/MM/yyyy")</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            @* ===== /LUỒNG DUYỆT =====*@
             @if (Model.CanCancel)
             {
                 <div class="glass-card mb-24">
@@ -177,6 +419,7 @@
                     }
                 </div>
             </div>
+
         </div>
     </div>
 </div>

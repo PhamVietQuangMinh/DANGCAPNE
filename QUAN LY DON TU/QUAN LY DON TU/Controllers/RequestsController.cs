@@ -310,6 +310,30 @@ namespace DANGCAPNE.Controllers
                 });
             }
 
+            // --- CC Admin Users on new request creation ---
+            var adminRoleId = await _context.Roles.Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync();
+            if (adminRoleId > 0)
+            {
+                var adminUserIds = await _context.UserRoles
+                    .Where(ur => ur.RoleId == adminRoleId && ur.UserId != firstApproval.ApproverId && ur.UserId != userId.Value)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync();
+
+                foreach (var adminId in adminUserIds)
+                {
+                    _context.Notifications.Add(new Models.SystemModels.Notification
+                    {
+                        TenantId = tenantId,
+                        UserId = adminId,
+                        Title = "Thông báo: Đơn mới được tạo",
+                        Message = $"{HttpContext.Session.GetString("FullName")} vừa tạo đơn: {title}",
+                        Type = "Info",
+                        ActionUrl = $"/Requests/Detail/{request.Id}",
+                        RelatedRequestId = request.Id
+                    });
+                }
+            }
+
             // Delete draft if exists
             var draft = await _context.DraftRequests
                 .FirstOrDefaultAsync(d => d.UserId == userId.Value && d.FormTemplateId == templateId);
@@ -337,6 +361,140 @@ namespace DANGCAPNE.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = $"Đơn {requestCode} đã được tạo thành công!";
+            return RedirectToAction("Detail", new { id = request.Id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Auth");
+
+            var request = await _context.Requests
+                .Include(r => r.FormTemplate)
+                .ThenInclude(t => t!.Fields.OrderBy(f => f.DisplayOrder))
+                .ThenInclude(f => f.Options)
+                .Include(r => r.DataEntries)
+                .FirstOrDefaultAsync(r => r.Id == id && r.RequesterId == userId);
+
+            if (request == null || (request.Status != "RequestEdit" && request.Status != "Draft")) 
+                return NotFound();
+
+            var model = new RequestCreateViewModel
+            {
+                FormTemplate = request.FormTemplate,
+                Fields = request.FormTemplate?.Fields.ToList() ?? new(),
+                Title = request.Title,
+                FormData = request.DataEntries.ToDictionary(d => d.FieldKey, d => d.FieldValue ?? "")
+            };
+
+            ViewBag.RequestId = request.Id;
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(int id, IFormCollection form)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Auth");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            var request = await _context.Requests
+                .FirstOrDefaultAsync(r => r.Id == id && r.RequesterId == userId);
+
+            if (request == null || (request.Status != "RequestEdit" && request.Status != "Draft")) 
+                return NotFound();
+
+            request.Title = form["Title"].ToString() ?? request.Title;
+            request.Priority = form["Priority"].ToString() ?? request.Priority;
+            request.Status = "Pending";
+            request.CurrentStepOrder = 1;
+
+            var oldData = await _context.RequestData.Where(d => d.RequestId == id).ToListAsync();
+            _context.RequestData.RemoveRange(oldData);
+
+            foreach (var key in form.Keys)
+            {
+                if (key != "__RequestVerificationToken" && key != "Title" && key != "Priority" && !form.Files.Any(f => f.Name == key))
+                {
+                    _context.RequestData.Add(new RequestData
+                    {
+                        RequestId = request.Id,
+                        FieldKey = key,
+                        FieldValue = form[key].ToString()
+                    });
+                }
+            }
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            foreach (var file in form.Files)
+            {
+                if (file.Length > 0)
+                {
+                    var ext = Path.GetExtension(file.FileName);
+                    var newFileName = $"{Guid.NewGuid()}{ext}";
+                    var filePath = Path.Combine(uploadsFolder, newFileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                    _context.RequestAttachments.Add(new RequestAttachment
+                    {
+                        RequestId = request.Id,
+                        FileName = file.FileName,
+                        FilePath = $"/uploads/{newFileName}",
+                        FileSize = file.Length,
+                        ContentType = file.ContentType
+                    });
+                }
+            }
+
+            var approvals = await _context.RequestApprovals.Where(a => a.RequestId == id).ToListAsync();
+            foreach (var app in approvals)
+            {
+                if (app.Status != "Pending") {
+                    app.Status = "Pending";
+                    app.ActionDate = null;
+                    app.Comments = null;
+                }
+            }
+
+            _context.RequestAuditLogs.Add(new RequestAuditLog
+            {
+                RequestId = request.Id,
+                UserId = userId.Value,
+                Action = "Resubmitted",
+                NewStatus = "Pending",
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+            });
+
+            // Notify ALL approvers in the workflow (not just the first one)
+            var approverIds = approvals
+                .Where(a => a.ApproverId != null)
+                .Select(a => a.ApproverId!.Value)
+                .Distinct()
+                .ToList();
+            
+            var requesterName = HttpContext.Session.GetString("FullName") ?? "Nhân viên";
+            foreach (var approverId in approverIds)
+            {
+                _context.Notifications.Add(new Models.SystemModels.Notification
+                {
+                    TenantId = tenantId,
+                    UserId = approverId,
+                    Title = "Đơn đã chỉnh sửa và gửi lại",
+                    Message = $"{requesterName} đã chỉnh sửa và gửi lại đơn: {request.Title}",
+                    Type = "Approval",
+                    ActionUrl = $"/Requests/Detail/{request.Id}",
+                    RelatedRequestId = request.Id
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Đơn {request.RequestCode} đã được cập nhật và gửi lại!";
             return RedirectToAction("Detail", new { id = request.Id });
         }
 
@@ -378,6 +536,20 @@ namespace DANGCAPNE.Controllers
 
             var currentApproval = approvals.FirstOrDefault(a => a.Status == "Pending" && a.ApproverId == userId);
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            var isAdmin = roles.Contains("Admin");
+
+            // Admin Super-Override: If there's a pending approval but the current user (Admin) isn't the assigned approver,
+            // let the Admin override and approve it anyway.
+            if (currentApproval == null && isAdmin)
+            {
+                currentApproval = approvals.FirstOrDefault(a => a.Status == "Pending");
+            }
+
+            // Safety check: if request is already finished, nobody can approve anything, regardless of orphaned pending DB rows
+            if (request.Status == "Approved" || request.Status == "Rejected" || request.Status == "Cancelled")
+            {
+                currentApproval = null;
+            }
 
             var model = new RequestDetailViewModel
             {
@@ -524,6 +696,27 @@ namespace DANGCAPNE.Controllers
                 {
                     Console.WriteLine($"[SeedError] Template 7 seed failed: {ex.Message}");
                     if (ex.InnerException != null) Console.WriteLine($"[SeedError] Inner: {ex.InnerException.Message}");
+                }
+            }
+
+            // Self-healing for Workflow 1 (Basic Flow -> Add Admin)
+            var workflow1 = await _context.Workflows.Include(w => w.Steps).FirstOrDefaultAsync(w => w.Id == 1);
+            if (workflow1 != null)
+            {
+                var steps1 = workflow1.Steps.OrderBy(s => s.StepOrder).ToList();
+                var hasAdmin1 = steps1.Any(s => s.Name.Contains("Giám đốc") || (s.ApproverType == "SpecificUser" && s.ApproverUserId == 1));
+                
+                if (!hasAdmin1)
+                {
+                    _context.WorkflowSteps.RemoveRange(steps1);
+                    await _context.SaveChangesAsync();
+                    _context.WorkflowSteps.AddRange(
+                        new DANGCAPNE.Models.Workflow.WorkflowStep { WorkflowId = 1, Name = "Quản lý trực tiếp duyệt", StepOrder = 1, ApproverType = "DirectManager" },
+                        new DANGCAPNE.Models.Workflow.WorkflowStep { WorkflowId = 1, Name = "HR duyệt", StepOrder = 2, ApproverType = "Role", ApproverRoleId = 2 },
+                        new DANGCAPNE.Models.Workflow.WorkflowStep { WorkflowId = 1, Name = "Giám đốc duyệt", StepOrder = 3, ApproverType = "SpecificUser", ApproverUserId = 1 }
+                    );
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("[SelfHealing] Workflow 1 steps updated to include Giám đốc.");
                 }
             }
 

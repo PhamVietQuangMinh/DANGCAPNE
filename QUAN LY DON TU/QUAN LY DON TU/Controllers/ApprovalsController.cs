@@ -128,58 +128,98 @@ namespace DANGCAPNE.Controllers
                 approval.Comments = model.Comments;
                 approval.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-                // Check if there are more steps
-                var nextApproval = await _context.RequestApprovals
-                    .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
-                    .OrderBy(a => a.StepOrder)
-                    .FirstOrDefaultAsync();
-
-                // Skip already-skipped steps
-                while (nextApproval != null && nextApproval.Status == "Skipped")
+                if (isAdmin)
                 {
-                    nextApproval = await _context.RequestApprovals
-                        .Where(a => a.RequestId == request.Id && a.StepOrder > nextApproval.StepOrder && a.Status == "Pending")
-                        .OrderBy(a => a.StepOrder)
-                        .FirstOrDefaultAsync();
-                }
-
-                if (nextApproval != null)
-                {
-                    request.Status = "InProgress";
-                    request.CurrentStepOrder = nextApproval.StepOrder;
-
-                    // Notify next approver
-                    if (nextApproval.ApproverId != null)
+                    // If Admin overrides a step meant for someone else, record that ADMIN did it.
+                    if (approval.ApproverId != userId)
                     {
-                        _context.Notifications.Add(new Models.SystemModels.Notification
-                        {
-                            TenantId = tenantId,
-                            UserId = nextApproval.ApproverId.Value,
-                            Title = "Đơn cần duyệt",
-                            Message = $"Đơn {request.RequestCode} đã được duyệt bước trước và chuyển đến bạn",
-                            Type = "Approval",
-                            ActionUrl = $"/Requests/Detail/{request.Id}",
-                            RelatedRequestId = request.Id
-                        });
-
-                        // SignalR real-time notification
-                        await _hubContext.Clients.Group($"user_{nextApproval.ApproverId}")
-                            .SendAsync("ReceiveNotification", new
-                            {
-                                title = "Đơn cần duyệt",
-                                message = $"Đơn {request.RequestCode} cần bạn xử lý",
-                                type = "Approval",
-                                actionUrl = $"/Requests/Detail/{request.Id}"
-                            });
+                        approval.ApproverId = userId;
+                        approval.Comments = string.IsNullOrEmpty(model.Comments) ? "Admin duyệt thay" : $"Admin duyệt thay: {model.Comments}";
                     }
+
+                    // ══ ADMIN: mark ALL remaining steps as 'Skipped' → request DONE ══
+                    var remainingPending = await _context.RequestApprovals
+                        .Where(a => a.RequestId == request.Id && a.Id != approval.Id && a.Status == "Pending")
+                        .ToListAsync();
+
+                    foreach (var ra in remainingPending)
+                    {
+                        ra.Status = "Skipped";
+                        ra.ActionDate = DateTime.Now;
+                        ra.Comments = "Bỏ qua do Admin đã duyệt toàn bộ";
+                        ra.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    }
+
+                    // Directly mark request as fully approved
+                    request.Status = "Approved";
+                    request.CompletedAt = DateTime.Now;
                 }
                 else
                 {
-                    // All steps approved
-                    request.Status = "Approved";
-                    request.CompletedAt = DateTime.Now;
+                    // ══ NON-ADMIN: step-by-step flow ══
+                    var nextApproval = await _context.RequestApprovals
+                        .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
+                        .OrderBy(a => a.StepOrder)
+                        .FirstOrDefaultAsync();
 
-                    // Auto-update profile for "Update Information Request"
+                    while (nextApproval != null && nextApproval.Status == "Skipped")
+                    {
+                        nextApproval = await _context.RequestApprovals
+                            .Where(a => a.RequestId == request.Id && a.StepOrder > nextApproval.StepOrder && a.Status == "Pending")
+                            .OrderBy(a => a.StepOrder)
+                            .FirstOrDefaultAsync();
+                    }
+
+                    if (nextApproval != null)
+                    {
+                        request.Status = "InProgress";
+                        request.CurrentStepOrder = nextApproval.StepOrder;
+
+                        if (nextApproval.ApproverId != null)
+                        {
+                            _context.Notifications.Add(new Models.SystemModels.Notification
+                            {
+                                TenantId = tenantId,
+                                UserId = nextApproval.ApproverId.Value,
+                                Title = "Đơn cần duyệt",
+                                Message = $"Đơn {request.RequestCode} đã được duyệt bước trước và chuyển đến bạn",
+                                Type = "Approval",
+                                ActionUrl = $"/Requests/Detail/{request.Id}",
+                                RelatedRequestId = request.Id
+                            });
+
+                            await _hubContext.Clients.Group($"user_{nextApproval.ApproverId}")
+                                .SendAsync("ReceiveNotification", new
+                                {
+                                    title = "Đơn cần duyệt",
+                                    message = $"Đơn {request.RequestCode} cần bạn xử lý",
+                                    type = "Approval",
+                                    actionUrl = $"/Requests/Detail/{request.Id}"
+                                });
+                        }
+
+                        // Notify requester about progress
+                        _context.Notifications.Add(new Models.SystemModels.Notification
+                        {
+                            TenantId = tenantId,
+                            UserId = request.RequesterId,
+                            Title = "Đơn đang được xử lý",
+                            Message = $"Đơn {request.RequestCode} đã được duyệt bước {approval.StepName ?? approval.StepOrder.ToString()} và đang chờ bước tiếp theo",
+                            Type = "Info",
+                            ActionUrl = $"/Requests/Detail/{request.Id}",
+                            RelatedRequestId = request.Id
+                        });
+                    }
+                    else
+                    {
+                        // All steps approved by non-admin flow
+                        request.Status = "Approved";
+                        request.CompletedAt = DateTime.Now;
+                    }
+                }
+
+                if (request.Status == "Approved")
+                {
                     var templateName = request.FormTemplate?.Name ?? "";
                     if (request.FormTemplateId == 7 || templateName.Contains("cập nhật thông tin"))
                     {
@@ -285,6 +325,41 @@ namespace DANGCAPNE.Controllers
                 Details = model.Comments,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
             });
+
+            // --- CC Admin Users on action ---
+            var adminRoleId = await _context.Roles.Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync();
+            if (adminRoleId > 0)
+            {
+                var nextApproverId = request.Status == "InProgress" ? 
+                    await _context.RequestApprovals.Where(a => a.RequestId == request.Id && a.Status == "Pending").OrderBy(a => a.StepOrder).Select(a => a.ApproverId).FirstOrDefaultAsync() 
+                    : null;
+
+                var adminUserIds = await _context.UserRoles
+                    .Where(ur => ur.RoleId == adminRoleId && ur.UserId != userId.Value && ur.UserId != request.RequesterId && ur.UserId != nextApproverId)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync();
+                
+                string actionMsg = model.Action switch {
+                    "Approve" => "đã duyệt",
+                    "Reject" => "đã từ chối",
+                    "RequestEdit" => "yêu cầu chỉnh sửa",
+                    _ => "đã xử lý"
+                };
+
+                foreach (var adminId in adminUserIds)
+                {
+                    _context.Notifications.Add(new Models.SystemModels.Notification
+                    {
+                        TenantId = tenantId,
+                        UserId = adminId,
+                        Title = $"Thông báo: Đơn {actionMsg}",
+                        Message = $"{HttpContext.Session.GetString("FullName")} {actionMsg} đơn: {request.RequestCode}",
+                        Type = "Info",
+                        ActionUrl = $"/Requests/Detail/{request.Id}",
+                        RelatedRequestId = request.Id
+                    });
+                }
+            }
 
             await _context.SaveChangesAsync();
 
@@ -405,6 +480,40 @@ namespace DANGCAPNE.Controllers
                     Details = model.Comments,
                     IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
                 });
+
+                // --- CC Admin Users on bulk action ---
+                var adminRoleId = await _context.Roles.Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync();
+                if (adminRoleId > 0)
+                {
+                    var nextApproverId = request.Status == "InProgress" ? 
+                        await _context.RequestApprovals.Where(a => a.RequestId == request.Id && a.Status == "Pending").OrderBy(a => a.StepOrder).Select(a => a.ApproverId).FirstOrDefaultAsync() 
+                        : null;
+
+                    var adminUserIds = await _context.UserRoles
+                        .Where(ur => ur.RoleId == adminRoleId && ur.UserId != userId.Value && ur.UserId != request.RequesterId && ur.UserId != nextApproverId)
+                        .Select(ur => ur.UserId)
+                        .ToListAsync();
+                    
+                    string actionMsg = model.Action switch {
+                        "Approve" => "đã duyệt hàng loạt",
+                        "Reject" => "đã từ chối hàng loạt",
+                        _ => "đã xử lý hàng loạt"
+                    };
+
+                    foreach (var adminId in adminUserIds)
+                    {
+                        _context.Notifications.Add(new Models.SystemModels.Notification
+                        {
+                            TenantId = tenantId,
+                            UserId = adminId,
+                            Title = $"Thông báo: Đơn {actionMsg}",
+                            Message = $"{HttpContext.Session.GetString("FullName")} {actionMsg} đơn: {request.RequestCode}",
+                            Type = "Info",
+                            ActionUrl = $"/Requests/Detail/{request.Id}",
+                            RelatedRequestId = request.Id
+                        });
+                    }
+                }
 
                 processed++;
             }

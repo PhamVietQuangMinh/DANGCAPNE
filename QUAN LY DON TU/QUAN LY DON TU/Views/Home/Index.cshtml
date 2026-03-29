@@ -5,7 +5,7 @@
     var shiftMap = Model.Shifts.ToDictionary(s => s.Id, s => s);
 }
 <div class="page-content">
-    <div style="margin-bottom:24px">
+    <div class="stagger-elem" style="margin-bottom:24px">
         <div class="glass-card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
             <div>
                 <div class="text-muted" style="font-size:12px">Thời gian hiện tại</div>
@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <div class="glass-card mb-24">
+    <div class="glass-card mb-24 stagger-elem">
         <div class="card-header"><h3><i class="bi bi-lightning-charge-fill text-primary"></i> Lối tắt nhanh</h3></div>
         <div class="card-body">
             <div class="shortcut-grid">
@@ -72,19 +72,19 @@
     @if (Context.Session.GetString("PrimaryRole") == "Admin" || Context.Session.GetString("PrimaryRole") == "HR" || Context.Session.GetString("PrimaryRole") == "Manager")
     {
         <div class="charts-grid">
-            <div class="glass-card">
+            <div class="glass-card stagger-elem">
                 <div class="card-header"><h3 data-i18n="ChartMonthly"><i class="bi bi-bar-chart-fill text-primary"></i> Đơn từ theo tháng</h3></div>
                 <div class="chart-container"><canvas id="monthlyChart"></canvas></div>
             </div>
-            <div class="glass-card">
+            <div class="glass-card stagger-elem">
                 <div class="card-header"><h3 data-i18n="ChartStatus"><i class="bi bi-pie-chart-fill text-info"></i> Theo trạng thái</h3></div>
                 <div class="chart-container"><canvas id="statusChart"></canvas></div>
             </div>
-            <div class="glass-card">
+            <div class="glass-card stagger-elem">
                 <div class="card-header"><h3 data-i18n="ChartDept"><i class="bi bi-building text-warning"></i> Theo phòng ban</h3></div>
                 <div class="chart-container"><canvas id="deptChart"></canvas></div>
             </div>
-            <div class="glass-card">
+            <div class="glass-card stagger-elem">
                 <div class="card-header"><h3 data-i18n="ChartType"><i class="bi bi-file-earmark-text text-success"></i> Theo loại đơn</h3></div>
                 <div class="chart-container"><canvas id="typeChart"></canvas></div>
             </div>
@@ -94,7 +94,7 @@
     {
         <div class="emp-stats-grid">
             <!-- Card 1: Trạng thái hôm nay -->
-            <div class="emp-stat-card emp-stat-blue">
+            <div class="emp-stat-card emp-stat-blue stagger-elem">
                 <div class="emp-stat-bg-icon"><i class="bi bi-person-bounding-box"></i></div>
                 <div class="emp-stat-content">
                     <div class="emp-stat-label">Trạng thái hôm nay</div>

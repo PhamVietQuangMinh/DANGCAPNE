@@ -1,0 +1,163 @@
+@model DANGCAPNE.ViewModels.RequestCreateViewModel
+@{
+    ViewData["TitleI18n"] = "CreateTitlePrefix";
+    ViewData["TitleSuffix"] = Model.FormTemplate?.Name;
+    ViewData["Title"] = "Chỉnh sửa đơn";
+}
+<div class="page-content">
+    <div class="glass-card" style="max-width:900px;margin:0 auto">
+        <div class="card-header">
+            <h3>
+                <i class="bi @Model.FormTemplate?.Icon" style="color:@Model.FormTemplate?.IconColor"></i>
+                Chỉnh sửa: @Model.FormTemplate?.Name
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning mb-24" style="font-size:14px; display:flex; gap:12px; align-items:center;">
+                <i class="bi bi-info-circle-fill" style="font-size:18px;"></i>
+                <span>Đơn này đã bị yêu cầu chỉnh sửa. Vui lòng cập nhật lại thông tin bên dưới và gửi lại để trưởng phòng tiếp tục duyệt.</span>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="requestForm" asp-action="Edit" asp-route-id="@ViewBag.RequestId">
+                <div class="form-row" style="margin-bottom:20px">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="LabelReqTitle">Tiêu đề đơn</label>
+                            <input type="text" name="Title" class="form-control" placeholder="Nhập tiêu đề cho đơn này" data-i18n="PlaceholderReqTitle" value="@Model.Title" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    @foreach (var field in Model.Fields)
+                    {
+                        var colClass = field.Width == 6 ? "col-6" : field.Width == 4 ? "col-4" : "col-12";
+                        var savedVal = Model.FormData.ContainsKey(field.FieldName) ? Model.FormData[field.FieldName] : "";
+                        <div class="@colClass" data-field-name="@field.FieldName">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    @field.Label
+                                    @if (field.IsRequired) { <span class="text-danger">*</span> }
+                                </label>
+                                @switch (field.FieldType)
+                                {
+                                    case "Text":
+                                        <input type="text" name="@field.FieldName" class="form-control" placeholder="@field.Placeholder" value="@savedVal" @(field.IsRequired ? "required" : "") />
+                                        break;
+                                    case "Number":
+                                        <input type="number" name="@field.FieldName" class="form-control" placeholder="@field.Placeholder" value="@savedVal" @(field.IsRequired ? "required" : "") />
+                                        break;
+                                    case "Date":
+                                        <input type="date" name="@field.FieldName" class="form-control" value="@savedVal" @(field.IsRequired ? "required" : "") />
+                                        break;
+                                    case "Textarea":
+                                        <textarea name="@field.FieldName" class="form-control" placeholder="@field.Placeholder" @(field.IsRequired ? "required" : "")>@savedVal</textarea>
+                                        break;
+                                    case "Dropdown":
+                                        <select name="@field.FieldName" class="form-control" @(field.IsRequired ? "required" : "")>
+                                            <option value="" data-i18n="OptSelect">-- Chọn --</option>
+                                            @foreach (var opt in field.Options)
+                                            {
+                                                if (savedVal == opt.Value)
+                                                {
+                                                    <option value="@opt.Value" selected>@opt.Label</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@opt.Value">@opt.Label</option>
+                                                }
+                                            }
+                                        </select>
+                                        break;
+                                    case "FileUpload":
+                                        <input type="file" name="@field.FieldName" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx" />
+                                        @if (!string.IsNullOrEmpty(savedVal))
+                                        {
+                                            <small class="text-muted" style="display:block;margin-top:4px;">File hiện tại: Bản đã lưu</small>
+                                        }
+                                        break;
+                                    case "Checkbox":
+                                        if (savedVal == "true")
+                                        {
+                                            <label class="form-check">
+                                                <input type="checkbox" name="@field.FieldName" value="true" checked />
+                                                <span>@field.Placeholder</span>
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label class="form-check">
+                                                <input type="checkbox" name="@field.FieldName" value="true" />
+                                                <span>@field.Placeholder</span>
+                                            </label>
+                                        }
+                                        break;
+                                    default:
+                                        <input type="text" name="@field.FieldName" class="form-control" value="@savedVal" />
+                                        break;
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="form-row" style="margin-top:8px">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="LabelPriority">Mức độ ưu tiên</label>
+                            <select name="Priority" class="form-control">
+                                <option value="Normal" data-i18n="PriNormal">Bình thường</option>
+                                <option value="Low" data-i18n="PriLow">Thấp</option>
+                                <option value="High" data-i18n="PriHigh">Cao</option>
+                                <option value="Urgent" data-i18n="PriUrgent">Khẩn cấp</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;padding-top:24px;border-top:1px solid var(--border-glass)">
+                    <a href="@Url.Action("Detail", "Requests", new { id = ViewBag.RequestId })" class="btn btn-outline"><i class="bi bi-arrow-left"></i> <span data-i18n="BtnBack">Quay lại</span></a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send-check"></i> <span>Cập nhật & Gửi lại</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Dynamic visibility for Template 7 is preserved if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        if ('@Model.FormTemplate?.Id' === '7') {
+            const updateTypeSelect = document.querySelector('[name="update_type"]');
+            const fields = {
+                fullname: document.querySelector('[data-field-name="new_fullname"]'),
+                phone: document.querySelector('[data-field-name="new_phone"]'),
+                email: document.querySelector('[data-field-name="new_email"]')
+            };
+
+            function updateVisibility() {
+                const val = updateTypeSelect.value;
+                Object.values(fields).forEach(f => {
+                    if (f) {
+                        f.style.display = 'none';
+                        const input = f.querySelector('input');
+                        if (input) input.required = false;
+                    }
+                });
+                
+                if (val && fields[val]) {
+                    fields[val].style.display = 'block';
+                    const input = fields[val].querySelector('input');
+                    if (input) input.required = true;
+                }
+            }
+
+            if (updateTypeSelect) {
+                updateTypeSelect.addEventListener('change', updateVisibility);
+                updateVisibility(); 
+            }
+        }
+    });
+</script>
+}

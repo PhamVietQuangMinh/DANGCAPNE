@@ -5,8 +5,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
-
+/* Global CSS Variables Configuration */
 :root {
     /* Premium Light Palette based on anhlogin.png */
     --bg-primary: #f0f4f9;

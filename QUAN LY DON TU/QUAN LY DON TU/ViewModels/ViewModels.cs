@@ -149,6 +149,30 @@ namespace DANGCAPNE.ViewModels
         public List<WorkflowDef> Workflows { get; set; } = new();
         public List<Branch> Branches { get; set; } = new();
         public string ActiveTab { get; set; } = "users";
+        // HR Management tabs
+        public List<Shift> Shifts { get; set; } = new();
+        public List<ShiftSwapRequest> ShiftSwapRequests { get; set; } = new();
+        public List<Timesheet> Timesheets { get; set; } = new();
+        public string? EmployeeSearch { get; set; }
+        public int? EmployeeDepartmentId { get; set; }
+        public string? AttendanceSearch { get; set; }
+        public int? AttendanceDepartmentId { get; set; }
+        public DateTime? AttendanceFromDate { get; set; }
+        public DateTime? AttendanceToDate { get; set; }
+    }
+
+    public class AdminEmployeeDetailViewModel
+    {
+        public User Employee { get; set; } = new();
+        public List<Timesheet> RecentTimesheets { get; set; } = new();
+        public List<ShiftSwapRequest> RecentShiftRequests { get; set; } = new();
+    }
+
+    public class AdminShiftRequestEditViewModel
+    {
+        public ShiftSwapRequest ShiftRequest { get; set; } = new();
+        public List<User> Employees { get; set; } = new();
+        public List<Shift> Shifts { get; set; } = new();
     }
 
     public class UserEditViewModel

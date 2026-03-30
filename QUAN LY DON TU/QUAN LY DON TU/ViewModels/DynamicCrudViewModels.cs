@@ -3,6 +3,7 @@ namespace DANGCAPNE.ViewModels
     public class ModulesIndexViewModel
     {
         public List<ModuleLinkViewModel> Modules { get; set; } = new();
+        public List<ModuleSectionViewModel> Sections { get; set; } = new();
     }
 
     public class ModuleLinkViewModel
@@ -10,6 +11,15 @@ namespace DANGCAPNE.ViewModels
         public string Key { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string Audience { get; set; } = string.Empty;
+    }
+
+    public class ModuleSectionViewModel
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Audience { get; set; } = string.Empty;
+        public List<ModuleLinkViewModel> Modules { get; set; } = new();
     }
 
     public class DynamicCrudListViewModel

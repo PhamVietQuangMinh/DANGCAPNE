@@ -27,6 +27,8 @@
                     var isAdmin = roles.Contains("Admin");
                     var isHR = roles.Contains("HR");
                     var isManager = roles.Contains("Manager");
+                    var isEmployeeOnly = !isAdmin && !isHR && !isManager;
+                    var currentAdminTab = Context.Request.Query["tab"].ToString();
                 }
                 <div class="nav-section">
                     <div class="nav-section-title" data-i18n="TitleDashboard">Tổng quan</div>
@@ -43,12 +45,15 @@
                     <a href="@Url.Action("EmployeeRequests", "Home")" class="nav-link @(currentAction == "EmployeeRequests" ? "active" : "")" data-i18n="NavEmpRequests">
                         <i class="bi bi-clipboard-check"></i> Quản lý đơn từ
                     </a>
-                    <a href="@Url.Action("EmployeeTimeline", "Home")" class="nav-link @(currentAction == "EmployeeTimeline" ? "active" : "")" data-i18n="NavEmpTimeline">
-                        <i class="bi bi-clock-history"></i> Timeline chấm công
-                    </a>
-                    <a href="@Url.Action("EmployeeSchedule", "Home")" class="nav-link @(currentAction == "EmployeeSchedule" ? "active" : "")" data-i18n="NavEmpSchedule">
-                        <i class="bi bi-calendar-week"></i> Lịch biểu & ca làm
-                    </a>
+                    @if (isEmployeeOnly)
+                    {
+                        <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
+                            <i class="bi bi-clock-history"></i> Timeline cháº¥m cÃ´ng
+                        </a>
+                        <a href="@Url.Action("Index", "Shift")" class="nav-link @(currentController == "Shift" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpSchedule">
+                            <i class="bi bi-calendar3"></i> Lá»‹ch biá»ƒu & ca lÃ m
+                        </a>
+                    }
                     <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpAttendance">
                         <i class="bi bi-clock-fill"></i> Chấm công
                     </a>
@@ -97,27 +102,12 @@
                         <a href="@Url.Action("Index", "Modules")" class="nav-link @(currentController == "Modules" && currentAction == "Index" ? "active" : "")" data-i18n="NavModules">
                             <i class="bi bi-grid-3x3-gap-fill"></i> Phân hệ mở rộng
                         </a>
-                        <a href="@Url.Action("Rbac", "Modules")" class="nav-link @(currentController == "Modules" && currentAction == "Rbac" ? "active" : "")" data-i18n="NavRbac">
-                            <i class="bi bi-shield-lock-fill"></i> Phân quyền
-                        </a>
-                        <a href="@Url.Action("Recruitment", "Modules")" class="nav-link @(currentController == "Modules" && currentAction == "Recruitment" ? "active" : "")" data-i18n="NavRecruit">
-                            <i class="bi bi-person-plus-fill"></i> Tuyển dụng
-                        </a>
-                        <a href="@Url.Action("TrainingCompliance", "Modules")" class="nav-link @(currentController == "Modules" && currentAction == "TrainingCompliance" ? "active" : "")" data-i18n="NavTraining">
-                            <i class="bi bi-mortarboard-fill"></i> Đào tạo & Tuân thủ
-                        </a>
-                        <a href="@Url.Action("AdminOps", "Modules")" class="nav-link @(currentController == "Modules" && currentAction == "AdminOps" ? "active" : "")" data-i18n="NavAdminOps">
-                            <i class="bi bi-briefcase-fill"></i> Hành chính
-                        </a>
                     </div>
                 }
                 @if (isAdmin)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title" data-i18n="NavAdmin">Quản trị</div>
-                        <a href="@Url.Action("FormBuilder", "Admin")" class="nav-link @(currentAction == "FormBuilder" ? "active" : "")" data-i18n="NavBuilder">
-                            <i class="bi bi-ui-checks-grid"></i> Trình tạo biểu mẫu
-                        </a>
                         <a href="@Url.Action("Delegation", "Admin")" class="nav-link @(currentAction == "Delegation" ? "active" : "")" data-i18n="NavDelegate">
                             <i class="bi bi-arrow-left-right"></i> Ủy quyền
                         </a>
@@ -137,12 +127,12 @@
                         <a href="@Url.Action("Whitelist", "Admin")" class="nav-link @(currentAction == "Whitelist" ? "active" : "")">
                             <i class="bi bi-shield-check"></i> Phê duyệt Email
                         </a>
-                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" data-i18n="NavUsers">
+                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab != "timekeeping" ? "active" : "")" data-i18n="NavUsers">
                             <i class="bi bi-people-fill"></i> Quản lý nhân viên
                         </a>
                         @if (isAdmin || isHR)
                         {
-                            <a href="@Url.Action("Index", "Admin", new { tab = "timekeeping" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && Context.Request.Query["tab"] == "timekeeping" ? "active" : "")">
+                            <a href="@Url.Action("Index", "Admin", new { tab = "timekeeping" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab == "timekeeping" ? "active" : "")">
                                 <i class="bi bi-calendar-check"></i> Quản lý chấm công
                             </a>
                         }

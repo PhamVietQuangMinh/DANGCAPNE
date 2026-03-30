@@ -13,6 +13,7 @@ using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.Organization;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.Models.Requests;
+using DANGCAPNE.Models.SystemModels;
 
 namespace DANGCAPNE.Controllers
 {
@@ -31,11 +32,13 @@ namespace DANGCAPNE.Controllers
             var modules = GetModulesForCurrentUser();
             var model = new ModulesIndexViewModel
             {
+                Sections = BuildSectionsForCurrentUser(),
                 Modules = modules.Select(m => new ModuleLinkViewModel
                 {
                     Key = m.Key,
                     Title = m.Title,
-                    Description = m.Description
+                    Description = m.Description,
+                    Audience = string.Join(", ", m.AllowedRoles)
                 }).ToList()
             };
             ViewData["Title"] = "Modules";
@@ -343,6 +346,30 @@ namespace DANGCAPNE.Controllers
             "UpdatedAt"
         };
 
+        private static readonly Dictionary<string, ModuleConfig> ExtendedModules = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["requestapprovals"] = new ModuleConfig("requestapprovals", "Request Approvals", "Hàng đợi phê duyệt đơn", typeof(RequestApproval), "Admin", "HR", "Manager"),
+            ["requestauditlogs"] = new ModuleConfig("requestauditlogs", "Request Audit Logs", "Lịch sử phê duyệt và thao tác đơn", typeof(RequestAuditLog), "Admin", "HR", "Manager"),
+            ["notifications"] = new ModuleConfig("notifications", "Notifications", "Hệ thống thông báo đơn", typeof(Notification), "Admin", "HR", "Manager"),
+            ["authauditlogs"] = new ModuleConfig("authauditlogs", "Auth Audit Logs", "Nhật ký đăng nhập/đăng xuất", typeof(AuthAuditLog), "Admin", "HR"),
+            ["passwordhistories"] = new ModuleConfig("passwordhistories", "Password History", "Lịch sử đổi mật khẩu", typeof(PasswordHistory), "Admin"),
+            ["salaryadvancerequests"] = new ModuleConfig("salaryadvancerequests", "Salary Advance Requests", "Tạm ứng lương", typeof(SalaryAdvanceRequest), "Admin", "HR", "Manager"),
+            ["insuranceimportbatches"] = new ModuleConfig("insuranceimportbatches", "Insurance Import Batches", "Nhập BHXH từ Excel", typeof(InsuranceImportBatch), "Admin", "HR"),
+            ["timesheets"] = new ModuleConfig("timesheets", "Timesheets", "Báo cáo chấm công chi tiết", typeof(Timesheet), "Admin", "HR", "Manager"),
+            ["dailyattendances"] = new ModuleConfig("dailyattendances", "Daily Attendance", "Lịch sử chấm công đã tổng hợp", typeof(DailyAttendance), "Admin", "HR", "Manager"),
+            ["attendanceadjustmentrequests"] = new ModuleConfig("attendanceadjustmentrequests", "Attendance Adjustment Requests", "Điều chỉnh công", typeof(AttendanceAdjustmentRequest), "Admin", "HR", "Manager"),
+            ["lateearlyrequests"] = new ModuleConfig("lateearlyrequests", "Late/Early Requests", "Đi muộn/về sớm", typeof(LateEarlyRequest), "Admin", "HR", "Manager"),
+            ["shiftimportbatches"] = new ModuleConfig("shiftimportbatches", "Shift Import Batches", "Xếp ca từ Excel", typeof(ShiftImportBatch), "Admin", "HR"),
+            ["autoshiftplans"] = new ModuleConfig("autoshiftplans", "Auto Shift Plans", "Xếp ca tự động", typeof(AutoShiftPlan), "Admin", "HR"),
+            ["autoshiftplanitems"] = new ModuleConfig("autoshiftplanitems", "Auto Shift Plan Items", "Chi tiết xếp ca tự động", typeof(AutoShiftPlanItem), "Admin", "HR"),
+            ["shifttaskassignments"] = new ModuleConfig("shifttaskassignments", "Shift Task Assignments", "Giao việc trong ca", typeof(ShiftTaskAssignment), "Admin", "HR", "Manager"),
+            ["employeeonlinesessions"] = new ModuleConfig("employeeonlinesessions", "Employee Online Sessions", "Giám sát nhân sự trực tuyến", typeof(EmployeeOnlineSession), "Admin", "HR", "Manager"),
+            ["workflowroutingrules"] = new ModuleConfig("workflowroutingrules", "Workflow Routing Rules", "Routing tuần tự/song song", typeof(WorkflowRoutingRule), "Admin", "HR"),
+            ["digitalsignatureprofiles"] = new ModuleConfig("digitalsignatureprofiles", "Digital Signature Profiles", "Ký điện tử", typeof(DigitalSignatureProfile), "Admin", "HR"),
+            ["kpisnapshots"] = new ModuleConfig("kpisnapshots", "KPI Snapshots", "Dashboard KPI", typeof(KpiSnapshot), "Admin", "HR", "Manager"),
+            ["requestcategoryreportsnapshots"] = new ModuleConfig("requestcategoryreportsnapshots", "Request Category Reports", "Báo cáo theo loại đơn", typeof(RequestCategoryReportSnapshot), "Admin", "HR", "Manager")
+        };
+
         private void ApplyPostToEntity(object entity, DynamicCrudEditPostModel post, bool skipKey = false)
         {
             var type = entity.GetType();
@@ -496,7 +523,11 @@ namespace DANGCAPNE.Controllers
         private ModuleConfig? GetModuleOrDeny(string key, out IActionResult? denyResult)
         {
             denyResult = null;
-            if (!Modules.TryGetValue(NormalizeKey(key), out var module))
+            var allModules = Modules
+                .Concat(ExtendedModules)
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+
+            if (!allModules.TryGetValue(NormalizeKey(key), out var module))
             {
                 return null;
             }
@@ -517,7 +548,70 @@ namespace DANGCAPNE.Controllers
         {
             var roles = (HttpContext.Session.GetString("Roles") ?? string.Empty)
                 .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return Modules.Values.Where(m => m.AllowedRoles.Any(r => roles.Contains(r)));
+            return Modules.Values
+                .Concat(ExtendedModules.Values)
+                .Where(m => m.AllowedRoles.Any(r => roles.Contains(r)));
+        }
+
+        private List<ModuleSectionViewModel> BuildSectionsForCurrentUser()
+        {
+            var allModules = GetModulesForCurrentUser()
+                .ToDictionary(m => NormalizeKey(m.Key), m => m, StringComparer.OrdinalIgnoreCase);
+
+            ModuleSectionViewModel CreateSection(string title, string description, string audience, params string[] keys)
+            {
+                var modules = keys
+                    .Select(NormalizeKey)
+                    .Where(allModules.ContainsKey)
+                    .Select(key => allModules[key])
+                    .Select(m => new ModuleLinkViewModel
+                    {
+                        Key = m.Key,
+                        Title = m.Title,
+                        Description = m.Description,
+                        Audience = string.Join(", ", m.AllowedRoles)
+                    })
+                    .ToList();
+
+                return new ModuleSectionViewModel
+                {
+                    Title = title,
+                    Description = description,
+                    Audience = audience,
+                    Modules = modules
+                };
+            }
+
+            var sections = new List<ModuleSectionViewModel>
+            {
+                CreateSection(
+                    "Bảo mật & truy cập",
+                    "Dành cho Admin/HR theo dõi đăng nhập, đăng xuất, thay đổi mật khẩu và phân quyền.",
+                    "Admin, HR",
+                    "authauditlogs", "passwordhistories", "permissions", "rolepermissions", "userpermissions"),
+                CreateSection(
+                    "Phê duyệt & đơn nội bộ",
+                    "Dành cho Trưởng phòng, HR, Admin xử lý điều chỉnh công, đi muộn/về sớm, tạm ứng lương và lịch sử phê duyệt.",
+                    "Manager, HR, Admin",
+                    "requestapprovals", "requestauditlogs", "attendanceadjustmentrequests", "lateearlyrequests", "salaryadvancerequests", "shiftswaprequests", "notifications"),
+                CreateSection(
+                    "Chấm công & vận hành ca",
+                    "Dành cho HR/Admin quản trị chấm công chi tiết, import ca, giao việc trong ca và giám sát nhân sự trực tuyến.",
+                    "Manager, HR, Admin",
+                    "timesheets", "dailyattendances", "shiftimportbatches", "autoshiftplans", "autoshiftplanitems", "shifttaskassignments", "employeeonlinesessions"),
+                CreateSection(
+                    "Workflow & ký số",
+                    "Dành cho HR/Admin cấu hình routing tuần tự hoặc song song và hồ sơ ký điện tử.",
+                    "HR, Admin",
+                    "workflowroutingrules", "digitalsignatureprofiles"),
+                CreateSection(
+                    "Bảo hiểm, KPI & báo cáo",
+                    "Dành cho HR/Admin tổng hợp bảo hiểm, KPI và báo cáo theo loại đơn.",
+                    "Manager, HR, Admin",
+                    "insuranceimportbatches", "socialinsurances", "kpisnapshots", "requestcategoryreportsnapshots")
+            };
+
+            return sections.Where(s => s.Modules.Count > 0).ToList();
         }
 
         private ModulesIndexViewModel BuildGroupViewModel(string title, IEnumerable<string> keys)
@@ -530,7 +624,8 @@ namespace DANGCAPNE.Controllers
                 {
                     Key = m.Key,
                     Title = m.Title,
-                    Description = m.Description
+                    Description = m.Description,
+                    Audience = string.Join(", ", m.AllowedRoles)
                 }).ToList()
             };
         }
@@ -775,6 +870,98 @@ namespace DANGCAPNE.Controllers
                 ["RequesterShiftId"] = new FieldConfig { DisplayName = "Requester Shift", Select = SelectShifts() },
                 ["TargetShiftId"] = new FieldConfig { DisplayName = "Target Shift", Select = SelectShifts() },
                 ["ApprovedByManagerId"] = new FieldConfig { DisplayName = "Approved By", Select = SelectUsers() }
+            },
+            ["requestapprovals"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["RequestId"] = new FieldConfig { DisplayName = "Request", Select = SelectRequests() },
+                ["ApproverId"] = new FieldConfig { DisplayName = "Approver", Select = SelectUsers() }
+            },
+            ["requestauditlogs"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["RequestId"] = new FieldConfig { DisplayName = "Request", Select = SelectRequests() },
+                ["UserId"] = new FieldConfig { DisplayName = "User", Select = SelectUsers() }
+            },
+            ["notifications"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Recipient", Select = SelectUsers() },
+                ["RelatedRequestId"] = new FieldConfig { DisplayName = "Related Request", Select = SelectRequests() }
+            },
+            ["passwordhistories"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "User", Select = SelectUsers() },
+                ["ChangedByUserId"] = new FieldConfig { DisplayName = "Changed By", Select = SelectUsers() }
+            },
+            ["timesheets"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() }
+            },
+            ["dailyattendances"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() },
+                ["ShiftId"] = new FieldConfig { DisplayName = "Shift", Select = SelectShifts() }
+            },
+            ["salaryadvancerequests"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() },
+                ["ApprovedByUserId"] = new FieldConfig { DisplayName = "Approved By", Select = SelectUsers() }
+            },
+            ["insuranceimportbatches"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["ImportedByUserId"] = new FieldConfig { DisplayName = "Imported By", Select = SelectUsers() }
+            },
+            ["attendanceadjustmentrequests"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() },
+                ["TimesheetId"] = new FieldConfig { DisplayName = "Timesheet", Select = SelectTimesheets() },
+                ["ApprovedByUserId"] = new FieldConfig { DisplayName = "Approved By", Select = SelectUsers() }
+            },
+            ["lateearlyrequests"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() },
+                ["ApprovedByUserId"] = new FieldConfig { DisplayName = "Approved By", Select = SelectUsers() }
+            },
+            ["shiftimportbatches"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["ImportedByUserId"] = new FieldConfig { DisplayName = "Imported By", Select = SelectUsers() }
+            },
+            ["autoshiftplans"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["DepartmentId"] = new FieldConfig { DisplayName = "Department", Select = SelectDepartments() },
+                ["GeneratedByUserId"] = new FieldConfig { DisplayName = "Generated By", Select = SelectUsers() }
+            },
+            ["autoshiftplanitems"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["PlanId"] = new FieldConfig { DisplayName = "Plan", Select = SelectAutoShiftPlans() },
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() },
+                ["ShiftId"] = new FieldConfig { DisplayName = "Shift", Select = SelectShifts() }
+            },
+            ["shifttaskassignments"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["ShiftId"] = new FieldConfig { DisplayName = "Shift", Select = SelectShifts() },
+                ["AssignedToUserId"] = new FieldConfig { DisplayName = "Assigned To", Select = SelectUsers() },
+                ["AssignedByUserId"] = new FieldConfig { DisplayName = "Assigned By", Select = SelectUsers() }
+            },
+            ["employeeonlinesessions"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() }
+            },
+            ["workflowroutingrules"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["WorkflowId"] = new FieldConfig { DisplayName = "Workflow", Select = SelectWorkflows() },
+                ["StepId"] = new FieldConfig { DisplayName = "Workflow Step", Select = SelectWorkflowSteps() }
+            },
+            ["digitalsignatureprofiles"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "User", Select = SelectUsers() }
+            },
+            ["kpisnapshots"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UserId"] = new FieldConfig { DisplayName = "User", Select = SelectUsers() },
+                ["DepartmentId"] = new FieldConfig { DisplayName = "Department", Select = SelectDepartments() }
+            },
+            ["requestcategoryreportsnapshots"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["GeneratedByUserId"] = new FieldConfig { DisplayName = "Generated By", Select = SelectUsers() }
             }
         };
 
@@ -794,6 +981,12 @@ namespace DANGCAPNE.Controllers
         {
             Query = () => _context.Users.AsNoTracking().ToList<object>(),
             LabelField = "FullName"
+        };
+
+        private SelectConfig SelectRequests() => new()
+        {
+            Query = () => _context.Requests.AsNoTracking().ToList<object>(),
+            LabelField = "RequestCode"
         };
 
         private SelectConfig SelectDepartments() => new()
@@ -889,6 +1082,30 @@ namespace DANGCAPNE.Controllers
         private SelectConfig SelectShifts() => new()
         {
             Query = () => _context.Shifts.AsNoTracking().ToList<object>(),
+            LabelField = "Name"
+        };
+
+        private SelectConfig SelectTimesheets() => new()
+        {
+            Query = () => _context.Timesheets.AsNoTracking().ToList<object>(),
+            LabelField = "Id"
+        };
+
+        private SelectConfig SelectAutoShiftPlans() => new()
+        {
+            Query = () => _context.AutoShiftPlans.AsNoTracking().ToList<object>(),
+            LabelField = "Name"
+        };
+
+        private SelectConfig SelectWorkflows() => new()
+        {
+            Query = () => _context.Workflows.AsNoTracking().ToList<object>(),
+            LabelField = "Name"
+        };
+
+        private SelectConfig SelectWorkflowSteps() => new()
+        {
+            Query = () => _context.WorkflowSteps.AsNoTracking().ToList<object>(),
             LabelField = "Name"
         };
     }

@@ -47,6 +47,15 @@ using (var scope = app.Services.CreateScope())
         // This is safe to ignore if schema is already up-to-date
         Console.WriteLine($"[Startup] Migration skipped: {ex.Message}");
     }
+
+    try
+    {
+        await SchemaPatchRunner.EnsureExtendedSchemaAsync(db);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Startup] Extended schema patch skipped: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.

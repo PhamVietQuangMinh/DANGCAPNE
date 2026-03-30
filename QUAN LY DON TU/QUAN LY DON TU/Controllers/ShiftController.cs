@@ -14,6 +14,24 @@ namespace DANGCAPNE.Controllers
             _context = context;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var today = DateTime.Today;
+            var schedules = await _context.UserShifts
+                .Include(us => us.Shift)
+                .Where(us => us.UserId == userId &&
+                    us.EffectiveDate.Date <= today.AddDays(30) &&
+                    (us.EndDate == null || us.EndDate.Value.Date >= today.AddDays(-7)))
+                .OrderBy(us => us.EffectiveDate)
+                .ToListAsync();
+
+            return View(schedules);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateSwapRequest(int targetUserId, int requesterShiftId, DateTime requesterDate, int targetShiftId, DateTime targetDate, string reason)
         {

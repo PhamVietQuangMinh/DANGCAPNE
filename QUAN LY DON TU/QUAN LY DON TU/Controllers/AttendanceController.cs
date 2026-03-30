@@ -38,6 +38,20 @@ namespace DANGCAPNE.Controllers
             return View();
         }
 
+        public async Task<IActionResult> Timeline()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var history = await _context.Timesheets
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.Date)
+                .Take(30)
+                .ToListAsync();
+
+            return View(history);
+        }
+
         public IActionResult RegisterFace()
         {
             var userId = HttpContext.Session.GetInt32("UserId");

@@ -5,6 +5,7 @@ using DANGCAPNE.ViewModels;
 using DANGCAPNE.Models.Organization;
 using Microsoft.AspNetCore.SignalR;
 using DANGCAPNE.Hubs;
+using Npgsql;
 namespace DANGCAPNE.Controllers
 {
     public class AccountController : Controller
@@ -33,6 +34,7 @@ namespace DANGCAPNE.Controllers
         {
             if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
             {
+                await WriteAuthAuditLog(null, model.Email, "LoginFailed", false, "Missing credentials");
                 ViewBag.Error = "Vui lòng nhập đầy đủ thông tin đăng nhập.";
                 return View(model);
             }
@@ -45,30 +47,35 @@ namespace DANGCAPNE.Controllers
 
             if (user == null)
             {
+                await WriteAuthAuditLog(null, model.Email, "LoginFailed", false, "Invalid email or password");
                 ViewBag.Error = "Email hoặc mật khẩu không chính xác.";
                 return View(model);
             }
 
             if (user.Status == "PendingApproval")
             {
+                await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Pending approval");
                 ViewBag.Error = "Tài khoản của bạn đang chờ quản lý phê duyệt. Vui lòng quay lại sau.";
                 return View(model);
             }
 
             if (user.Status == "Rejected")
             {
+                await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Registration rejected");
                 ViewBag.Error = "Yêu cầu đăng ký của bạn đã bị từ chối. Vui lòng liên hệ bộ phận nhân sự.";
                 return View(model);
             }
 
             if (user.Status != "Active")
             {
+                await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Inactive account");
                 ViewBag.Error = "Tài khoản của bạn hiện đang bị khóa hoặc không khả dụng.";
                 return View(model);
             }
 
             // Biometric Interception
             HttpContext.Session.SetInt32("PendingUserId", user.Id);
+            await WriteAuthAuditLog(user.Id, user.Email, "LoginSuccess", true, "Password verified, awaiting biometric verification");
 
             if (!user.IsBiometricEnrolled)
             {
@@ -114,6 +121,7 @@ namespace DANGCAPNE.Controllers
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            await WriteAuthAuditLog(user.Id, user.Email, "RegisterSubmitted", true, "New account submitted for approval");
 
             // Notify HR, Admin, and Managers
             var hrAdmins = await _context.UserRoles
@@ -152,6 +160,9 @@ namespace DANGCAPNE.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var email = HttpContext.Session.GetString("Email");
+            _ = WriteAuthAuditLog(userId, email, "Logout", true, "User logged out");
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
@@ -208,13 +219,52 @@ namespace DANGCAPNE.Controllers
                     return RedirectToAction("Profile");
                 }
                 user.PasswordHash = HashPassword(model.NewPassword);
+                _context.PasswordHistories.Add(new DANGCAPNE.Models.Security.PasswordHistory
+                {
+                    TenantId = user.TenantId,
+                    UserId = user.Id,
+                    PasswordHash = user.PasswordHash,
+                    ChangedByUserId = user.Id,
+                    ChangeSource = "SelfService"
+                });
             }
 
             user.Phone = model.User?.Phone ?? user.Phone;
             user.TwoFactorEnabled = model.TwoFactorEnabled;
             user.UpdatedAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (PostgresException ex) when (ex.SqlState == "42P01")
+            {
+                _context.ChangeTracker.Clear();
+                await SchemaPatchRunner.EnsureExtendedSchemaAsync(_context);
+
+                var reloadedUser = await _context.Users.FindAsync(userId);
+                if (reloadedUser == null) return RedirectToAction("Login");
+
+                reloadedUser.Phone = model.User?.Phone ?? reloadedUser.Phone;
+                reloadedUser.TwoFactorEnabled = model.TwoFactorEnabled;
+                reloadedUser.UpdatedAt = DateTime.Now;
+
+                if (!string.IsNullOrEmpty(model.NewPassword))
+                {
+                    reloadedUser.PasswordHash = HashPassword(model.NewPassword);
+                    _context.PasswordHistories.Add(new DANGCAPNE.Models.Security.PasswordHistory
+                    {
+                        TenantId = reloadedUser.TenantId,
+                        UserId = reloadedUser.Id,
+                        PasswordHash = reloadedUser.PasswordHash,
+                        ChangedByUserId = reloadedUser.Id,
+                        ChangeSource = "SelfService"
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                user = reloadedUser;
+            }
             TempData["Success"] = "Cập nhật thông tin thành công!";
             HttpContext.Session.SetString("FullName", user.FullName);
 
@@ -270,6 +320,46 @@ namespace DANGCAPNE.Controllers
             var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password + "DANGCAPNE_SALT"));
             return Convert.ToBase64String(bytes);
         }
+
+        private async Task WriteAuthAuditLog(int? userId, string? email, string action, bool isSuccess, string? details = null)
+        {
+            try
+            {
+                var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+                await SaveAuthAuditLogInternalAsync(new DANGCAPNE.Models.Security.AuthAuditLog
+                {
+                    TenantId = tenantId,
+                    UserId = userId,
+                    Email = email ?? string.Empty,
+                    Action = action,
+                    IsSuccess = isSuccess,
+                    Details = details,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    UserAgent = Request.Headers.UserAgent.ToString()
+                });
+            }
+            catch
+            {
+                // Ignore audit log errors in authentication flow.
+            }
+        }
+
+        private async Task SaveAuthAuditLogInternalAsync(DANGCAPNE.Models.Security.AuthAuditLog log)
+        {
+            try
+            {
+                _context.AuthAuditLogs.Add(log);
+                await _context.SaveChangesAsync();
+            }
+            catch (PostgresException ex) when (ex.SqlState == "42P01")
+            {
+                _context.ChangeTracker.Clear();
+                await SchemaPatchRunner.EnsureExtendedSchemaAsync(_context);
+                _context.AuthAuditLogs.Add(log);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> EnrollBiometrics()
         {

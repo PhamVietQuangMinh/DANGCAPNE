@@ -2,6 +2,16 @@
 // Automatically runs on every page that includes site.js
 
 document.addEventListener("DOMContentLoaded", () => {
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    const sidebarScrollKey = 'dangcapne:sidebar-scroll';
+
+    if (sidebarNav) {
+        const savedSidebarScroll = sessionStorage.getItem(sidebarScrollKey);
+        if (savedSidebarScroll !== null) {
+            sidebarNav.scrollTop = parseInt(savedSidebarScroll, 10) || 0;
+        }
+    }
+
     // 1. Page Load Fade-In Transition & Dashboard Intro
     document.body.classList.add("page-fade-in");
 
@@ -132,6 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const href = link.getAttribute('href');
             if (href && href !== '#' && !href.startsWith('javascript:')) {
+                if (sidebarNav) {
+                    sessionStorage.setItem(sidebarScrollKey, String(sidebarNav.scrollTop));
+                }
                 e.preventDefault();
                 document.body.classList.remove("page-fade-in");
                 document.body.classList.add("page-fade-out");

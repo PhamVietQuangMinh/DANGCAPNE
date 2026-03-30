@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
 using DANGCAPNE.Data;
 using DANGCAPNE.Hubs;
+using DANGCAPNE.Models.HR;
 using DANGCAPNE.Models.Requests;
+using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.ViewModels;
 
@@ -361,6 +363,8 @@ namespace DANGCAPNE.Controllers
                 }
             }
 
+            await SyncExtendedBusinessRequestStatusAsync(request.Id, request.Status, userId.Value, model.Comments);
+
             await _context.SaveChangesAsync();
 
             TempData["Success"] = model.Action switch
@@ -515,12 +519,69 @@ namespace DANGCAPNE.Controllers
                     }
                 }
 
+                await SyncExtendedBusinessRequestStatusAsync(request.Id, request.Status, userId.Value, model.Comments);
+
                 processed++;
             }
 
             await _context.SaveChangesAsync();
             TempData["Success"] = $"Đã xử lý {processed} đơn thành công!";
             return RedirectToAction("Index");
+        }
+
+        private async Task SyncExtendedBusinessRequestStatusAsync(int sourceRequestId, string status, int actionUserId, string? comments)
+        {
+            var adjustment = await _context.AttendanceAdjustmentRequests
+                .FirstOrDefaultAsync(x => x.SourceRequestId == sourceRequestId);
+            if (adjustment != null)
+            {
+                adjustment.Status = MapStructuredStatus(status);
+                adjustment.Notes = comments;
+                adjustment.UpdatedAt = DateTime.Now;
+                if (status == "Approved" || status == "Rejected")
+                {
+                    adjustment.ApprovedByUserId = actionUserId;
+                    adjustment.ProcessedAt = DateTime.Now;
+                }
+            }
+
+            var lateEarly = await _context.LateEarlyRequests
+                .FirstOrDefaultAsync(x => x.SourceRequestId == sourceRequestId);
+            if (lateEarly != null)
+            {
+                lateEarly.Status = MapStructuredStatus(status);
+                lateEarly.Notes = comments;
+                lateEarly.UpdatedAt = DateTime.Now;
+                if (status == "Approved" || status == "Rejected")
+                {
+                    lateEarly.ApprovedByUserId = actionUserId;
+                    lateEarly.ProcessedAt = DateTime.Now;
+                }
+            }
+
+            var advance = await _context.SalaryAdvanceRequests
+                .FirstOrDefaultAsync(x => x.SourceRequestId == sourceRequestId);
+            if (advance != null)
+            {
+                advance.Status = status == "Approved" ? "Approved" : status == "Rejected" ? "Rejected" : "Pending";
+                advance.Notes = comments;
+                advance.UpdatedAt = DateTime.Now;
+                if (status == "Approved" || status == "Rejected")
+                {
+                    advance.ApprovedByUserId = actionUserId;
+                    advance.ApprovedAt = DateTime.Now;
+                }
+            }
+        }
+
+        private static string MapStructuredStatus(string requestStatus)
+        {
+            return requestStatus switch
+            {
+                "Approved" => "Approved",
+                "Rejected" => "Rejected",
+                _ => "Pending"
+            };
         }
     }
 }

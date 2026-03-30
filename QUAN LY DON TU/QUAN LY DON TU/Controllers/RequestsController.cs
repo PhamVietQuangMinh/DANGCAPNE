@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using DANGCAPNE.Data;
+using DANGCAPNE.Models.HR;
 using DANGCAPNE.Models.Requests;
+using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.ViewModels;
 using Newtonsoft.Json;
@@ -69,6 +72,7 @@ namespace DANGCAPNE.Controllers
             if (userId == null) return RedirectToAction("Login", "Account");
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            await EnsureExtendedTemplatesAsync(tenantId);
 
             // Self-healing seed for Template 7 (Update Info Request)
             if (templateId == 7)
@@ -185,6 +189,8 @@ namespace DANGCAPNE.Controllers
                     });
                 }
             }
+
+            await SyncExtendedBusinessRequestAsync(request, form, tenantId, userId.Value);
 
             // Handle file uploads
             var aiTasks = new List<Task<string>>();
@@ -661,6 +667,7 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            await EnsureExtendedTemplatesAsync(tenantId);
 
             // Self-healing seed for Template 7 (Update Info Request)
             var hasUpdateTypeField = await _context.FormFields.AnyAsync(f => f.FormTemplateId == 7 && f.FieldName == "update_type");
@@ -750,6 +757,296 @@ namespace DANGCAPNE.Controllers
 
             return View(templates);
         }
+
+        private async Task EnsureExtendedTemplatesAsync(int tenantId)
+        {
+            var templates = new[]
+            {
+                new { Id = 11, Name = "Đơn điều chỉnh công", Category = "Attendance", Icon = "bi-pencil-square", IconColor = "#f59e0b", WorkflowId = 1, RequiresFinancialApproval = false },
+                new { Id = 12, Name = "Đơn đi muộn/về sớm", Category = "Attendance", Icon = "bi-alarm", IconColor = "#ef4444", WorkflowId = 1, RequiresFinancialApproval = false },
+                new { Id = 13, Name = "Đơn tạm ứng lương", Category = "Expense", Icon = "bi-wallet2", IconColor = "#22c55e", WorkflowId = 2, RequiresFinancialApproval = true }
+            };
+
+            foreach (var templateDef in templates)
+            {
+                var template = await _context.FormTemplates.FirstOrDefaultAsync(f => f.Id == templateDef.Id);
+                if (template == null)
+                {
+                    template = new DANGCAPNE.Models.Workflow.FormTemplate
+                    {
+                        Id = templateDef.Id,
+                        TenantId = tenantId,
+                        Name = templateDef.Name,
+                        Category = templateDef.Category,
+                        Icon = templateDef.Icon,
+                        IconColor = templateDef.IconColor,
+                        WorkflowId = templateDef.WorkflowId,
+                        RequiresFinancialApproval = templateDef.RequiresFinancialApproval,
+                        IsActive = true,
+                        Description = templateDef.Name,
+                        CreatedAt = DateTime.Now
+                    };
+                    _context.FormTemplates.Add(template);
+                }
+                else
+                {
+                    template.IsActive = true;
+                    template.WorkflowId = templateDef.WorkflowId;
+                    template.RequiresFinancialApproval = templateDef.RequiresFinancialApproval;
+                    template.Icon = templateDef.Icon;
+                    template.IconColor = templateDef.IconColor;
+                    template.Category = templateDef.Category;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            await EnsureTemplateFieldsAsync(11, new[]
+            {
+                new TemplateFieldSeed(1001, "Ngày cần điều chỉnh", "attendance_date", "Date", true, 1, 6),
+                new TemplateFieldSeed(1002, "Giờ vào đề nghị", "requested_checkin", "Text", false, 2, 3),
+                new TemplateFieldSeed(1003, "Giờ ra đề nghị", "requested_checkout", "Text", false, 3, 3),
+                new TemplateFieldSeed(1004, "Lý do điều chỉnh", "reason", "Textarea", true, 4, 12),
+                new TemplateFieldSeed(1005, "Minh chứng đính kèm", "attachment", "FileUpload", false, 5, 12)
+            });
+
+            await EnsureTemplateFieldsAsync(12, new[]
+            {
+                new TemplateFieldSeed(1011, "Ngày áp dụng", "attendance_date", "Date", true, 1, 6),
+                new TemplateFieldSeed(1012, "Loại đăng ký", "request_type", "Dropdown", true, 2, 6),
+                new TemplateFieldSeed(1013, "Giờ dự kiến", "expected_time", "Text", true, 3, 6),
+                new TemplateFieldSeed(1014, "Giờ thực tế", "actual_time", "Text", true, 4, 6),
+                new TemplateFieldSeed(1015, "Lý do", "reason", "Textarea", true, 5, 12)
+            }, new[]
+            {
+                new TemplateOptionSeed(2011, 1012, "Đi muộn", "LateArrival", 1),
+                new TemplateOptionSeed(2012, 1012, "Về sớm", "EarlyLeave", 2)
+            });
+
+            await EnsureTemplateFieldsAsync(13, new[]
+            {
+                new TemplateFieldSeed(1021, "Số tiền tạm ứng", "advance_amount", "Number", true, 1, 6),
+                new TemplateFieldSeed(1022, "Tháng lương khấu trừ", "payroll_month", "Text", true, 2, 6),
+                new TemplateFieldSeed(1023, "Ngày cần nhận", "needed_by_date", "Date", true, 3, 6),
+                new TemplateFieldSeed(1024, "Lý do tạm ứng", "reason", "Textarea", true, 4, 12),
+                new TemplateFieldSeed(1025, "Tài liệu đính kèm", "attachment", "FileUpload", false, 5, 12)
+            });
+        }
+
+        private async Task EnsureTemplateFieldsAsync(int templateId, IEnumerable<TemplateFieldSeed> fields, IEnumerable<TemplateOptionSeed>? options = null)
+        {
+            var existingFields = await _context.FormFields.Where(f => f.FormTemplateId == templateId).ToListAsync();
+            foreach (var fieldSeed in fields)
+            {
+                var field = existingFields.FirstOrDefault(f => f.Id == fieldSeed.Id)
+                    ?? existingFields.FirstOrDefault(f => f.FieldName == fieldSeed.FieldName);
+
+                if (field == null)
+                {
+                    field = new DANGCAPNE.Models.Workflow.FormField
+                    {
+                        Id = fieldSeed.Id,
+                        FormTemplateId = templateId
+                    };
+                    _context.FormFields.Add(field);
+                    existingFields.Add(field);
+                }
+
+                field.Label = fieldSeed.Label;
+                field.FieldName = fieldSeed.FieldName;
+                field.FieldType = fieldSeed.FieldType;
+                field.IsRequired = fieldSeed.IsRequired;
+                field.DisplayOrder = fieldSeed.DisplayOrder;
+                field.Width = fieldSeed.Width;
+            }
+
+            if (options != null)
+            {
+                var fieldIds = existingFields.Select(f => f.Id).ToList();
+                var existingOptions = await _context.FormFieldOptions.Where(o => fieldIds.Contains(o.FormFieldId)).ToListAsync();
+                foreach (var optionSeed in options)
+                {
+                    var option = existingOptions.FirstOrDefault(o => o.Id == optionSeed.Id)
+                        ?? existingOptions.FirstOrDefault(o => o.FormFieldId == optionSeed.FormFieldId && o.Value == optionSeed.Value);
+
+                    if (option == null)
+                    {
+                        option = new DANGCAPNE.Models.Workflow.FormFieldOption
+                        {
+                            Id = optionSeed.Id,
+                            FormFieldId = optionSeed.FormFieldId
+                        };
+                        _context.FormFieldOptions.Add(option);
+                        existingOptions.Add(option);
+                    }
+
+                    option.Label = optionSeed.Label;
+                    option.Value = optionSeed.Value;
+                    option.DisplayOrder = optionSeed.DisplayOrder;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task SyncExtendedBusinessRequestAsync(Request request, IFormCollection form, int tenantId, int userId)
+        {
+            switch (request.FormTemplateId)
+            {
+                case 11:
+                    await UpsertAttendanceAdjustmentRequestAsync(request, form, tenantId, userId);
+                    break;
+                case 12:
+                    await UpsertLateEarlyRequestAsync(request, form, tenantId, userId);
+                    break;
+                case 13:
+                    await UpsertSalaryAdvanceRequestAsync(request, form, tenantId, userId);
+                    break;
+            }
+        }
+
+        private async Task UpsertAttendanceAdjustmentRequestAsync(Request request, IFormCollection form, int tenantId, int userId)
+        {
+            var attendanceDate = ParseDateOrNull(form["attendance_date"]) ?? DateTime.Today;
+            var requestedCheckIn = CombineDateAndTime(attendanceDate, form["requested_checkin"]);
+            var requestedCheckOut = CombineDateAndTime(attendanceDate, form["requested_checkout"]);
+            var timesheetId = await _context.Timesheets
+                .Where(t => t.UserId == userId && t.Date.Date == attendanceDate.Date)
+                .Select(t => (int?)t.Id)
+                .FirstOrDefaultAsync();
+
+            var entity = await _context.AttendanceAdjustmentRequests
+                .FirstOrDefaultAsync(x => x.SourceRequestId == request.Id);
+
+            if (entity == null)
+            {
+                entity = new AttendanceAdjustmentRequest
+                {
+                    TenantId = tenantId,
+                    SourceRequestId = request.Id,
+                    UserId = userId,
+                    CreatedAt = DateTime.Now
+                };
+                _context.AttendanceAdjustmentRequests.Add(entity);
+            }
+
+            entity.TimesheetId = timesheetId;
+            entity.AttendanceDate = attendanceDate.Date;
+            entity.RequestedCheckIn = requestedCheckIn;
+            entity.RequestedCheckOut = requestedCheckOut;
+            entity.Reason = form["reason"].ToString();
+            entity.Status = "Pending";
+            entity.UpdatedAt = DateTime.Now;
+        }
+
+        private async Task UpsertLateEarlyRequestAsync(Request request, IFormCollection form, int tenantId, int userId)
+        {
+            var attendanceDate = ParseDateOrNull(form["attendance_date"]) ?? DateTime.Today;
+            var entity = await _context.LateEarlyRequests
+                .FirstOrDefaultAsync(x => x.SourceRequestId == request.Id);
+
+            if (entity == null)
+            {
+                entity = new LateEarlyRequest
+                {
+                    TenantId = tenantId,
+                    SourceRequestId = request.Id,
+                    UserId = userId,
+                    CreatedAt = DateTime.Now
+                };
+                _context.LateEarlyRequests.Add(entity);
+            }
+
+            entity.AttendanceDate = attendanceDate.Date;
+            entity.RequestType = form["request_type"].ToString();
+            entity.ExpectedTime = CombineDateAndTime(attendanceDate, form["expected_time"]) ?? attendanceDate;
+            entity.ActualTime = CombineDateAndTime(attendanceDate, form["actual_time"]) ?? attendanceDate;
+            entity.Reason = form["reason"].ToString();
+            entity.Status = "Pending";
+            entity.UpdatedAt = DateTime.Now;
+        }
+
+        private async Task UpsertSalaryAdvanceRequestAsync(Request request, IFormCollection form, int tenantId, int userId)
+        {
+            var entity = await _context.SalaryAdvanceRequests
+                .FirstOrDefaultAsync(x => x.SourceRequestId == request.Id);
+
+            if (entity == null)
+            {
+                entity = new SalaryAdvanceRequest
+                {
+                    TenantId = tenantId,
+                    SourceRequestId = request.Id,
+                    UserId = userId,
+                    CreatedAt = DateTime.Now
+                };
+                _context.SalaryAdvanceRequests.Add(entity);
+            }
+
+            entity.Amount = ParseDecimalOrDefault(form["advance_amount"]);
+            entity.PayrollMonth = form["payroll_month"].ToString();
+            entity.NeededByDate = ParseDateOrNull(form["needed_by_date"]) ?? DateTime.Today;
+            entity.Reason = form["reason"].ToString();
+            entity.Status = "Pending";
+            entity.UpdatedAt = DateTime.Now;
+        }
+
+        private static DateTime? ParseDateOrNull(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return null;
+            }
+
+            if (DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed) ||
+                DateTime.TryParse(raw, CultureInfo.GetCultureInfo("vi-VN"), DateTimeStyles.None, out parsed))
+            {
+                return parsed;
+            }
+
+            return null;
+        }
+
+        private static DateTime? CombineDateAndTime(DateTime date, string? rawTime)
+        {
+            if (string.IsNullOrWhiteSpace(rawTime))
+            {
+                return null;
+            }
+
+            if (TimeSpan.TryParse(rawTime, CultureInfo.InvariantCulture, out var time) ||
+                TimeSpan.TryParse(rawTime, CultureInfo.GetCultureInfo("vi-VN"), out time))
+            {
+                return date.Date.Add(time);
+            }
+
+            if (DateTime.TryParse(rawTime, out var parsed))
+            {
+                return date.Date.Add(parsed.TimeOfDay);
+            }
+
+            return null;
+        }
+
+        private static decimal ParseDecimalOrDefault(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return 0;
+            }
+
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) ||
+                decimal.TryParse(raw, NumberStyles.Any, CultureInfo.GetCultureInfo("vi-VN"), out parsed))
+            {
+                return parsed;
+            }
+
+            return 0;
+        }
+
+        private sealed record TemplateFieldSeed(int Id, string Label, string FieldName, string FieldType, bool IsRequired, int DisplayOrder, int Width);
+        private sealed record TemplateOptionSeed(int Id, int FormFieldId, string Label, string Value, int DisplayOrder);
+
         [HttpPost]
         public async Task<IActionResult> Chat([FromBody] AIChatRequest payload)
         {

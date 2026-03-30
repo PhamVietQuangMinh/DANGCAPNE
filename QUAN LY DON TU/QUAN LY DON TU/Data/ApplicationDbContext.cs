@@ -33,6 +33,8 @@ namespace DANGCAPNE.Data
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<UserPermission> UserPermissions { get; set; }
+        public DbSet<AuthAuditLog> AuthAuditLogs { get; set; }
+        public DbSet<PasswordHistory> PasswordHistories { get; set; }
 
         // Module 2: Workflow & Dynamic Forms
         public DbSet<FormTemplate> FormTemplates { get; set; }
@@ -45,6 +47,7 @@ namespace DANGCAPNE.Data
         public DbSet<Delegation> Delegations { get; set; }
         public DbSet<SlaConfig> SlaConfigs { get; set; }
         public DbSet<EscalationRule> EscalationRules { get; set; }
+        public DbSet<WorkflowRoutingRule> WorkflowRoutingRules { get; set; }
 
         // Module 3: Requests & Execution
         public DbSet<Request> Requests { get; set; }
@@ -73,7 +76,9 @@ namespace DANGCAPNE.Data
         public DbSet<PerformanceReviewItem> PerformanceReviewItems { get; set; }
         public DbSet<SalaryAdjustmentRequest> SalaryAdjustmentRequests { get; set; }
         public DbSet<BonusRequest> BonusRequests { get; set; }
+        public DbSet<SalaryAdvanceRequest> SalaryAdvanceRequests { get; set; }
         public DbSet<SocialInsurance> SocialInsurances { get; set; }
+        public DbSet<InsuranceImportBatch> InsuranceImportBatches { get; set; }
         public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
 
         // Module 3C: Training & Compliance
@@ -103,6 +108,13 @@ namespace DANGCAPNE.Data
         public DbSet<OvertimeRate> OvertimeRates { get; set; }
         public DbSet<AttendanceLocationConfig> AttendanceLocationConfigs { get; set; }
         public DbSet<ShiftSwapRequest> ShiftSwapRequests { get; set; }
+        public DbSet<AttendanceAdjustmentRequest> AttendanceAdjustmentRequests { get; set; }
+        public DbSet<LateEarlyRequest> LateEarlyRequests { get; set; }
+        public DbSet<ShiftImportBatch> ShiftImportBatches { get; set; }
+        public DbSet<AutoShiftPlan> AutoShiftPlans { get; set; }
+        public DbSet<AutoShiftPlanItem> AutoShiftPlanItems { get; set; }
+        public DbSet<ShiftTaskAssignment> ShiftTaskAssignments { get; set; }
+        public DbSet<EmployeeOnlineSession> EmployeeOnlineSessions { get; set; }
 
         // Module 5: Finance & Utilities
         public DbSet<Project> Projects { get; set; }
@@ -120,6 +132,9 @@ namespace DANGCAPNE.Data
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<EmailLog> EmailLogs { get; set; }
         public DbSet<SystemError> SystemErrors { get; set; }
+        public DbSet<DigitalSignatureProfile> DigitalSignatureProfiles { get; set; }
+        public DbSet<KpiSnapshot> KpiSnapshots { get; set; }
+        public DbSet<RequestCategoryReportSnapshot> RequestCategoryReportSnapshots { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -224,6 +239,18 @@ namespace DANGCAPNE.Data
                 .HasForeignKey(er => er.EscalateToUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<WorkflowRoutingRule>()
+                .HasOne(r => r.Workflow)
+                .WithMany()
+                .HasForeignKey(r => r.WorkflowId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WorkflowRoutingRule>()
+                .HasOne(r => r.Step)
+                .WithMany()
+                .HasForeignKey(r => r.StepId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Project
             modelBuilder.Entity<Project>()
                 .HasOne(p => p.Manager)
@@ -243,6 +270,24 @@ namespace DANGCAPNE.Data
                 .HasOne(n => n.User)
                 .WithMany()
                 .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AuthAuditLog>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PasswordHistory>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PasswordHistory>()
+                .HasOne(p => p.ChangedByUser)
+                .WithMany()
+                .HasForeignKey(p => p.ChangedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // DraftRequest
@@ -337,6 +382,138 @@ namespace DANGCAPNE.Data
                 .HasForeignKey(a => a.BranchId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<AttendanceAdjustmentRequest>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AttendanceAdjustmentRequest>()
+                .HasOne(a => a.Timesheet)
+                .WithMany()
+                .HasForeignKey(a => a.TimesheetId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AttendanceAdjustmentRequest>()
+                .HasOne(a => a.ApprovedByUser)
+                .WithMany()
+                .HasForeignKey(a => a.ApprovedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LateEarlyRequest>()
+                .HasOne(l => l.User)
+                .WithMany()
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LateEarlyRequest>()
+                .HasOne(l => l.ApprovedByUser)
+                .WithMany()
+                .HasForeignKey(l => l.ApprovedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ShiftImportBatch>()
+                .HasOne(s => s.ImportedByUser)
+                .WithMany()
+                .HasForeignKey(s => s.ImportedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoShiftPlan>()
+                .HasOne(a => a.Department)
+                .WithMany()
+                .HasForeignKey(a => a.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoShiftPlan>()
+                .HasOne(a => a.GeneratedByUser)
+                .WithMany()
+                .HasForeignKey(a => a.GeneratedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoShiftPlanItem>()
+                .HasOne(a => a.Plan)
+                .WithMany()
+                .HasForeignKey(a => a.PlanId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AutoShiftPlanItem>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoShiftPlanItem>()
+                .HasOne(a => a.Shift)
+                .WithMany()
+                .HasForeignKey(a => a.ShiftId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ShiftTaskAssignment>()
+                .HasOne(s => s.Shift)
+                .WithMany()
+                .HasForeignKey(s => s.ShiftId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ShiftTaskAssignment>()
+                .HasOne(s => s.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(s => s.AssignedToUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ShiftTaskAssignment>()
+                .HasOne(s => s.AssignedByUser)
+                .WithMany()
+                .HasForeignKey(s => s.AssignedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EmployeeOnlineSession>()
+                .HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SalaryAdvanceRequest>()
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SalaryAdvanceRequest>()
+                .HasOne(s => s.ApprovedByUser)
+                .WithMany()
+                .HasForeignKey(s => s.ApprovedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InsuranceImportBatch>()
+                .HasOne(i => i.ImportedByUser)
+                .WithMany()
+                .HasForeignKey(i => i.ImportedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DigitalSignatureProfile>()
+                .HasOne(d => d.User)
+                .WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<KpiSnapshot>()
+                .HasOne(k => k.User)
+                .WithMany()
+                .HasForeignKey(k => k.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<KpiSnapshot>()
+                .HasOne(k => k.Department)
+                .WithMany()
+                .HasForeignKey(k => k.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RequestCategoryReportSnapshot>()
+                .HasOne(r => r.GeneratedByUser)
+                .WithMany()
+                .HasForeignKey(r => r.GeneratedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Indexes for performance
             modelBuilder.Entity<User>().HasIndex(u => u.Email);
             modelBuilder.Entity<User>().HasIndex(u => u.TenantId);
@@ -346,6 +523,14 @@ namespace DANGCAPNE.Data
             modelBuilder.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
             modelBuilder.Entity<Timesheet>().HasIndex(t => new { t.UserId, t.Date });
             modelBuilder.Entity<LeaveBalance>().HasIndex(lb => new { lb.UserId, lb.Year });
+            modelBuilder.Entity<AuthAuditLog>().HasIndex(a => new { a.UserId, a.CreatedAt });
+            modelBuilder.Entity<EmployeeOnlineSession>().HasIndex(e => new { e.UserId, e.Status });
+            modelBuilder.Entity<AttendanceAdjustmentRequest>().HasIndex(a => new { a.UserId, a.AttendanceDate });
+            modelBuilder.Entity<LateEarlyRequest>().HasIndex(l => new { l.UserId, l.AttendanceDate });
+            modelBuilder.Entity<AttendanceAdjustmentRequest>().HasIndex(a => a.SourceRequestId).IsUnique();
+            modelBuilder.Entity<LateEarlyRequest>().HasIndex(l => l.SourceRequestId).IsUnique();
+            modelBuilder.Entity<SalaryAdvanceRequest>().HasIndex(s => s.SourceRequestId).IsUnique();
+            modelBuilder.Entity<AutoShiftPlanItem>().HasIndex(a => new { a.UserId, a.WorkDate });
 
             // Seed data
             const bool SeedDemoData = false;

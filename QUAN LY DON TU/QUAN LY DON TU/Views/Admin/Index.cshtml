@@ -9,19 +9,9 @@
 }
 
 <div class="page-content">
-    <div class="d-flex justify-between align-center mb-24" style="gap:16px; flex-wrap:wrap;">
-        <div>
-            <h2 style="margin:0; font-size:28px; font-weight:800;">@pageTitle</h2>
-            <p class="text-muted" style="margin-top:6px;">@pageSubtitle</p>
-        </div>
-        <div class="d-flex gap-12 flex-wrap">
-            <a class="btn @(activeTab == "users" ? "btn-primary" : "btn-outline")" href="@Url.Action("Index", new { tab = "users", employeeSearch = Model.EmployeeSearch, employeeDepartmentId = Model.EmployeeDepartmentId })">
-                <i class="bi bi-people-fill"></i> Nhân viên
-            </a>
-            <a class="btn @(activeTab == "timekeeping" ? "btn-primary" : "btn-outline")" href="@Url.Action("Index", new { tab = "timekeeping", attendanceSearch = Model.AttendanceSearch, attendanceDepartmentId = Model.AttendanceDepartmentId, attendanceFromDate = Model.AttendanceFromDate?.ToString("yyyy-MM-dd"), attendanceToDate = Model.AttendanceToDate?.ToString("yyyy-MM-dd") })">
-                <i class="bi bi-calendar-check"></i> Chấm công
-            </a>
-        </div>
+    <div class="mb-24">
+        <h2 style="margin:0; font-size:28px; font-weight:800;">@pageTitle</h2>
+        <p class="text-muted" style="margin-top:6px;">@pageSubtitle</p>
     </div>
 
     @if (activeTab == "timekeeping")
@@ -71,7 +61,7 @@
                 <span class="text-muted">@Model.Timesheets.Count bản ghi</span>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="data-table">
+                <table class="data-table admin-data-table admin-timekeeping-table">
                     <thead>
                         <tr>
                             <th>Ngày</th>
@@ -156,7 +146,7 @@
                 <span class="text-muted">@Model.Users.Count nhân viên</span>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="data-table">
+                <table class="data-table admin-data-table admin-users-table">
                     <thead>
                         <tr>
                             <th>Mã NV</th>

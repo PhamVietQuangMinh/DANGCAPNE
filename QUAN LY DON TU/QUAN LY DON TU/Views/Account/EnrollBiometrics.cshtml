@@ -111,6 +111,13 @@
 
         .face-frame { position: absolute; border: 2px solid #3b82f6; border-radius: 20px; transition: transform 0.1s linear, width 0.1s linear, height 0.1s linear; pointer-events: none; z-index: 25; display: none; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
 
+        /* Flip video for mirror effect - same as RegisterFace */
+        #video3 { transform: scaleX(-1); }
+
+        /* Quality indicator */
+        .quality-bar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-top: 8px; }
+        .quality-fill { height: 100%; background: #3b82f6; transition: width 0.2s, background 0.2s; }
+
         /* MODAL STYLES */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); padding: 20px; }
         .modal-card { background: #fff; width: 100%; max-width: 600px; max-height: 90vh; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; animation: modalIn 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
@@ -247,9 +254,10 @@
                             <div><div class="metric">Khuôn mặt</div><div class="metric-val" id="mFaces">0</div></div>
                             <div><div class="metric">Độ tin cậy</div><div class="metric-val" id="mConf">0%</div></div>
                             <div><div class="metric">Trạng thái</div><div class="metric-val" id="mState">Chờ</div></div>
-                            <div><div class="metric">Góc độ</div><div class="metric-val" id="mAngle">0&deg;</div></div>
-                            <div><div class="metric">Độ nét</div><div class="metric-val ok" id="mBlur">Tốt</div></div>
+                            <div><div class="metric">Góc độ</div><div class="metric-val" id="mAngle">0°</div></div>
+                            <div><div class="metric">Chất lượng</div><div class="metric-val ok" id="mQuality">Tốt</div></div>
                         </div>
+                        <div class="quality-bar"><div class="quality-fill" id="qualityFill" style="width:0%"></div></div>
                     </div>
                     <div class="slots-col">
                         <div class="slot-card active" id="slot-front">
@@ -538,10 +546,16 @@
 
             // Wait for video to be ready
             if(!video.videoWidth) { setTimeout(processAILoop, 100); return; }
-            
+
             const displaySize = { width: video.clientWidth, height: video.clientHeight };
             faceapi.matchDimensions(canvas, displaySize);
-            
+
+            // Thresholds đã điều chỉnh - dễ nhận diện hơn
+            const RIGHT_RATIO_MIN = 1.15;  // Nghiêng phải: mũi gần mắt phải
+            const LEFT_RATIO_MAX = 0.87;    // Nghiêng trái: mũi gần mắt trái
+            const BLUR_THRESHOLD = 80;      // Blur threshold (0-100)
+            const MIN_FACE_SIZE_RATIO = 0.15; // Khuôn mặt tối thiểu 15% chiều cao video
+
             async function loop() {
                 if (!aiRunning || video.paused || video.ended) {
                     requestAnimationFrame(loop);
@@ -550,7 +564,7 @@
 
                 let detections;
                 try {
-                    detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 }))
+                    detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
                                                 .withFaceLandmarks()
                                                 .withFaceDescriptor();
                 } catch(e) { }
@@ -560,13 +574,25 @@
 
                 if (!detections) {
                     frame.style.opacity = '0';
-                    updateMetrics(0, 0, 'S/A', 'Mất dấu');
+                    updateMetrics(0, 0, '0°', 'Mất dấu', 0);
+                    document.getElementById('aiHint').innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Không tìm thấy khuôn mặt. Hãy đưa mặt vào khung.';
+                    document.getElementById('aiHint').className = 'hint-box';
                     requestAnimationFrame(loop);
                     return;
                 }
 
                 const resized = faceapi.resizeResults(detections, displaySize);
                 const box = resized.detection.box;
+
+                // Tính kích thước khuôn mặt tương đối
+                const faceSizeRatio = box.height / displaySize.height;
+                if (faceSizeRatio < MIN_FACE_SIZE_RATIO) {
+                    updateMetrics(1, Math.round(detections.detection.score * 100), 'Gần hơn', 'Xa quá', 20);
+                    document.getElementById('aiHint').innerHTML = '<i class="bi bi-arrows-fullscreen"></i> Hãy di chuyển GẦN camera hơn một chút.';
+                    document.getElementById('aiHint').className = 'hint-box';
+                    requestAnimationFrame(loop);
+                    return;
+                }
 
                 // Smoothly update frame position
                 frame.style.display = 'block';
@@ -578,57 +604,117 @@
 
                 const score = Math.round(detections.detection.score * 100);
                 const landmarks = detections.landmarks.positions;
-                const nose = landmarks[30], leftEye = landmarks[36], rightEye = landmarks[45];
-                const distLeft = Math.abs(nose.x - leftEye.x), distRight = Math.abs(rightEye.x - nose.x);
-                const ratio = distLeft / distRight;
 
-                let state = 'THẲNG', estAngle = 0;
-                if (ratio > 1.4) { state = 'PHẢI'; estAngle = 30; }
-                else if (ratio < 0.7) { state = 'TRÁI'; estAngle = -30; } 
-                
-                updateMetrics(1, score, estAngle + '°', state);
+                // Tính góc nghiêng đầu dựa trên vị trí mũi và mắt
+                // Video bị flip nên left/right bị đảo ngược
+                const nose = landmarks[30];
+                const leftEye = landmarks[36];
+                const rightEye = landmarks[45];
+
+                // Khoảng cách từ mũi đến mỗi mắt (đã flip video)
+                const distToLeftEye = Math.abs(nose.x - leftEye.x);
+                const distToRightEye = Math.abs(rightEye.x - nose.x);
+                const ratio = distToLeftEye / distToRightEye;
+
+                // Ước tính góc nghiêng (-30 đến +30 độ)
+                let estAngle = Math.round((1 - ratio) * 30);
+
+                // Xác định trạng thái góc mặt (đã flip)
+                // ratio > 1: Mũi gần mắt TRÁI hơn → Nghiêng TRÁI (trên video hẫng flip sẽ thấy nghiêng phải)
+                // ratio < 1: Mũi gần mắt PHẢI hơn → Nghiêng PHẢI (trên video flip sẽ thấy nghiêng trái)
+                let state = 'THẲNG';
+                if (ratio > RIGHT_RATIO_MIN) {
+                    // Mũi gần mắt trái → nghiêng TRÁI (trên video thấy nghiêng phải)
+                    state = 'PHẢI';
+                } else if (ratio < LEFT_RATIO_MAX) {
+                    // Mũi gần mắt phải → nghiêng PHẢI (trên video thấy nghiêng trái)
+                    state = 'TRÁI';
+                }
+
+                // Tính chất lượng ảnh dựa trên score và kích thước khuôn mặt
+                const quality = Math.min(100, Math.round(score * 0.7 + (faceSizeRatio / MIN_FACE_SIZE_RATIO) * 30));
+                updateMetrics(1, score, estAngle + '°', state, quality);
+
+                // Cập nhật quality bar
+                const qualityFill = document.getElementById('qualityFill');
+                qualityFill.style.width = quality + '%';
+                if (quality >= 70) {
+                    qualityFill.style.background = '#10b981';
+                    document.getElementById('mQuality').innerText = 'Tốt';
+                    document.getElementById('mQuality').className = 'metric-val ok';
+                } else if (quality >= 40) {
+                    qualityFill.style.background = '#f59e0b';
+                    document.getElementById('mQuality').innerText = 'Trung bình';
+                    document.getElementById('mQuality').className = 'metric-val';
+                } else {
+                    qualityFill.style.background = '#ef4444';
+                    document.getElementById('mQuality').innerText = 'Yếu';
+                    document.getElementById('mQuality').className = 'metric-val';
+                }
+
+                // Hướng dẫn theo góc mặt cần thiết
+                let hintMap = {
+                    'left': '<i class="bi bi-arrow-left-circle-fill"></i> Hãy NGHIÊNG ĐẦU SANG TRÁI một chút.',
+                    'right': '<i class="bi bi-arrow-right-circle-fill"></i> Hãy NGHIÊNG ĐẦU SANG PHẢI một chút.'
+                };
 
                 let poseEnum = 'front';
-                if(ratio > 1.4) poseEnum = 'right';
-                else if(ratio < 0.7) poseEnum = 'left';
+                if (ratio > RIGHT_RATIO_MIN) poseEnum = 'right';  // Nghiêng phải thực tế
+                else if (ratio < LEFT_RATIO_MAX) poseEnum = 'left'; // Nghiêng trái thực tế
+
+                // Kiểm tra điều kiện chất lượng trước khi thu thập
+                const isGoodQuality = quality >= 50 && faceSizeRatio >= MIN_FACE_SIZE_RATIO;
 
                 if (poseEnum === window.currentTargetPose) {
-                    window.collectedEnrolls = window.collectedEnrolls || [];
-                    window.collectedEnrolls.push(detections.descriptor);
-                    
-                    if (window.collectedEnrolls.length >= 4) {
-                        // Average the 4 descriptors
-                        const avgDescriptor = new Float32Array(128);
-                        let norm = 0;
-                        for (let i = 0; i < 128; i++) {
-                            let sum = 0;
-                            for (const d of window.collectedEnrolls) sum += d[i];
-                            avgDescriptor[i] = sum / window.collectedEnrolls.length;
-                            norm += avgDescriptor[i] * avgDescriptor[i];
-                        }
-                        // Normalize vector to maintain unit length
-                        norm = Math.sqrt(norm);
-                        if (norm > 0) {
-                            for (let i = 0; i < 128; i++) avgDescriptor[i] /= norm;
-                        }
+                    if (isGoodQuality) {
+                        window.collectedEnrolls = window.collectedEnrolls || [];
+                        window.collectedEnrolls.push(detections.descriptor);
 
-                        checkCaptureRequirement(poseEnum, avgDescriptor, video);
-                        window.collectedEnrolls = [];
+                        // Giảm số frame cần thiết từ 4 xuống 2 để nhanh hơn
+                        const FRAMES_NEEDED = 2;
+
+                        if (window.collectedEnrolls.length >= FRAMES_NEEDED) {
+                            // Average the descriptors
+                            const avgDescriptor = new Float32Array(128);
+                            let norm = 0;
+                            for (let i = 0; i < 128; i++) {
+                                let sum = 0;
+                                for (const d of window.collectedEnrolls) sum += d[i];
+                                avgDescriptor[i] = sum / window.collectedEnrolls.length;
+                                norm += avgDescriptor[i] * avgDescriptor[i];
+                            }
+                            // Normalize vector
+                            norm = Math.sqrt(norm);
+                            if (norm > 0) {
+                                for (let i = 0; i < 128; i++) avgDescriptor[i] /= norm;
+                            }
+
+                            checkCaptureRequirement(poseEnum, avgDescriptor, video);
+                            window.collectedEnrolls = [];
+                        } else {
+                            document.getElementById('aiHint').innerHTML = `<i class="bi bi-check-circle-fill" style="color:#10b981"></i> Giữ nguyên tư thế! Đang trích xuất... (${window.collectedEnrolls.length}/${FRAMES_NEEDED})`;
+                            document.getElementById('aiHint').className = 'hint-box ok';
+                        }
                     } else {
-                        document.getElementById('aiHint').innerHTML = `<i class="bi bi-cpu"></i> Đang trích xuất đặc điểm... (${window.collectedEnrolls.length}/4)`;
-                        document.getElementById('aiHint').className = 'hint-box ok';
+                        window.collectedEnrolls = [];
+                        document.getElementById('aiHint').innerHTML = '<i class="bi bi-info-circle-fill"></i> Di chuyển gần camera và đảm bảo đủ ánh sáng.';
+                        document.getElementById('aiHint').className = 'hint-box';
                     }
                 } else {
-                    window.collectedEnrolls = []; // Reset if pose changes before 4 frames
+                    window.collectedEnrolls = [];
+                    if (!captureCooldown) {
+                        document.getElementById('aiHint').innerHTML = hintMap[currentTargetPose] || hintMap['left'];
+                        document.getElementById('aiHint').className = 'hint-box';
+                    }
                 }
 
                 requestAnimationFrame(loop);
             }
-            
+
             requestAnimationFrame(loop);
         }
 
-        function updateMetrics(faces, conf, angle, state) {
+        function updateMetrics(faces, conf, angle, state, quality) {
             document.getElementById('mFaces').innerText = faces;
             document.getElementById('mConf').innerText = conf + '%';
             document.getElementById('mAngle').innerText = angle;
@@ -678,8 +764,13 @@
             if (captureCooldown) return;
 
             const hintMap = {
-                'left': '<i class="bi bi-info-circle-fill"></i> Hãy NGHIÊNG ĐẦU SANG TRÁI.',
-                'right': '<i class="bi bi-info-circle-fill"></i> Hãy NGHIÊNG ĐẦU SANG PHẢI.'
+                'left': '<i class="bi bi-arrow-left-circle-fill"></i> Hãy NGHIÊNG ĐẦU SANG TRÁI một chút.',
+                'right': '<i class="bi bi-arrow-right-circle-fill"></i> Hãy NGHIÊNG ĐẦU SANG PHẢI một chút.'
+            };
+
+            const slotNameMap = {
+                'left': 'NGHIÊNG TRÁI',
+                'right': 'NGHIÊNG PHẢI'
             };
 
             const triggerCapture = (slotName, descSetter, nextPose, hintHtml) => {
@@ -687,33 +778,47 @@
                 const img = (() => {
                     const cvs = document.createElement('canvas');
                     cvs.width = video.videoWidth; cvs.height = video.videoHeight;
-                    cvs.getContext('2d').drawImage(video, 0, 0);
+                    const ctx = cvs.getContext('2d');
+                    // Flip để ảnh không bị ngược (video đang bị scaleX(-1))
+                    ctx.translate(cvs.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, 0, 0);
                     return cvs.toDataURL('image/jpeg', 0.6);
                 })();
                 updateSlotUI(slotName, img, true);
-                document.getElementById('aiHint').innerHTML = hintHtml;
+
+                const slotLabel = slotName === 'left' ? 'TRÁI' : 'PHẢI';
+                document.getElementById('aiHint').innerHTML = `<i class="bi bi-check-circle-fill" style="color:#10b981; font-size:20px;"></i> <strong>Hoàn tất góc ${slotLabel}!</strong> ${nextPose ? 'Tiếp tục nghiêng sang bên kia...' : ''}`;
                 document.getElementById('aiHint').className = 'hint-box ok';
-                
+
+                // Thêm animation cho slot
+                const slotCard = document.getElementById(`slot-${slotName}`);
+                slotCard.style.transform = 'scale(1.02)';
+                setTimeout(() => slotCard.style.transform = '', 300);
+
                 captureCooldown = true;
-                setTimeout(() => { 
-                    captureCooldown = false; 
+                setTimeout(() => {
+                    captureCooldown = false;
                     currentTargetPose = nextPose;
                     if (nextPose) {
                         updateSlotUI(nextPose, null, false);
                         document.getElementById('aiHint').innerHTML = hintMap[nextPose];
+                        document.getElementById('aiHint').className = 'hint-box';
+                    } else {
+                        document.getElementById('aiHint').innerHTML = '<i class="bi bi-stars" style="color:#10b981; font-size:20px;"></i> <strong>HOÀN TẤT!</strong> Bạn đã thu thập đủ mẫu sinh trắc học.';
+                        document.getElementById('btnNext3').disabled = false;
+                        aiRunning = false;
                     }
                 }, 1500);
             }
 
             if (currentTargetPose === 'left' && currentPose === 'left') {
-                triggerCapture('left', d => descLeft = d, 'right', '<i class="bi bi-check-circle-fill"></i> Tốt! Hãy từ từ NGHIÊNG ĐẦU SANG PHẢI.');
+                triggerCapture('left', d => descLeft = d, 'right', '');
             }
             else if (currentTargetPose === 'right' && currentPose === 'right') {
-                triggerCapture('right', d => descRight = d, null, '<i class="bi bi-stars"></i> Xong! Bạn đã hoàn thành lấy mẫu sinh trắc.');
-                document.getElementById('btnNext3').disabled = false;
-                aiRunning = false;
+                triggerCapture('right', d => descRight = d, null, '');
             } else {
-                if (!captureCooldown) document.getElementById('aiHint').innerHTML = hintMap[currentTargetPose];
+                if (!captureCooldown) document.getElementById('aiHint').innerHTML = hintMap[currentTargetPose] || hintMap['left'];
             }
         }
 

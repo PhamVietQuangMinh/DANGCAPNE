@@ -1,0 +1,74 @@
+  Phát triển ứng dụng (.NET) 
+ 
+LAB 6 | 1  
+ 
+LAB 6 
+MỤC TIÊU 
+✓ Xây dựng và bổ sung thêm các chức năng cho quản lý hoá đơn 
+✓ Xây dựng các chức năng thống kê 
+NỘI DUNG 
+PHẦN I: ÁP DỤNG BÀI HỌC 
+BÀI 1 (5 ĐIỂM): Xây dựng chức năng quản lý hoá đơn ở phía Quản lý với các chức năng: 
+• Hiển thị danh sách tất cả đơn hàng 
+• Xem chi tiết đơn hàng: với các thông tin: danh sách sản phẩm, số lượng, đơn giá, 
+tổng tiền, trạng thái, tên nhân viên tạo đơn, ngày tạo đơn. 
+BÀI 2 (3 ĐIỂM): Xây dựng chức năng thống kê 5 thức uống bán chạy và thống kê doanh 
+thu tuỳ chọn theo khoản thời gian. 
+PHẦN II: NÂNG CẤP TÍNH NĂNG 
+BÀI 3 (2 ĐIỂM): Tạo biểu đồ cho các chức năng thống kê 
+Gợi ý: Sử dụng thư viện Chart.js 
+Nhúng vào giao diện: 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+Code tham khảo: 
+ 
+<div style="width: 80%; margin: auto;"> 
+    <canvas id="myChart"></canvas> 
+=====PAGE=====
+  Phát triển ứng dụng (.NET) 
+ 
+LAB 6 | 2  
+ 
+</div> 
+ 
+<script> 
+    // Nhận dữ liệu từ ViewBag (Convert sang JSON để JS hiểu được) 
+    const labels = @Json.Serialize(ViewBag.Labels); 
+    const dataValues = @Json.Serialize(ViewBag.Values); 
+ 
+    const ctx = document.getElementById('myChart').getContext('2d'); 
+ 
+    new Chart(ctx, { 
+        type: 'bar', // Có thể đổi thành 'line', 'pie', 'doughnut' 
+        data: { 
+            labels: labels, 
+            datasets: [{ 
+                label: 'Doanh thu (Triệu VNĐ)', 
+                data: dataValues, 
+                backgroundColor: 'rgba(54, 162, 235, 0.5)', 
+                borderColor: 'rgba(54, 162, 235, 1)', 
+                borderWidth: 1 
+            }] 
+        }, 
+        options: { 
+            scales: { 
+                y: { 
+                    beginAtZero: true 
+                } 
+            } 
+=====PAGE=====
+  Phát triển ứng dụng (.NET) 
+ 
+LAB 6 | 3  
+ 
+        } 
+    }); 
+</script> 
+Ứng dụng AI: Cung cấp cho AI mô tả dữ liệu có được cần vẽ biểu đồ. Mô tả ứng dụng 
+đang xây dựng là .NET Core MVC với Razor view, thư viện đang muốn sử dụng là 
+Chart.js. Yêu cầu AI hỗ trợ tạo và hiển thị biểu đồ lên thẻ <canvas 
+id="myChart"></canvas> 
+ 
+*** YÊU CẦU NỘP BÀI:  
+Sinh viên nén file bao gồm các yêu cầu đã thực hiện trên, nộp LMS đúng thời gian quy 
+định của giảng viên. Không nộp bài xem như không có điểm. 
+--Hết-- 

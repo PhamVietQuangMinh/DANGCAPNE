@@ -75,6 +75,12 @@
                             <i class="bi bi-check2-circle"></i> Duyệt đơn
                             <span class="badge-count" id="sidebarApprovalCount" style="display:none"></span>
                         </a>
+                        @if (isAdmin)
+                        {
+                        <a href="@Url.Action("Index", "Admin", new { tab = "requeststats" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab == "requeststats" ? "active" : "")">
+                            <i class="bi bi-bar-chart-line-fill"></i> Thống kê đơn từ
+                        </a>
+                        }
                     </div>
                 }
                 @if (isHR || isAdmin)
@@ -127,7 +133,7 @@
                         <a href="@Url.Action("Whitelist", "Admin")" class="nav-link @(currentAction == "Whitelist" ? "active" : "")">
                             <i class="bi bi-shield-check"></i> Phê duyệt Email
                         </a>
-                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab != "timekeeping" ? "active" : "")" data-i18n="NavUsers">
+                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab != "timekeeping" && currentAdminTab != "requeststats" ? "active" : "")" data-i18n="NavUsers">
                             <i class="bi bi-people-fill"></i> Quản lý nhân viên
                         </a>
                         @if (isAdmin || isHR)

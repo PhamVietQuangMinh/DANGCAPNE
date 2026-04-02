@@ -159,6 +159,17 @@ namespace DANGCAPNE.ViewModels
         public int? AttendanceDepartmentId { get; set; }
         public DateTime? AttendanceFromDate { get; set; }
         public DateTime? AttendanceToDate { get; set; }
+        public DateTime? RequestStatsFromDate { get; set; }
+        public DateTime? RequestStatsToDate { get; set; }
+        public int TotalRequestsInRange { get; set; }
+        public int PendingRequestsInRange { get; set; }
+        public int ApprovedRequestsInRange { get; set; }
+        public int RejectedRequestsInRange { get; set; }
+        public int InProgressRequestsInRange { get; set; }
+        public int CancelledRequestsInRange { get; set; }
+        public Dictionary<string, int> TopRequestTypes { get; set; } = new();
+        public Dictionary<string, int> RequestStatusStats { get; set; } = new();
+        public Dictionary<string, int> RequestsByDay { get; set; } = new();
     }
 
     public class AdminEmployeeDetailViewModel

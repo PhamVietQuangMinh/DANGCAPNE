@@ -1,10 +1,18 @@
 @model DANGCAPNE.ViewModels.AdminViewModel
 @{
     var activeTab = (Model.ActiveTab ?? "users").ToLowerInvariant();
-    var pageTitle = activeTab == "timekeeping" ? "Quản lý chấm công" : "Quản lý nhân viên";
-    var pageSubtitle = activeTab == "timekeeping"
-        ? "Theo dõi lịch sử chấm công, bộ lọc phòng ban và chỉnh sửa bản ghi công."
-        : "Xem danh sách nhân viên và dữ liệu được tải trực tiếp từ cơ sở dữ liệu trên server.";
+    var pageTitle = activeTab switch
+    {
+        "timekeeping" => "Quản lý chấm công",
+        "requeststats" => "Thống kê đơn từ",
+        _ => "Quản lý nhân viên"
+    };
+    var pageSubtitle = activeTab switch
+    {
+        "timekeeping" => "Theo dõi lịch sử chấm công, bộ lọc phòng ban và chỉnh sửa bản ghi công.",
+        "requeststats" => "Thống kê đơn từ theo khoảng thời gian và biểu đồ dành riêng cho Admin.",
+        _ => "Xem danh sách nhân viên và dữ liệu được tải trực tiếp từ cơ sở dữ liệu trên server."
+    };
     ViewData["Title"] = pageTitle;
 }
 
@@ -57,7 +65,7 @@
 
         <div class="glass-card">
             <div class="card-header d-flex justify-between align-center">
-                <h3><i class="bi bi-table"></i> Bảng Chấm công</h3>
+                <h3><i class="bi bi-table"></i> Bảng chấm công</h3>
                 <span class="text-muted">@Model.Timesheets.Count bản ghi</span>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
@@ -100,6 +108,130 @@
                         {
                             <tr>
                                 <td colspan="8" class="text-center text-muted" style="padding:32px;">Không có dữ liệu chấm công phù hợp bộ lọc hiện tại.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else if (activeTab == "requeststats")
+    {
+        <div class="glass-card mb-24">
+            <div class="card-header">
+                <h3><i class="bi bi-funnel"></i> Bộ lọc thống kê đơn từ</h3>
+            </div>
+            <div class="card-body">
+                <form method="get" asp-action="Index">
+                    <input type="hidden" name="tab" value="requeststats" />
+                    <div class="form-row">
+                        <div class="col-3">
+                            <label class="form-label">Từ ngày</label>
+                            <input type="date" class="form-control" name="requestStatsFromDate" value="@Model.RequestStatsFromDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Đến ngày</label>
+                            <input type="date" class="form-control" name="requestStatsToDate" value="@Model.RequestStatsToDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="d-flex gap-12 flex-wrap" style="margin-top:16px;">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> Xem thống kê</button>
+                        <a href="@Url.Action("Index", new { tab = "requeststats" })" class="btn btn-outline">Đặt lại</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="admin-stat-grid mb-24">
+            <div class="glass-card admin-stat-card">
+                <div class="admin-stat-label">Tổng số đơn</div>
+                <div class="admin-stat-value">@Model.TotalRequestsInRange</div>
+                <div class="admin-stat-sub">@Model.RequestStatsFromDate?.ToString("dd/MM/yyyy") - @Model.RequestStatsToDate?.ToString("dd/MM/yyyy")</div>
+            </div>
+            <div class="glass-card admin-stat-card">
+                <div class="admin-stat-label">Chờ xử lý</div>
+                <div class="admin-stat-value text-warning">@Model.PendingRequestsInRange</div>
+                <div class="admin-stat-sub">Bao gồm đơn đang chờ duyệt</div>
+            </div>
+            <div class="glass-card admin-stat-card">
+                <div class="admin-stat-label">Đã duyệt</div>
+                <div class="admin-stat-value text-success">@Model.ApprovedRequestsInRange</div>
+                <div class="admin-stat-sub">Đơn hoàn tất phê duyệt</div>
+            </div>
+            <div class="glass-card admin-stat-card">
+                <div class="admin-stat-label">Từ chối / Hủy</div>
+                <div class="admin-stat-value text-danger">@(Model.RejectedRequestsInRange + Model.CancelledRequestsInRange)</div>
+                <div class="admin-stat-sub">Từ chối: @Model.RejectedRequestsInRange · Hủy: @Model.CancelledRequestsInRange</div>
+            </div>
+        </div>
+
+        <div class="admin-chart-grid mb-24">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-trophy"></i> Biểu đồ Top 5 loại đơn nhiều nhất</h3>
+                </div>
+                <div class="card-body">
+                    <div class="admin-chart-wrap">
+                        <canvas id="topTypesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-pie-chart"></i> Tỷ lệ trạng thái đơn</h3>
+                </div>
+                <div class="card-body">
+                    <div class="admin-chart-wrap">
+                        <canvas id="statusStatsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card mb-24">
+            <div class="card-header">
+                <h3><i class="bi bi-graph-up-arrow"></i> Số lượng đơn theo ngày</h3>
+            </div>
+            <div class="card-body">
+                <div class="admin-chart-wrap admin-chart-wrap-wide">
+                    <canvas id="requestsByDayChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header d-flex justify-between align-center">
+                <h3><i class="bi bi-table"></i> Bảng chi tiết Top 5 loại đơn</h3>
+                <span class="text-muted">@Model.TopRequestTypes.Count mục</span>
+            </div>
+            <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="data-table admin-data-table">
+                    <thead>
+                        <tr>
+                            <th>Loại đơn</th>
+                            <th>Số lượng</th>
+                            <th>Tỷ trọng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TopRequestTypes.Any())
+                        {
+                            @foreach (var item in Model.TopRequestTypes)
+                            {
+                                var ratio = Model.TotalRequestsInRange > 0
+                                    ? (item.Value * 100.0 / Model.TotalRequestsInRange).ToString("0.##")
+                                    : "0";
+                                <tr>
+                                    <td>@item.Key</td>
+                                    <td>@item.Value</td>
+                                    <td>@ratio%</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted" style="padding:32px;">Không có dữ liệu đơn từ trong khoảng thời gian đã chọn.</td>
                             </tr>
                         }
                     </tbody>
@@ -150,7 +282,7 @@
                     <thead>
                         <tr>
                             <th>Mã NV</th>
-                            <th>Họ Tên</th>
+                            <th>Họ tên</th>
                             <th>Chức vụ</th>
                             <th>Phòng ban</th>
                             <th>Thao tác</th>
@@ -188,3 +320,174 @@
         </div>
     }
 </div>
+
+<style>
+    .admin-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .admin-stat-card {
+        padding: 20px;
+    }
+
+    .admin-stat-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .admin-stat-value {
+        font-size: 32px;
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+    .admin-stat-sub {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .admin-chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .admin-chart-wrap {
+        position: relative;
+        height: 320px;
+    }
+
+    .admin-chart-wrap-wide {
+        height: 360px;
+    }
+
+    @@media (max-width: 1100px) {
+        .admin-stat-grid,
+        .admin-chart-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @@media (max-width: 700px) {
+        .admin-stat-grid,
+        .admin-chart-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@if (activeTab == "requeststats")
+{
+    <script>
+        const topTypeLabels = [@Html.Raw(string.Join(",", Model.TopRequestTypes.Keys.Select(k => $"'{k.Replace("'", "\\'")}'")))];
+        const topTypeValues = [@string.Join(",", Model.TopRequestTypes.Values)];
+        const statusKeys = [@Html.Raw(string.Join(",", Model.RequestStatusStats.Keys.Select(k => $"'{k}'")))];
+        const statusValues = [@string.Join(",", Model.RequestStatusStats.Values)];
+        const dayLabels = [@Html.Raw(string.Join(",", Model.RequestsByDay.Keys.Select(k => $"'{k}'")))];
+        const dayValues = [@string.Join(",", Model.RequestsByDay.Values)];
+
+        const statusMap = {
+            Pending: 'Chờ duyệt',
+            Approved: 'Đã duyệt',
+            Rejected: 'Từ chối',
+            InProgress: 'Đang xử lý',
+            Cancelled: 'Đã hủy',
+            Draft: 'Nháp',
+            RequestEdit: 'Yêu cầu sửa'
+        };
+
+        const chartTextColor = '#1e293b';
+        const chartGridColor = 'rgba(15, 23, 42, 0.08)';
+
+        document.addEventListener('DOMContentLoaded', function () {
+        if (typeof Chart === 'undefined') return;
+
+        Chart.defaults.color = chartTextColor;
+        Chart.defaults.borderColor = chartGridColor;
+
+        if (document.getElementById('topTypesChart')) {
+            new Chart(document.getElementById('topTypesChart'), {
+                type: 'bar',
+                data: {
+                    labels: topTypeLabels,
+                    datasets: [{
+                        label: 'Số đơn',
+                        data: topTypeValues,
+                        backgroundColor: ['#2563eb', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444'],
+                        borderRadius: 10,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: chartGridColor } },
+                        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: chartGridColor } }
+                    }
+                }
+            });
+        }
+
+        if (document.getElementById('statusStatsChart')) {
+            new Chart(document.getElementById('statusStatsChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: statusKeys.map(x => statusMap[x] || x),
+                    datasets: [{
+                        data: statusValues,
+                        backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#6b7280', '#8b5cf6'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        if (document.getElementById('requestsByDayChart')) {
+            new Chart(document.getElementById('requestsByDayChart'), {
+                type: 'line',
+                data: {
+                    labels: dayLabels,
+                    datasets: [{
+                        label: 'Số đơn theo ngày',
+                        data: dayValues,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true } },
+                    scales: {
+                        x: { grid: { color: chartGridColor } },
+                        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: chartGridColor } }
+                    }
+                }
+            });
+        }
+        });
+    </script>
+}

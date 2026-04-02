@@ -29,19 +29,33 @@ namespace DANGCAPNE.Controllers
             string? attendanceSearch = null,
             int? attendanceDepartmentId = null,
             DateTime? attendanceFromDate = null,
-            DateTime? attendanceToDate = null)
+            DateTime? attendanceToDate = null,
+            DateTime? requestStatsFromDate = null,
+            DateTime? requestStatsToDate = null)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
             if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
-            tab = string.Equals(tab, "timekeeping", StringComparison.OrdinalIgnoreCase) ? "timekeeping" : "users";
+            var isAdmin = roles.Contains("Admin");
+            tab = tab?.Trim().ToLowerInvariant() switch
+            {
+                "timekeeping" => "timekeeping",
+                "requeststats" when isAdmin => "requeststats",
+                _ => "users"
+            };
 
             var normalizedEmployeeSearch = employeeSearch?.Trim();
             var normalizedAttendanceSearch = attendanceSearch?.Trim();
             var fromDate = attendanceFromDate?.Date ?? DateTime.Today.AddDays(-30);
             var toDate = attendanceToDate?.Date ?? DateTime.Today;
+            var requestFrom = requestStatsFromDate?.Date ?? DateTime.Today.AddDays(-30);
+            var requestTo = requestStatsToDate?.Date ?? DateTime.Today;
+            if (requestTo < requestFrom)
+            {
+                (requestFrom, requestTo) = (requestTo, requestFrom);
+            }
 
             var usersQuery = _context.Users
                 .Include(u => u.Department)
@@ -81,6 +95,44 @@ namespace DANGCAPNE.Controllers
                 timesheetQuery = timesheetQuery.Where(t => t.User!.DepartmentId == attendanceDepartmentId.Value);
             }
 
+            var requestStatsQuery = _context.Requests
+                .Include(r => r.FormTemplate)
+                .Where(r => r.TenantId == tenantId &&
+                            r.CreatedAt.Date >= requestFrom &&
+                            r.CreatedAt.Date <= requestTo);
+
+            var topRequestTypes = new Dictionary<string, int>();
+            var requestStatusStats = new Dictionary<string, int>();
+            var requestsByDay = new Dictionary<string, int>();
+            var totalRequestsInRange = 0;
+
+            if (isAdmin)
+            {
+                totalRequestsInRange = await requestStatsQuery.CountAsync();
+
+                topRequestTypes = await requestStatsQuery
+                    .GroupBy(r => r.FormTemplate != null && !string.IsNullOrWhiteSpace(r.FormTemplate.Name)
+                        ? r.FormTemplate.Name
+                        : "Không xác định")
+                    .Select(g => new { Name = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .ThenBy(x => x.Name)
+                    .Take(5)
+                    .ToDictionaryAsync(x => x.Name, x => x.Count);
+
+                requestStatusStats = await requestStatsQuery
+                    .GroupBy(r => r.Status ?? "Unknown")
+                    .Select(g => new { Status = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .ToDictionaryAsync(x => x.Status, x => x.Count);
+
+                requestsByDay = await requestStatsQuery
+                    .GroupBy(r => r.CreatedAt.Date)
+                    .Select(g => new { Day = g.Key, Count = g.Count() })
+                    .OrderBy(x => x.Day)
+                    .ToDictionaryAsync(x => x.Day.ToString("dd/MM"), x => x.Count);
+            }
+
             var model = new AdminViewModel
             {
                 Users = await usersQuery.OrderBy(u => u.FullName).ToListAsync(),
@@ -108,7 +160,18 @@ namespace DANGCAPNE.Controllers
                 AttendanceSearch = normalizedAttendanceSearch,
                 AttendanceDepartmentId = attendanceDepartmentId,
                 AttendanceFromDate = fromDate,
-                AttendanceToDate = toDate
+                AttendanceToDate = toDate,
+                RequestStatsFromDate = requestFrom,
+                RequestStatsToDate = requestTo,
+                TotalRequestsInRange = totalRequestsInRange,
+                PendingRequestsInRange = requestStatusStats.TryGetValue("Pending", out var pendingCount) ? pendingCount : 0,
+                ApprovedRequestsInRange = requestStatusStats.TryGetValue("Approved", out var approvedCount) ? approvedCount : 0,
+                RejectedRequestsInRange = requestStatusStats.TryGetValue("Rejected", out var rejectedCount) ? rejectedCount : 0,
+                InProgressRequestsInRange = requestStatusStats.TryGetValue("InProgress", out var inProgressCount) ? inProgressCount : 0,
+                CancelledRequestsInRange = requestStatusStats.TryGetValue("Cancelled", out var cancelledCount) ? cancelledCount : 0,
+                TopRequestTypes = topRequestTypes,
+                RequestStatusStats = requestStatusStats,
+                RequestsByDay = requestsByDay
             };
 
             return View(model);

@@ -300,3 +300,12 @@ C:\Users\PC\DANGCAPNE\QUAN LY DON TU\QUAN LY DON TU\obj\Debug\net8.0\swae.build.
 C:\Users\PC\DANGCAPNE\QUAN LY DON TU\QUAN LY DON TU\obj\Debug\net8.0\DANGCAPNE.csproj.Up2Date
 C:\Users\PC\DANGCAPNE\QUAN LY DON TU\QUAN LY DON TU\obj\Debug\net8.0\DANGCAPNE.genruntimeconfig.cache
 C:\Users\PC\DANGCAPNE\QUAN LY DON TU\QUAN LY DON TU\obj\Debug\net8.0\ref\DANGCAPNE.dll
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\NuGet.Config
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\appsettings.Development.json
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\appsettings.json
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\DANGCAPNE.staticwebassets.runtime.json
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\DANGCAPNE.staticwebassets.endpoints.json
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\DANGCAPNE.deps.json
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\DANGCAPNE.runtimeconfig.json
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\DANGCAPNE.dll
+c:\Users\PC\DANGCAPNE\temp-build-adminstats\DANGCAPNE.pdb

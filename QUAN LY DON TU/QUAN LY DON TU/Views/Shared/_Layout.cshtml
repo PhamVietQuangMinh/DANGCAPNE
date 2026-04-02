@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -64,7 +64,7 @@
                         <i class="bi bi-plus-circle-fill"></i> Tạo đơn mới
                     </a>
                     <a href="@Url.Action("Index", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Index" ? "active" : "")" data-i18n="NavMyReq">
-                        <i class="bi bi-file-earmark-text-fill"></i> Đơn từ của tôi
+                        <i class="bi bi-file-earmark-text-fill"></i> Đơn từ hệ thống
                     </a>
                 </div>
                 @if (isManager || isAdmin || isHR)
@@ -297,7 +297,7 @@
         const dict = {
             "vi": {
                 // Sidebar
-                "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ của tôi", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý nhân viên", "NavBuilder": "Trình tạo biểu mẫu",
+                "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ hệ thống", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý nhân viên", "NavBuilder": "Trình tạo biểu mẫu",
                 "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline chấm công", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpAttendance": "Chấm công",
                 // Dashboard & Shared
                 "DashPending": "Đang chờ xử lý", "DashApproved": "Đã duyệt", "DashRejected": "Bị từ chối", "DashLeave": "Ngày phép còn lại",
@@ -357,7 +357,7 @@
             },
             "en": {
                 // Sidebar
-                "TitleDashboard": "Dashboard", "NavOverview": "Overview", "NavNotif": "Notifications", "NavRequests": "Requests", "NavCreate": "Create Request", "NavMyReq": "My Requests", "NavApproval": "Approvals", "NavHR": "HR Menu", "NavLeave": "Leave Mgmt", "NavTime": "Timekeeping", "NavModules": "Extra Modules", "NavAdmin": "Administration", "NavUsers": "Employee Management", "NavBuilder": "Form Builder",
+                "TitleDashboard": "Dashboard", "NavOverview": "Overview", "NavNotif": "Notifications", "NavRequests": "Requests", "NavCreate": "Create Request", "NavMyReq": "System Requests", "NavApproval": "Approvals", "NavHR": "HR Menu", "NavLeave": "Leave Mgmt", "NavTime": "Timekeeping", "NavModules": "Extra Modules", "NavAdmin": "Administration", "NavUsers": "Employee Management", "NavBuilder": "Form Builder",
                 "NavEmp": "Employee", "NavEmpRequests": "Request Management", "NavEmpTimeline": "Attendance Timeline", "NavEmpSchedule": "Schedule & Shifts", "NavEmpAttendance": "Timekeeping",
                 // Dashboard & Shared
                 "DashPending": "Pending Action", "DashApproved": "Approved", "DashRejected": "Rejected", "DashLeave": "Leave Balance",

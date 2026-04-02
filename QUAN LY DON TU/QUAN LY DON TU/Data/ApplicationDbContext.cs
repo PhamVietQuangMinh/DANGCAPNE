@@ -520,8 +520,14 @@ namespace DANGCAPNE.Data
             modelBuilder.Entity<Request>().HasIndex(r => r.TenantId);
             modelBuilder.Entity<Request>().HasIndex(r => r.Status);
             modelBuilder.Entity<Request>().HasIndex(r => r.RequesterId);
+            modelBuilder.Entity<Request>().HasIndex(r => new { r.TenantId, r.CreatedAt });
+            modelBuilder.Entity<Request>().HasIndex(r => new { r.TenantId, r.RequesterId, r.Status });
+            modelBuilder.Entity<Request>().HasIndex(r => new { r.TenantId, r.Status });
             modelBuilder.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
+            modelBuilder.Entity<Notification>().HasIndex(n => new { n.TenantId, n.UserId, n.IsRead });
             modelBuilder.Entity<Timesheet>().HasIndex(t => new { t.UserId, t.Date });
+            modelBuilder.Entity<Timesheet>().HasIndex(t => new { t.TenantId, t.Date });
+            modelBuilder.Entity<Timesheet>().HasIndex(t => new { t.TenantId, t.UserId, t.Date });
             modelBuilder.Entity<LeaveBalance>().HasIndex(lb => new { lb.UserId, lb.Year });
             modelBuilder.Entity<AuthAuditLog>().HasIndex(a => new { a.UserId, a.CreatedAt });
             modelBuilder.Entity<EmployeeOnlineSession>().HasIndex(e => new { e.UserId, e.Status });
@@ -531,6 +537,15 @@ namespace DANGCAPNE.Data
             modelBuilder.Entity<LateEarlyRequest>().HasIndex(l => l.SourceRequestId).IsUnique();
             modelBuilder.Entity<SalaryAdvanceRequest>().HasIndex(s => s.SourceRequestId).IsUnique();
             modelBuilder.Entity<AutoShiftPlanItem>().HasIndex(a => new { a.UserId, a.WorkDate });
+            modelBuilder.Entity<RequestApproval>().HasIndex(ra => ra.RequestId);
+            modelBuilder.Entity<RequestApproval>().HasIndex(ra => new { ra.ApproverId, ra.Status });
+            modelBuilder.Entity<RequestData>().HasIndex(rd => rd.RequestId);
+            modelBuilder.Entity<UserManager>().HasIndex(um => um.ManagerId);
+            modelBuilder.Entity<UserManager>().HasIndex(um => new { um.UserId, um.IsPrimary });
+            modelBuilder.Entity<Delegation>().HasIndex(d => new { d.DelegatorId, d.IsActive });
+            modelBuilder.Entity<FormTemplate>().HasIndex(ft => new { ft.TenantId, ft.IsActive });
+            modelBuilder.Entity<UserRole>().HasIndex(ur => ur.RoleId);
+            modelBuilder.Entity<RequestAuditLog>().HasIndex(ral => ral.RequestId);
 
             // Seed data
             const bool SeedDemoData = false;

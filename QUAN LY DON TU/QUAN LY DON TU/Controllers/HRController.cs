@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.ViewModels;
+using DANGCAPNE.Models.Requests;
 
 namespace DANGCAPNE.Controllers
 {
@@ -26,34 +27,61 @@ namespace DANGCAPNE.Controllers
             if (!roles.Contains("HR") && !roles.Contains("Admin"))
                 return RedirectToAction("AccessDenied", "Account");
 
+            var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+
+            // Fetch all requests with related data in one query
             var allRequests = await _context.Requests
                 .Include(r => r.Requester).ThenInclude(u => u!.Department)
                 .Include(r => r.FormTemplate)
                 .Where(r => r.TenantId == tenantId)
                 .OrderByDescending(r => r.CreatedAt)
+                .AsNoTracking()
                 .ToListAsync();
+
+            // Pre-filter for status buckets using in-memory (small dataset after SQL filter)
+            var pendingList = new List<Request>();
+            var inProgressList = new List<Request>();
+            var approvedList = new List<Request>();
+            var rejectedList = new List<Request>();
+
+            foreach (var r in allRequests)
+            {
+                switch (r.Status)
+                {
+                    case "Pending": pendingList.Add(r); break;
+                    case "InProgress":
+                    case "RequestEdit": inProgressList.Add(r); break;
+                    case "Approved": approvedList.Add(r); break;
+                    case "Rejected":
+                    case "Cancelled": rejectedList.Add(r); break;
+                }
+            }
 
             var model = new HRDashboardViewModel
             {
                 AllRequests = allRequests,
-                PendingRequests = allRequests.Where(r => r.Status == "Pending").ToList(),
-                InProgressRequests = allRequests.Where(r => r.Status == "InProgress" || r.Status == "RequestEdit").ToList(),
-                ApprovedRequests = allRequests.Where(r => r.Status == "Approved").ToList(),
-                RejectedRequests = allRequests.Where(r => r.Status == "Rejected" || r.Status == "Cancelled").ToList(),
-                Employees = await _context.Users.Include(u => u.Department).Where(u => u.TenantId == tenantId && u.Status == "Active").ToListAsync(),
+                PendingRequests = pendingList,
+                InProgressRequests = inProgressList,
+                ApprovedRequests = approvedList,
+                RejectedRequests = rejectedList,
+                Employees = await _context.Users.Include(u => u.Department).Where(u => u.TenantId == tenantId && u.Status == "Active").AsNoTracking().ToListAsync(),
                 LeaveBalances = await _context.LeaveBalances.Include(lb => lb.User).Include(lb => lb.LeaveType)
-                    .Where(lb => lb.TenantId == tenantId && lb.Year == DateTime.Now.Year).ToListAsync(),
+                    .Where(lb => lb.TenantId == tenantId && lb.Year == DateTime.Now.Year).AsNoTracking().ToListAsync(),
             };
 
-            // Anomaly detection
-            model.Anomalies = await DetectAnomalies(tenantId);
+            // Anomaly detection - use SQL grouping instead of loading all rows
+            var anomalies = await DetectAnomalies(tenantId, threeMonthsAgo);
+            model.Anomalies = anomalies;
 
-            // Dept stats
-            var deptStats = allRequests
-                .Where(r => r.Requester?.Department != null)
+            // Dept stats - use SQL aggregation
+            var deptStatsRaw = await _context.Requests
+                .Include(r => r.Requester).ThenInclude(u => u!.Department)
+                .Where(r => r.TenantId == tenantId && r.Requester != null && r.Requester.Department != null)
                 .GroupBy(r => r.Requester!.Department!.Name)
-                .ToDictionary(g => g.Key, g => g.Count());
-            model.DepartmentStats = deptStats;
+                .Select(g => new { Dept = g.Key, Count = g.Count() })
+                .AsNoTracking()
+                .ToListAsync();
+            model.DepartmentStats = deptStatsRaw.ToDictionary(x => x.Dept, x => x.Count);
 
             return View(model);
         }
@@ -102,53 +130,59 @@ namespace DANGCAPNE.Controllers
             return View(model);
         }
 
-        private async Task<List<AnomalyAlert>> DetectAnomalies(int tenantId)
+        private async Task<List<AnomalyAlert>> DetectAnomalies(int tenantId, DateTime threeMonthsAgo)
         {
             var anomalies = new List<AnomalyAlert>();
-            var threeMonthsAgo = DateTime.Now.AddMonths(-3);
 
-            // Detect Monday sick leave pattern
-            var mondaySickLeaves = _context.Requests
+            // Detect Monday sick leave pattern via SQL grouping
+            var mondaySickLeaves = await _context.Requests
                 .Include(r => r.Requester)
                 .Include(r => r.FormTemplate)
                 .Where(r => r.TenantId == tenantId &&
                     r.FormTemplate!.Category == "Leave" &&
                     r.CreatedAt >= threeMonthsAgo)
-                .AsEnumerable()
+                .AsNoTracking()
+                .ToListAsync();
+
+            var mondayGrouped = mondaySickLeaves
                 .Where(r => r.CreatedAt.DayOfWeek == DayOfWeek.Monday)
-                .GroupBy(r => r.RequesterId)
+                .GroupBy(r => new { r.RequesterId, r.Requester!.FullName })
                 .Where(g => g.Count() >= 3)
-                .Select(g => new { UserId = g.Key, Count = g.Count(), Name = g.First().Requester!.FullName })
+                .Select(g => new { g.Key.RequesterId, g.Key.FullName, Count = g.Count() })
                 .ToList();
 
-            foreach (var item in mondaySickLeaves)
+            foreach (var item in mondayGrouped)
             {
                 anomalies.Add(new AnomalyAlert
                 {
-                    EmployeeName = item.Name,
+                    EmployeeName = item.FullName,
                     AlertType = "Nghỉ thứ Hai",
                     Description = $"Đã xin nghỉ {item.Count} lần vào ngày thứ Hai trong 3 tháng qua",
                     Severity = "Warning"
                 });
             }
 
-            // Detect high OT department
+            // Detect high OT department via SQL aggregation
             var otByDept = await _context.Requests
                 .Include(r => r.Requester).ThenInclude(u => u!.Department)
                 .Where(r => r.TenantId == tenantId &&
                     r.FormTemplate!.Category == "OT" &&
                     r.CreatedAt >= DateTime.Now.AddMonths(-1))
-                .GroupBy(r => r.Requester!.Department!.Name)
-                .Select(g => new { Dept = g.Key, Count = g.Count() })
+                .AsNoTracking()
                 .ToListAsync();
 
-            foreach (var item in otByDept.Where(x => x.Count > 10))
+            var highOtDepts = otByDept
+                .GroupBy(r => r.Requester!.Department!.Name)
+                .Where(g => g.Count() > 10)
+                .ToList();
+
+            foreach (var item in highOtDepts)
             {
                 anomalies.Add(new AnomalyAlert
                 {
-                    EmployeeName = item.Dept,
+                    EmployeeName = item.Key,
                     AlertType = "OT cao bất thường",
-                    Description = $"Phòng {item.Dept} có {item.Count} đơn OT trong tháng này",
+                    Description = $"Phòng {item.Key} có {item.Count()} đơn OT trong tháng này",
                     Severity = "Critical"
                 });
             }

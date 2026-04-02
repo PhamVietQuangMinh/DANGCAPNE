@@ -760,77 +760,17 @@ namespace DANGCAPNE.Controllers
 
         private async Task EnsureExtendedTemplatesAsync(int tenantId)
         {
-            var templates = new[]
-            {
-                new { Id = 11, Name = "Đơn điều chỉnh công", Category = "Attendance", Icon = "bi-pencil-square", IconColor = "#f59e0b", WorkflowId = 1, RequiresFinancialApproval = false },
-                new { Id = 12, Name = "Đơn đi muộn/về sớm", Category = "Attendance", Icon = "bi-alarm", IconColor = "#ef4444", WorkflowId = 1, RequiresFinancialApproval = false },
-                new { Id = 13, Name = "Đơn tạm ứng lương", Category = "Expense", Icon = "bi-wallet2", IconColor = "#22c55e", WorkflowId = 2, RequiresFinancialApproval = true }
-            };
-
-            foreach (var templateDef in templates)
-            {
-                var template = await _context.FormTemplates.FirstOrDefaultAsync(f => f.Id == templateDef.Id);
-                if (template == null)
-                {
-                    template = new DANGCAPNE.Models.Workflow.FormTemplate
-                    {
-                        Id = templateDef.Id,
-                        TenantId = tenantId,
-                        Name = templateDef.Name,
-                        Category = templateDef.Category,
-                        Icon = templateDef.Icon,
-                        IconColor = templateDef.IconColor,
-                        WorkflowId = templateDef.WorkflowId,
-                        RequiresFinancialApproval = templateDef.RequiresFinancialApproval,
-                        IsActive = true,
-                        Description = templateDef.Name,
-                        CreatedAt = DateTime.Now
-                    };
-                    _context.FormTemplates.Add(template);
-                }
-                else
-                {
-                    template.IsActive = true;
-                    template.WorkflowId = templateDef.WorkflowId;
-                    template.RequiresFinancialApproval = templateDef.RequiresFinancialApproval;
-                    template.Icon = templateDef.Icon;
-                    template.IconColor = templateDef.IconColor;
-                    template.Category = templateDef.Category;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            await EnsureTemplateFieldsAsync(11, new[]
-            {
-                new TemplateFieldSeed(1001, "Ngày cần điều chỉnh", "attendance_date", "Date", true, 1, 6),
-                new TemplateFieldSeed(1002, "Giờ vào đề nghị", "requested_checkin", "Text", false, 2, 3),
-                new TemplateFieldSeed(1003, "Giờ ra đề nghị", "requested_checkout", "Text", false, 3, 3),
-                new TemplateFieldSeed(1004, "Lý do điều chỉnh", "reason", "Textarea", true, 4, 12),
-                new TemplateFieldSeed(1005, "Minh chứng đính kèm", "attachment", "FileUpload", false, 5, 12)
-            });
-
-            await EnsureTemplateFieldsAsync(12, new[]
-            {
-                new TemplateFieldSeed(1011, "Ngày áp dụng", "attendance_date", "Date", true, 1, 6),
-                new TemplateFieldSeed(1012, "Loại đăng ký", "request_type", "Dropdown", true, 2, 6),
-                new TemplateFieldSeed(1013, "Giờ dự kiến", "expected_time", "Text", true, 3, 6),
-                new TemplateFieldSeed(1014, "Giờ thực tế", "actual_time", "Text", true, 4, 6),
-                new TemplateFieldSeed(1015, "Lý do", "reason", "Textarea", true, 5, 12)
-            }, new[]
-            {
-                new TemplateOptionSeed(2011, 1012, "Đi muộn", "LateArrival", 1),
-                new TemplateOptionSeed(2012, 1012, "Về sớm", "EarlyLeave", 2)
-            });
-
-            await EnsureTemplateFieldsAsync(13, new[]
-            {
-                new TemplateFieldSeed(1021, "Số tiền tạm ứng", "advance_amount", "Number", true, 1, 6),
-                new TemplateFieldSeed(1022, "Tháng lương khấu trừ", "payroll_month", "Text", true, 2, 6),
-                new TemplateFieldSeed(1023, "Ngày cần nhận", "needed_by_date", "Date", true, 3, 6),
-                new TemplateFieldSeed(1024, "Lý do tạm ứng", "reason", "Textarea", true, 4, 12),
-                new TemplateFieldSeed(1025, "Tài liệu đính kèm", "attachment", "FileUpload", false, 5, 12)
-            });
+            // Đơn 11–13 (điều chỉnh công, đi muộn/về sớm, tạm ứng lương) không còn hiển thị trên "Chọn loại đơn".
+            // Tắt nếu đã tồn tại trong DB; giữ code xử lý SyncExtendedBusinessRequestAsync cho đơn cũ.
+            const int retiredStart = 11;
+            const int retiredEnd = 13;
+            var retired = await _context.FormTemplates
+                .Where(f => f.TenantId == tenantId && f.Id >= retiredStart && f.Id <= retiredEnd)
+                .ToListAsync();
+            foreach (var t in retired)
+                t.IsActive = false;
+            if (retired.Count > 0)
+                await _context.SaveChangesAsync();
         }
 
         private async Task EnsureTemplateFieldsAsync(int templateId, IEnumerable<TemplateFieldSeed> fields, IEnumerable<TemplateOptionSeed>? options = null)

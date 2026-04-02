@@ -665,7 +665,7 @@
                 // Kiểm tra điều kiện chất lượng trước khi thu thập
                 const isGoodQuality = quality >= 50 && faceSizeRatio >= MIN_FACE_SIZE_RATIO;
 
-                if (poseEnum === window.currentTargetPose) {
+                if (poseEnum === currentTargetPose) {
                     if (isGoodQuality) {
                         window.collectedEnrolls = window.collectedEnrolls || [];
                         window.collectedEnrolls.push(detections.descriptor);

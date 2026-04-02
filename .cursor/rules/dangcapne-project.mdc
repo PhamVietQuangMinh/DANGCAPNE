@@ -1,0 +1,12 @@
+---
+description: DANGCAPNE repo layout, stack, and editing constraints for this ASP.NET MVC project
+alwaysApply: true
+---
+
+# DANGCAPNE — ngữ cảnh dự án
+
+- Solution: `DANGCAPNE.sln`. App chính: `QUAN LY DON TU/QUAN LY DON TU/`.
+- Stack: ASP.NET Core MVC, EF Core, Razor; session-based auth và `TenantId` cho dữ liệu đa tenant.
+- Chỉ sửa phần liên quan yêu cầu; giữ naming và pattern controller/view/service hiện có.
+- Tránh commit secret: không thêm/chỉnh `appsettings.json` để lộ mật khẩu hoặc API key; dùng User Secrets hoặc env vars khi cần.
+- File `.cs`/`.cshtml` dùng UTF-8; giữ tiếng Việt đúng encoding (tránh chuỗi bị mojibake).

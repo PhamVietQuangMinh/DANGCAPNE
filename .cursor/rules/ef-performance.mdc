@@ -1,0 +1,73 @@
+---
+description: Entity Framework Core performance rules — AsNoTracking, Include, SQL aggregation patterns
+globs: **/*Controller.cs **/ApplicationDbContext.cs
+alwaysApply: false
+---
+
+# EF Core Performance Rules — DANGCAPNE
+
+## AsNoTracking()
+
+**LUÔN** thêm `.AsNoTracking()` cho truy vấn chỉ đọc (hiển thị, thống kê, dashboard):
+
+```csharp
+// ✅ Đúng — chỉ đọc
+var data = await _context.Requests
+    .Include(r => r.Requester)
+    .AsNoTracking()
+    .Where(r => r.TenantId == tenantId)
+    .ToListAsync();
+
+// ❌ Sai — tracking không cần thiết
+var data = await _context.Requests
+    .Include(r => r.Requester)
+    .Where(r => r.TenantId == tenantId)
+    .ToListAsync();
+```
+
+## Include chain
+
+- Dùng `.ThenInclude()` cho navigation lồng nhau:
+  `.Include(r => r.Requester).ThenInclude(u => u!.Department)`
+- Chỉ Include những bảng thực sự cần; tránh Include thừa.
+
+## SQL-side aggregation
+
+Ưu tiên đếm/nhóm trên SQL thay vì kéo toàn bộ rồi lọc in-memory:
+
+```csharp
+// ✅ Tốt — SQL aggregation
+var stats = await _context.Requests
+    .Where(r => r.TenantId == tenantId)
+    .GroupBy(r => r.Status)
+    .Select(g => new { Status = g.Key, Count = g.Count() })
+    .AsNoTracking()
+    .ToListAsync();
+
+// ❌ Chậm — kéo tất cả rồi đếm in-memory
+var all = await _context.Requests.AsNoTracking().ToListAsync();
+var count = all.Count(r => r.Status == "Pending");
+```
+
+## Phân trang
+
+Luôn `.Skip().Take()` hoặc `.Take(n)` cho danh sách lớn:
+
+```csharp
+var page = await _context.Requests
+    .AsNoTracking()
+    .Where(r => r.TenantId == tenantId)
+    .OrderByDescending(r => r.CreatedAt)
+    .Skip((page - 1) * pageSize)
+    .Take(pageSize)
+    .ToListAsync();
+```
+
+## Index
+
+Khi thêm truy vấn mới dựa trên field, kiểm tra/trình bày index trong `ApplicationDbContext.OnModelCreating`:
+
+```csharp
+modelBuilder.Entity<Request>().HasIndex(r => new { r.TenantId, r.Status });
+modelBuilder.Entity<Request>().HasIndex(r => r.RequesterId);
+```

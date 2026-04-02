@@ -1,0 +1,59 @@
+---
+description: Security rules — session auth, tenant isolation, no secrets in code
+globs: **/*Controller.cs **/appsettings.json **/Program.cs
+alwaysApply: false
+---
+
+# Security Rules — DANGCAPNE
+
+## Session Authentication
+
+Mọi action controller **PHẢI** kiểm tra session trước khi xử lý:
+
+```csharp
+var userId = HttpContext.Session.GetInt32("UserId");
+if (userId == null) return RedirectToAction("Login", "Account");
+```
+
+Các session key đang dùng: `UserId`, `TenantId`, `Roles`, `PrimaryRole`, `FullName`.
+
+## Tenant Isolation
+
+LUÔN lọc theo `TenantId` khi truy vấn dữ liệu nghiệp vụ:
+
+```csharp
+// ✅ Đúng
+var data = await _context.Requests
+    .Where(r => r.TenantId == tenantId)
+    .AsNoTracking()
+    .ToListAsync();
+
+// ❌ Sai — không có tenant filter
+var data = await _context.Requests.ToListAsync();
+```
+
+## Role Authorization
+
+Dùng `RoleAuthorizeAttribute` hoặc kiểm tra trực tiếp:
+
+```csharp
+var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+if (!roles.Contains("HR") && !roles.Contains("Admin"))
+    return RedirectToAction("AccessDenied", "Account");
+```
+
+## Secrets
+
+- **KHÔNG BAO GIỜ** commit connection string thật, API key, password vào `appsettings.json`.
+- Dùng **User Secrets** (`dotnet user-secrets`) cho development.
+- Dùng **Environment Variables** cho production.
+- Nếu thấy secret trong code, THÔNG BÁO ngay.
+
+## Input Validation
+
+Validate đầu vào trước khi lưu DB:
+
+```csharp
+if (string.IsNullOrWhiteSpace(model.FullName))
+    return BadRequest("Tên không hợp lệ.");
+```

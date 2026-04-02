@@ -1,0 +1,58 @@
+---
+description: C# .NET coding standards for this ASP.NET Core MVC project
+globs: **/*.cs
+alwaysApply: false
+---
+
+# C# Coding Standards — DANGCAPNE
+
+## Naming
+
+- Controller: `XxxController.cs` (suffixed `Controller`)
+- Model: `PascalCase`, đặt trong `Models/<Module>/`
+- ViewModel: `XxxViewModel.cs` trong `ViewModels/`
+- DbSet: `PascalCase` số nhiều — `Requests`, `Users`, `LeaveBalances`
+- Biến cục bộ: `camelCase`
+
+## Controller pattern
+
+```csharp
+[Route("Xxx/[action]")]
+public class XxxController : Controller
+{
+    private readonly ApplicationDbContext _context;
+
+    public XxxController(ApplicationDbContext context) => _context = context;
+
+    public async Task<IActionResult> ActionName()
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (userId == null) return RedirectToAction("Login", "Account");
+        var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+        // ... logic
+        return View(model);
+    }
+}
+```
+
+## EF Core
+
+- Đọc chỉ: `.AsNoTracking()` cho action hiển thị.
+- Đọc + sửa: bỏ `.AsNoTracking()`, dùng transaction nếu cần.
+- Luôn lọc `TenantId` khi truy vấn dữ liệu nghiệp vụ.
+
+## Async
+
+- Dùng `async Task<IActionResult>` cho tất cả action.
+- Luôn `await`, tránh `.Result` hoặc `.GetAwaiter().GetResult()`.
+
+## Error handling
+
+- Dùng `try/catch` với log; không để exception lan ra ngoài controller.
+- Trả về `IActionResult` phù hợp: `Ok()`, `BadRequest()`, `NotFound()`, `Json()`.
+
+## Không thêm
+
+- Comment rải rác kiểu `// hàm này làm gì` — chỉ comment khi logic không tự giải thích.
+- Magic string sửa trực tiếp trong code — dùng `const` hoặc enum.

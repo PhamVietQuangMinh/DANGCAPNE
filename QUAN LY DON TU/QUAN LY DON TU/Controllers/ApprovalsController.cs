@@ -27,50 +27,22 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
 
-            var roles = HttpContext.Session.GetString("Roles") ?? "";
-            var isAdmin = roles.Contains("Admin");
+            var pending = await _context.RequestApprovals
+                .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                .Include(a => a.Approver)
+                .Where(a => a.ApproverId == userId && a.Status == "Pending")
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
 
-            List<RequestApproval> pending;
-            List<RequestApproval> processed;
-
-            if (isAdmin)
-            {
-                // Admin sees ALL pending approvals system-wide
-                pending = await _context.RequestApprovals
-                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
-                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                    .Include(a => a.Approver)
-                    .Where(a => a.Status == "Pending")
-                    .OrderByDescending(a => a.CreatedAt)
-                    .ToListAsync();
-
-                processed = await _context.RequestApprovals
-                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
-                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                    .Include(a => a.Approver)
-                    .Where(a => a.Status != "Pending")
-                    .OrderByDescending(a => a.ActionDate)
-                    .Take(50)
-                    .ToListAsync();
-            }
-            else
-            {
-                // Normal users only see approvals assigned to them
-                pending = await _context.RequestApprovals
-                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
-                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                    .Where(a => a.ApproverId == userId && a.Status == "Pending")
-                    .OrderByDescending(a => a.CreatedAt)
-                    .ToListAsync();
-
-                processed = await _context.RequestApprovals
-                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
-                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                    .Where(a => a.ApproverId == userId && a.Status != "Pending")
-                    .OrderByDescending(a => a.ActionDate)
-                    .Take(50)
-                    .ToListAsync();
-            }
+            var processed = await _context.RequestApprovals
+                .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                .Include(a => a.Approver)
+                .Where(a => a.ApproverId == userId && a.Status != "Pending")
+                .OrderByDescending(a => a.ActionDate)
+                .Take(50)
+                .ToListAsync();
 
             var model = new ApprovalListViewModel
             {
@@ -83,36 +55,22 @@ namespace DANGCAPNE.Controllers
             return View(model);
         }
 
-        [HttpPost]
+                [HttpPost]
         public async Task<IActionResult> ProcessApproval(ApprovalActionViewModel model)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
-            var roles = HttpContext.Session.GetString("Roles") ?? "";
-            var isAdmin = roles.Contains("Admin");
 
-            RequestApproval? approval;
-            if (isAdmin)
-            {
-                // Admin can process any approval
-                approval = await _context.RequestApprovals
-                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                    .FirstOrDefaultAsync(a => a.Id == model.ApprovalId);
-            }
-            else
-            {
-                approval = await _context.RequestApprovals
-                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                    .FirstOrDefaultAsync(a => a.Id == model.ApprovalId && a.ApproverId == userId);
-            }
+            var approval = await _context.RequestApprovals
+                .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                .FirstOrDefaultAsync(a => a.Id == model.ApprovalId && a.ApproverId == userId);
 
             if (approval == null) return NotFound();
 
-            // PIN verification for financial approvals
             if (approval.Request?.FormTemplate?.RequiresFinancialApproval == true && model.Action == "Approve")
             {
-                if (string.IsNullOrEmpty(model.Pin) || model.Pin != "1234") // In production, verify against user's PIN hash
+                if (string.IsNullOrEmpty(model.Pin) || model.Pin != "1234")
                 {
                     TempData["Error"] = "Mã PIN không chính xác. Vui lòng thử lại.";
                     return RedirectToAction("Detail", "Requests", new { id = approval.RequestId });
@@ -130,94 +88,62 @@ namespace DANGCAPNE.Controllers
                 approval.Comments = model.Comments;
                 approval.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-                if (isAdmin)
+                var nextApproval = await _context.RequestApprovals
+                    .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
+                    .OrderBy(a => a.StepOrder)
+                    .FirstOrDefaultAsync();
+
+                while (nextApproval != null && nextApproval.Status == "Skipped")
                 {
-                    // If Admin overrides a step meant for someone else, record that ADMIN did it.
-                    if (approval.ApproverId != userId)
-                    {
-                        approval.ApproverId = userId;
-                        approval.Comments = string.IsNullOrEmpty(model.Comments) ? "Admin duyệt thay" : $"Admin duyệt thay: {model.Comments}";
-                    }
-
-                    // ══ ADMIN: mark ALL remaining steps as 'Skipped' → request DONE ══
-                    var remainingPending = await _context.RequestApprovals
-                        .Where(a => a.RequestId == request.Id && a.Id != approval.Id && a.Status == "Pending")
-                        .ToListAsync();
-
-                    foreach (var ra in remainingPending)
-                    {
-                        ra.Status = "Skipped";
-                        ra.ActionDate = DateTime.Now;
-                        ra.Comments = "Bỏ qua do Admin đã duyệt toàn bộ";
-                        ra.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-                    }
-
-                    // Directly mark request as fully approved
-                    request.Status = "Approved";
-                    request.CompletedAt = DateTime.Now;
-                }
-                else
-                {
-                    // ══ NON-ADMIN: step-by-step flow ══
-                    var nextApproval = await _context.RequestApprovals
-                        .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
+                    nextApproval = await _context.RequestApprovals
+                        .Where(a => a.RequestId == request.Id && a.StepOrder > nextApproval.StepOrder && a.Status == "Pending")
                         .OrderBy(a => a.StepOrder)
                         .FirstOrDefaultAsync();
+                }
 
-                    while (nextApproval != null && nextApproval.Status == "Skipped")
+                if (nextApproval != null)
+                {
+                    request.Status = "InProgress";
+                    request.CurrentStepOrder = nextApproval.StepOrder;
+
+                    if (nextApproval.ApproverId != null)
                     {
-                        nextApproval = await _context.RequestApprovals
-                            .Where(a => a.RequestId == request.Id && a.StepOrder > nextApproval.StepOrder && a.Status == "Pending")
-                            .OrderBy(a => a.StepOrder)
-                            .FirstOrDefaultAsync();
-                    }
-
-                    if (nextApproval != null)
-                    {
-                        request.Status = "InProgress";
-                        request.CurrentStepOrder = nextApproval.StepOrder;
-
-                        if (nextApproval.ApproverId != null)
-                        {
-                            _context.Notifications.Add(new Models.SystemModels.Notification
-                            {
-                                TenantId = tenantId,
-                                UserId = nextApproval.ApproverId.Value,
-                                Title = "Đơn cần duyệt",
-                                Message = $"Đơn {request.RequestCode} đã được duyệt bước trước và chuyển đến bạn",
-                                Type = "Approval",
-                                ActionUrl = $"/Requests/Detail/{request.Id}",
-                                RelatedRequestId = request.Id
-                            });
-
-                            await _hubContext.Clients.Group($"user_{nextApproval.ApproverId}")
-                                .SendAsync("ReceiveNotification", new
-                                {
-                                    title = "Đơn cần duyệt",
-                                    message = $"Đơn {request.RequestCode} cần bạn xử lý",
-                                    type = "Approval",
-                                    actionUrl = $"/Requests/Detail/{request.Id}"
-                                });
-                        }
-
-                        // Notify requester about progress
                         _context.Notifications.Add(new Models.SystemModels.Notification
                         {
                             TenantId = tenantId,
-                            UserId = request.RequesterId,
-                            Title = "Đơn đang được xử lý",
-                            Message = $"Đơn {request.RequestCode} đã được duyệt bước {approval.StepName ?? approval.StepOrder.ToString()} và đang chờ bước tiếp theo",
-                            Type = "Info",
+                            UserId = nextApproval.ApproverId.Value,
+                            Title = "Đơn cần duyệt",
+                            Message = $"Đơn {request.RequestCode} đã được duyệt bước trước và chuyển đến bạn",
+                            Type = "Approval",
                             ActionUrl = $"/Requests/Detail/{request.Id}",
                             RelatedRequestId = request.Id
                         });
+
+                        await _hubContext.Clients.Group($"user_{nextApproval.ApproverId}")
+                            .SendAsync("ReceiveNotification", new
+                            {
+                                title = "Đơn cần duyệt",
+                                message = $"Đơn {request.RequestCode} cần bạn xử lý",
+                                type = "Approval",
+                                actionUrl = $"/Requests/Detail/{request.Id}"
+                            });
                     }
-                    else
+
+                    _context.Notifications.Add(new Models.SystemModels.Notification
                     {
-                        // All steps approved by non-admin flow
-                        request.Status = "Approved";
-                        request.CompletedAt = DateTime.Now;
-                    }
+                        TenantId = tenantId,
+                        UserId = request.RequesterId,
+                        Title = "Đơn đang được xử lý",
+                        Message = $"Đơn {request.RequestCode} đã được duyệt bước {approval.StepName ?? approval.StepOrder.ToString()} và đang chờ bước tiếp theo",
+                        Type = "Info",
+                        ActionUrl = $"/Requests/Detail/{request.Id}",
+                        RelatedRequestId = request.Id
+                    });
+                }
+                else
+                {
+                    request.Status = "Approved";
+                    request.CompletedAt = DateTime.Now;
                 }
 
                 if (request.Status == "Approved")
@@ -225,7 +151,6 @@ namespace DANGCAPNE.Controllers
                     var templateName = request.FormTemplate?.Name ?? "";
                     if (request.FormTemplateId == 7 || templateName.Contains("cập nhật thông tin"))
                     {
-                        Console.WriteLine($"[ProfileUpdate] Processing approval for Request {request.RequestCode}");
                         var dataEntries = await _context.RequestData
                             .Where(rd => rd.RequestId == request.Id)
                             .ToListAsync();
@@ -237,18 +162,14 @@ namespace DANGCAPNE.Controllers
                             var newPhone = dataEntries.FirstOrDefault(d => (d.FieldKey == "new_phone" || d.FieldKey == "phone"))?.FieldValue;
                             var newEmail = dataEntries.FirstOrDefault(d => (d.FieldKey == "new_email" || d.FieldKey == "email"))?.FieldValue;
 
-                            Console.WriteLine($"[ProfileUpdate] Fields extracted - Name: {newFullName}, Phone: {newPhone}, Email: {newEmail}");
-
                             if (!string.IsNullOrWhiteSpace(newFullName)) requester.FullName = newFullName.Trim();
                             if (!string.IsNullOrWhiteSpace(newPhone)) requester.Phone = newPhone.Trim();
                             if (!string.IsNullOrWhiteSpace(newEmail)) requester.Email = newEmail.Trim();
-                            
+
                             _context.Users.Update(requester);
-                            Console.WriteLine($"[ProfileUpdate] Sync completed for User {requester.Email}");
                         }
                     }
 
-                    // Notify requester
                     _context.Notifications.Add(new Models.SystemModels.Notification
                     {
                         TenantId = tenantId,
@@ -260,7 +181,6 @@ namespace DANGCAPNE.Controllers
                         RelatedRequestId = request.Id
                     });
 
-                    // SignalR
                     await _hubContext.Clients.Group($"user_{request.RequesterId}")
                         .SendAsync("RequestStatusChanged", new
                         {
@@ -299,7 +219,7 @@ namespace DANGCAPNE.Controllers
             }
             else if (model.Action == "RequestEdit")
             {
-                approval.Status = "Pending"; // Keep pending
+                approval.Status = "Pending";
                 request.Status = "RequestEdit";
 
                 _context.Notifications.Add(new Models.SystemModels.Notification
@@ -316,7 +236,6 @@ namespace DANGCAPNE.Controllers
 
             request.UpdatedAt = DateTime.Now;
 
-            // Audit log
             _context.RequestAuditLogs.Add(new RequestAuditLog
             {
                 RequestId = request.Id,
@@ -328,20 +247,20 @@ namespace DANGCAPNE.Controllers
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
             });
 
-            // --- CC Admin Users on action ---
             var adminRoleId = await _context.Roles.Where(r => r.Name == "Admin").Select(r => r.Id).FirstOrDefaultAsync();
             if (adminRoleId > 0)
             {
-                var nextApproverId = request.Status == "InProgress" ? 
-                    await _context.RequestApprovals.Where(a => a.RequestId == request.Id && a.Status == "Pending").OrderBy(a => a.StepOrder).Select(a => a.ApproverId).FirstOrDefaultAsync() 
+                var nextApproverId = request.Status == "InProgress"
+                    ? await _context.RequestApprovals.Where(a => a.RequestId == request.Id && a.Status == "Pending").OrderBy(a => a.StepOrder).Select(a => a.ApproverId).FirstOrDefaultAsync()
                     : null;
 
                 var adminUserIds = await _context.UserRoles
                     .Where(ur => ur.RoleId == adminRoleId && ur.UserId != userId.Value && ur.UserId != request.RequesterId && ur.UserId != nextApproverId)
                     .Select(ur => ur.UserId)
                     .ToListAsync();
-                
-                string actionMsg = model.Action switch {
+
+                var actionMsg = model.Action switch
+                {
                     "Approve" => "đã duyệt",
                     "Reject" => "đã từ chối",
                     "RequestEdit" => "yêu cầu chỉnh sửa",
@@ -364,7 +283,6 @@ namespace DANGCAPNE.Controllers
             }
 
             await SyncExtendedBusinessRequestStatusAsync(request.Id, request.Status, userId.Value, model.Comments);
-
             await _context.SaveChangesAsync();
 
             TempData["Success"] = model.Action switch

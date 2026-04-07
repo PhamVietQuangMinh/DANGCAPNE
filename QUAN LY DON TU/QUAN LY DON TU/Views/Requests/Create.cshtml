@@ -14,6 +14,13 @@
             <span class="text-muted" id="draftStatus"></span>
         </div>
         <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(Model.FormError))
+            {
+                <div class="alert alert-danger" style="margin-bottom:20px">
+                    <i class="bi bi-exclamation-triangle-fill"></i> @Model.FormError
+                </div>
+            }
+
             <form method="post" enctype="multipart/form-data" id="requestForm" asp-action="Create" asp-route-templateId="@Model.FormTemplate?.Id">
                 <div class="form-row" style="margin-bottom:20px">
                     <div class="col-12">
@@ -41,7 +48,7 @@
                                         <input type="text" name="@field.FieldName" class="form-control" placeholder="@field.Placeholder" value="@savedVal" @(field.IsRequired ? "required" : "") />
                                         break;
                                     case "Number":
-                                        <input type="number" name="@field.FieldName" class="form-control" placeholder="@field.Placeholder" value="@savedVal" @(field.IsRequired ? "required" : "") />
+                                        <input type="number" step="0.5" name="@field.FieldName" class="form-control" placeholder="@field.Placeholder" value="@savedVal" @(field.IsRequired ? "required" : "") @((Model.FormTemplate?.Id == 1 && field.FieldName == "total_days") ? "readonly" : "") />
                                         break;
                                     case "Date":
                                         <input type="date" name="@field.FieldName" class="form-control" value="@savedVal" @(field.IsRequired ? "required" : "") />
@@ -54,12 +61,19 @@
                                             <option value="" data-i18n="OptSelect">-- Chọn --</option>
                                             @foreach (var opt in field.Options)
                                             {
-                                                <option value="@opt.Value" selected="@(savedVal == opt.Value)">@opt.Label</option>
+                                                if (savedVal == opt.Value)
+                                                {
+                                                    <option value="@opt.Value" selected>@opt.Label</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@opt.Value">@opt.Label</option>
+                                                }
                                             }
                                         </select>
                                         break;
                                     case "FileUpload":
-                                        <input type="file" name="@field.FieldName" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx" />
+                                        <input type="file" name="@field.FieldName" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx" @((Model.FormTemplate?.Id == 1) ? "required" : "") />
                                         break;
                                     case "Checkbox":
                                         <label class="form-check">
@@ -76,15 +90,97 @@
                     }
                 </div>
 
+                @if (Model.FormTemplate?.Id == 1)
+                {
+                    <div id="annualLeavePanel" class="glass-subcard" style="display:none;margin-top:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+                            <div>
+                                <div style="font-size:16px;font-weight:700">Quỹ phép năm 2025 / 2026</div>
+                                <div class="text-muted" style="font-size:13px">Hệ thống ưu tiên trừ phép năm trước rồi mới đến phép năm hiện tại.</div>
+                            </div>
+                            <span class="mini-badge">1 tháng = 1 ngày, tối đa 12 ngày/năm</span>
+                        </div>
+                        <div class="leave-grid">
+                            @foreach (var bucket in Model.AnnualLeaveBuckets)
+                            {
+                                <div class="leave-card" data-year="@bucket.Year" data-remaining="@bucket.Remaining.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                    <div class="leave-card-year">@bucket.Year</div>
+                                    <div class="leave-card-main">Còn lại @bucket.Remaining ngày</div>
+                                    <div class="leave-card-meta">Quỹ năm: @bucket.TotalEntitled ngày</div>
+                                    <div class="leave-card-meta">Đã dùng: @bucket.Used ngày</div>
+                                    @if (bucket.CarryOver > 0)
+                                    {
+                                        <div class="leave-card-meta">Bao gồm chuyển sang: @bucket.CarryOver ngày</div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="leave-preview" id="annualLeavePreview">
+                            <div class="leave-preview-item">Dùng từ năm trước: <strong id="usePrevYear">0</strong> ngày</div>
+                            <div class="leave-preview-item">Dùng từ năm nay: <strong id="useCurrentYear">0</strong> ngày</div>
+                            <div class="leave-preview-item">Còn lại năm trước: <strong id="remainPrevYear">0</strong> ngày</div>
+                            <div class="leave-preview-item">Còn lại năm nay: <strong id="remainCurrentYear">0</strong> ngày</div>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.FormTemplate?.Id == 2)
+                {
+                    <div class="glass-subcard" style="margin-top:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                            <div>
+                                <div style="font-size:16px;font-weight:700">Kế hoạch tăng ca của nhân viên</div>
+                                <div class="text-muted" style="font-size:13px">Trưởng phòng và HR sẽ nhìn được danh sách OT gần nhất để sắp lịch tăng ca.</div>
+                            </div>
+                            <span class="mini-badge">Trong ngày báo trước 4 tiếng, ngày sau báo trước 1 ngày</span>
+                        </div>
+                        <div id="otRuleMessage" class="ot-rule-message info">Nhập ngày OT và giờ bắt đầu để hệ thống kiểm tra điều kiện báo trước.</div>
+                        <div class="table-responsive" style="margin-top:12px">
+                            <table class="table table-sm" style="margin-bottom:0">
+                                <thead>
+                                    <tr>
+                                        <th>Nhân viên</th>
+                                        <th>Mã đơn</th>
+                                        <th>Ngày OT</th>
+                                        <th>Khung giờ</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.OvertimePlans.Any())
+                                    {
+                                        foreach (var plan in Model.OvertimePlans)
+                                        {
+                                            <tr>
+                                                <td>@plan.EmployeeName</td>
+                                                <td>@plan.RequestCode</td>
+                                                <td>@plan.WorkDate.ToString("dd/MM/yyyy")</td>
+                                                <td>@plan.StartTime - @plan.EndTime</td>
+                                                <td>@plan.Status</td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="5" class="text-muted" style="text-align:center">Chưa có kế hoạch OT nào gần đây.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+
                 <div class="form-row" style="margin-top:8px">
                     <div class="col-6">
                         <div class="form-group">
                             <label class="form-label" data-i18n="LabelPriority">Mức độ ưu tiên</label>
                             <select name="Priority" class="form-control">
-                                <option value="Normal" data-i18n="PriNormal">Bình thường</option>
-                                <option value="Low" data-i18n="PriLow">Thấp</option>
-                                <option value="High" data-i18n="PriHigh">Cao</option>
-                                <option value="Urgent" data-i18n="PriUrgent">Khẩn cấp</option>
+                                <option value="Normal" selected="@(Model.Priority == "Normal")" data-i18n="PriNormal">Bình thường</option>
+                                <option value="Low" selected="@(Model.Priority == "Low")" data-i18n="PriLow">Thấp</option>
+                                <option value="High" selected="@(Model.Priority == "High")" data-i18n="PriHigh">Cao</option>
+                                <option value="Urgent" selected="@(Model.Priority == "Urgent")" data-i18n="PriUrgent">Khẩn cấp</option>
                             </select>
                         </div>
                     </div>
@@ -100,9 +196,89 @@
     </div>
 </div>
 
+<style>
+    .glass-subcard {
+        background: var(--bg-glass);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius-md);
+        padding: 18px;
+        margin-bottom: 8px;
+    }
+    .mini-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(99, 102, 241, 0.12);
+        color: #4f46e5;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .leave-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+    }
+    .leave-card {
+        border: 1px solid rgba(99, 102, 241, 0.16);
+        background: rgba(255, 255, 255, 0.75);
+        border-radius: 16px;
+        padding: 16px;
+    }
+    .leave-card-year {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+    .leave-card-main {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    .leave-card-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    .leave-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+    .leave-preview-item {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(99, 102, 241, 0.08);
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+    .ot-rule-message {
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .ot-rule-message.info {
+        background: rgba(59, 130, 246, 0.12);
+        color: #2563eb;
+    }
+    .ot-rule-message.ok {
+        background: rgba(16, 185, 129, 0.12);
+        color: #059669;
+    }
+    .ot-rule-message.error {
+        background: rgba(239, 68, 68, 0.12);
+        color: #dc2626;
+    }
+</style>
+
 @section Scripts {
 <script>
+    const annualLeaveBuckets = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.AnnualLeaveBuckets));
     let autoSaveTimer;
+
     function saveDraft() {
         const form = document.getElementById('requestForm');
         const formData = {};
@@ -123,34 +299,122 @@
         autoSaveTimer = setTimeout(saveDraft, 30000);
     });
 
-    // AI Auto-fill from Session Storage
+    function updateAnnualLeavePreview() {
+        const leaveTypeSelect = document.querySelector('[name="leave_type"]');
+        const totalDaysInput = document.querySelector('[name="total_days"]');
+        const panel = document.getElementById('annualLeavePanel');
+        if (!leaveTypeSelect || !totalDaysInput || !panel || annualLeaveBuckets.length < 2) {
+            return;
+        }
+
+        const isAnnualLeave = leaveTypeSelect.value === 'AL';
+        panel.style.display = isAnnualLeave ? 'block' : 'none';
+        if (!isAnnualLeave) {
+            return;
+        }
+
+        const requested = parseFloat(totalDaysInput.value || '0');
+        const previousYear = annualLeaveBuckets[0];
+        const currentYear = annualLeaveBuckets[1];
+        const usePrevious = Math.min(previousYear.remaining || 0, requested || 0);
+        const useCurrent = Math.max(0, (requested || 0) - usePrevious);
+
+        document.getElementById('usePrevYear').textContent = usePrevious.toFixed(1).replace('.0', '');
+        document.getElementById('useCurrentYear').textContent = useCurrent.toFixed(1).replace('.0', '');
+        document.getElementById('remainPrevYear').textContent = Math.max(0, (previousYear.remaining || 0) - usePrevious).toFixed(1).replace('.0', '');
+        document.getElementById('remainCurrentYear').textContent = Math.max(0, (currentYear.remaining || 0) - useCurrent).toFixed(1).replace('.0', '');
+    }
+
+    function updateLeaveDuration() {
+        const startDateInput = document.querySelector('[name="start_date"]');
+        const endDateInput = document.querySelector('[name="end_date"]');
+        const totalDaysInput = document.querySelector('[name="total_days"]');
+        if (!startDateInput || !endDateInput || !totalDaysInput) {
+            return;
+        }
+
+        if (!startDateInput.value || !endDateInput.value) {
+            totalDaysInput.value = '';
+            updateAnnualLeavePreview();
+            return;
+        }
+
+        const startDate = new Date(startDateInput.value + 'T00:00:00');
+        const endDate = new Date(endDateInput.value + 'T00:00:00');
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+            totalDaysInput.value = '';
+            updateAnnualLeavePreview();
+            return;
+        }
+
+        const diffDays = Math.floor((endDate.getTime() - startDate.getTime()) / 86400000) + 1;
+        totalDaysInput.value = diffDays;
+        updateAnnualLeavePreview();
+    }
+    function updateOtRuleMessage() {
+        const dateInput = document.querySelector('[name="ot_date"]');
+        const startInput = document.querySelector('[name="start_time"]');
+        const messageBox = document.getElementById('otRuleMessage');
+        if (!dateInput || !startInput || !messageBox) {
+            return;
+        }
+
+        if (!dateInput.value || !startInput.value) {
+            messageBox.className = 'ot-rule-message info';
+            messageBox.textContent = 'Nhập ngày OT và giờ bắt đầu để hệ thống kiểm tra điều kiện báo trước.';
+            return;
+        }
+
+        const now = new Date();
+        const startDate = new Date(`${dateInput.value}T${startInput.value}:00`);
+        if (Number.isNaN(startDate.getTime())) {
+            messageBox.className = 'ot-rule-message info';
+            messageBox.textContent = 'Giờ OT nên nhập theo định dạng HH:mm.';
+            return;
+        }
+
+        const diffHours = (startDate.getTime() - now.getTime()) / 3600000;
+        const sameDay = startDate.toDateString() === now.toDateString();
+
+        if (sameDay && diffHours < 4) {
+            messageBox.className = 'ot-rule-message error';
+            messageBox.textContent = 'OT trong ngày làm việc phải báo trước cho cấp trên ít nhất 4 tiếng.';
+            return;
+        }
+
+        if (!sameDay && diffHours < 24) {
+            messageBox.className = 'ot-rule-message error';
+            messageBox.textContent = 'OT cho ngày kế tiếp trở đi phải báo trước ít nhất 1 ngày.';
+            return;
+        }
+
+        messageBox.className = 'ot-rule-message ok';
+        messageBox.textContent = 'Khung OT này đang đáp ứng điều kiện báo trước của hệ thống.';
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const templateId = '@Model.FormTemplate?.Id';
         const aiDataKey = 'ai_formData_' + templateId;
         const aiDataStr = sessionStorage.getItem(aiDataKey);
-        
+
         if (aiDataStr) {
             try {
                 const aiData = JSON.parse(aiDataStr);
                 const form = document.getElementById('requestForm');
-                
-                // Clear ai session data so it doesn't persistently auto-fill on manual reload
                 sessionStorage.removeItem(aiDataKey);
-                
+
                 let filledCount = 0;
                 for (const key in aiData) {
                     const inputElement = form.querySelector(`[name="${key}"]`);
                     if (inputElement && (inputElement.tagName === 'INPUT' || inputElement.tagName === 'TEXTAREA' || inputElement.tagName === 'SELECT')) {
-                        // Avoid overwriting checkboxes/files naively, stick to text/number/select
-                        if(inputElement.type !== 'file' && inputElement.type !== 'checkbox' && inputElement.type !== 'radio') {
+                        if (inputElement.type !== 'file' && inputElement.type !== 'checkbox' && inputElement.type !== 'radio') {
                             inputElement.value = aiData[key];
                             filledCount++;
                         }
                     }
                 }
-                
+
                 if (filledCount > 0) {
-                    // Show a toast or notification
                     const draftStatus = document.getElementById('draftStatus');
                     const lang = localStorage.getItem('dangcapne_lang') || 'vi';
                     const p1 = typeof dict !== 'undefined' && dict[lang]?.AIFillP1 ? dict[lang].AIFillP1 : 'A.I đã tự động điền ';
@@ -159,12 +423,11 @@
                     draftStatus.classList.add('text-primary');
                     draftStatus.classList.remove('text-muted');
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error('Error parsing AI data', e);
             }
         }
 
-        // Dynamic visibility for Template 7
         if ('@Model.FormTemplate?.Id' === '7') {
             const updateTypeSelect = document.querySelector('[name="update_type"]');
             const fields = {
@@ -175,7 +438,6 @@
 
             function updateVisibility() {
                 const val = updateTypeSelect.value;
-                // Hide all and reset required
                 Object.values(fields).forEach(f => {
                     if (f) {
                         f.style.display = 'none';
@@ -183,8 +445,7 @@
                         if (input) input.required = false;
                     }
                 });
-                
-                // Show selected and set required if needed
+
                 if (val && fields[val]) {
                     fields[val].style.display = 'block';
                     const input = fields[val].querySelector('input');
@@ -194,8 +455,31 @@
 
             if (updateTypeSelect) {
                 updateTypeSelect.addEventListener('change', updateVisibility);
-                updateVisibility(); // Initial state
+                updateVisibility();
             }
+        }
+
+        const leaveTypeSelect = document.querySelector('[name="leave_type"]');
+        const totalDaysInput = document.querySelector('[name="total_days"]');
+        const startDateInput = document.querySelector('[name="start_date"]');
+        const endDateInput = document.querySelector('[name="end_date"]');
+        if (leaveTypeSelect && totalDaysInput) {
+            leaveTypeSelect.addEventListener('change', updateAnnualLeavePreview);
+            totalDaysInput.addEventListener('input', updateAnnualLeavePreview);
+            updateAnnualLeavePreview();
+        }
+        if (startDateInput && endDateInput && totalDaysInput) {
+            startDateInput.addEventListener('change', updateLeaveDuration);
+            endDateInput.addEventListener('change', updateLeaveDuration);
+            updateLeaveDuration();
+        }
+
+        const otDateInput = document.querySelector('[name="ot_date"]');
+        const otStartInput = document.querySelector('[name="start_time"]');
+        if (otDateInput && otStartInput) {
+            otDateInput.addEventListener('change', updateOtRuleMessage);
+            otStartInput.addEventListener('input', updateOtRuleMessage);
+            updateOtRuleMessage();
         }
     });
 </script>

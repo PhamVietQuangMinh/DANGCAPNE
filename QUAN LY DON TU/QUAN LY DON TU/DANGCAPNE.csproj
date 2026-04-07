@@ -17,4 +17,10 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="DbPatchTemp\**\*.cs" />
+    <EmbeddedResource Remove="DbPatchTemp\**\*" />
+    <None Remove="DbPatchTemp\**\*" />
+  </ItemGroup>
+
 </Project>

@@ -68,6 +68,25 @@ namespace DANGCAPNE.ViewModels
         public List<FormTemplate> FormTemplates { get; set; } = new();
     }
 
+        public class AnnualLeaveBucketViewModel
+    {
+        public int Year { get; set; }
+        public double TotalEntitled { get; set; }
+        public double Used { get; set; }
+        public double CarryOver { get; set; }
+        public double Remaining { get; set; }
+    }
+
+    public class OvertimePlanItemViewModel
+    {
+        public string EmployeeName { get; set; } = string.Empty;
+        public string RequestCode { get; set; } = string.Empty;
+        public DateTime WorkDate { get; set; }
+        public string StartTime { get; set; } = string.Empty;
+        public string EndTime { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+
     public class RequestCreateViewModel
     {
         public FormTemplate? FormTemplate { get; set; }
@@ -75,6 +94,9 @@ namespace DANGCAPNE.ViewModels
         public Dictionary<string, string> FormData { get; set; } = new();
         public string? Title { get; set; }
         public string Priority { get; set; } = "Normal";
+        public string? FormError { get; set; }
+        public List<AnnualLeaveBucketViewModel> AnnualLeaveBuckets { get; set; } = new();
+        public List<OvertimePlanItemViewModel> OvertimePlans { get; set; } = new();
     }
 
     public class RequestDetailViewModel

@@ -134,7 +134,7 @@
             @{
                 var currentUserId = Context.Session.GetInt32("UserId");
                 var userRoles = (Context.Session.GetString("Roles") ?? "").Split(",");
-                bool isRequester = Model.Request?.RequesterId == currentUserId;
+                bool isRequester = false;
             }
 
             @if (isRequester)

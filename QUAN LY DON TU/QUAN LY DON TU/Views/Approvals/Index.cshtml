@@ -1,51 +1,62 @@
 @model DANGCAPNE.ViewModels.ApprovalListViewModel
 @{
-    ViewData["Title"] = "Phê duyệt đơn";
+    ViewData["Title"] = "Phe duyet don";
 }
 <div class="page-content">
     <div class="d-flex justify-between align-center mb-24" style="flex-wrap:wrap;gap:16px">
         <div>
-            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px" data-i18n="TitleApproveReq">Phê duyệt đơn từ</h2>
-            <p class="text-muted">Bạn có <strong class="text-warning">@Model.TotalPending</strong> <span data-i18n="SubtitlePendingReq">đơn đang chờ xử lý</span></p>
+            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px">Phe duyet don tu</h2>
+            <p class="text-muted">Ban co <strong class="text-warning">@Model.TotalPending</strong> don dang cho xu ly</p>
         </div>
         @if (Model.PendingApprovals.Any())
         {
-            <button class="btn btn-success" onclick="showBulkModal()"><i class="bi bi-check2-all"></i> <span data-i18n="BtnBulkApprove">Duyệt hàng loạt</span></button>
+            <button class="btn btn-success" onclick="showBulkModal()"><i class="bi bi-check2-all"></i> Duyet hang loat</button>
         }
     </div>
 
     @if (Model.PendingApprovals.Any())
     {
         <div class="glass-card mb-24">
-            <div class="card-header"><h3><i class="bi bi-clock-fill text-warning"></i> <span data-i18n="ApproveTabWait">Đang chờ duyệt</span> (@Model.PendingApprovals.Count)</h3></div>
+            <div class="card-header"><h3><i class="bi bi-clock-fill text-warning"></i> Dang cho duyet (@Model.PendingApprovals.Count)</h3></div>
             <div class="card-body" style="padding:0">
                 <form method="post" asp-action="BulkApproval" id="bulkForm">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="selectAll" onchange="toggleAll(this)" /></th>
-                                <th data-i18n="ColReqCode">Mã đơn</th>
-                                <th data-i18n="ColType">Loại</th>
-                                <th data-i18n="ColRequester">Người gửi</th>
-                                <th data-i18n="ColTitle">Tiêu đề</th>
-                                <th data-i18n="ColStep">Bước</th>
-                                <th data-i18n="ColSubmitDate">Ngày gửi</th>
-                                <th data-i18n="ColAction">Thao tác</th>
+                                <th>Ma don</th>
+                                <th>Loai</th>
+                                <th>Nguoi gui</th>
+                                <th>Tieu de</th>
+                                <th>Buoc</th>
+                                <th>SLA</th>
+                                <th>Ngay gui</th>
+                                <th>Thao tac</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var a in Model.PendingApprovals)
+                            @foreach (var approval in Model.PendingApprovals)
                             {
+                                Model.ApprovalSla.TryGetValue(approval.Id, out var pendingSla);
                                 <tr>
-                                    <td><input type="checkbox" name="ApprovalIds" value="@a.Id" class="bulk-check" /></td>
-                                    <td><strong class="text-primary">@a.Request?.RequestCode</strong></td>
-                                    <td><i class="bi @a.Request?.FormTemplate?.Icon" style="color:@a.Request?.FormTemplate?.IconColor"></i> @a.Request?.FormTemplate?.Name</td>
-                                    <td>@a.Request?.Requester?.FullName</td>
-                                    <td>@a.Request?.Title</td>
-                                    <td><span class="status-badge pending">@a.StepName</span></td>
-                                    <td class="text-muted">@a.Request?.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                    <td><input type="checkbox" name="ApprovalIds" value="@approval.Id" class="bulk-check" /></td>
+                                    <td><strong class="text-primary">@approval.Request?.RequestCode</strong></td>
+                                    <td><i class="bi @approval.Request?.FormTemplate?.Icon" style="color:@approval.Request?.FormTemplate?.IconColor"></i> @approval.Request?.FormTemplate?.Name</td>
+                                    <td>@approval.Request?.Requester?.FullName</td>
+                                    <td>@approval.Request?.Title</td>
+                                    <td><span class="status-badge pending">@approval.StepName</span></td>
                                     <td>
-                                        <a href="@Url.Action("Detail", "Requests", new { id = a.RequestId })" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i> <span data-i18n="BtnView">Xem</span></a>
+                                        @if (pendingSla != null)
+                                        {
+                                            <div class="sla-stack">
+                                                <span class="status-badge @(pendingSla.IsOverdue ? "rejected" : "pending")">@pendingSla.StatusText</span>
+                                                <span class="sla-time @(pendingSla.IsOverdue ? "overdue" : "")">@pendingSla.RemainingText</span>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="text-muted">@approval.Request?.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <a href="@Url.Action("Detail", "Requests", new { id = approval.RequestId })" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i> Xem</a>
                                     </td>
                                 </tr>
                             }
@@ -53,10 +64,10 @@
                     </table>
                     <div id="bulkActions" style="display:none;padding:20px;border-top:1px solid var(--border-glass)">
                         <div class="d-flex gap-8 align-center flex-wrap">
-                            <span class="text-muted"><span data-i18n="LabelSelected">Đã chọn</span> <strong id="selectedCount">0</strong></span>
-                            <input type="text" name="Comments" class="form-control" placeholder="Nhận xét (tùy chọn)" data-i18n="PlaceholderComment" style="max-width:300px" />
-                            <button type="submit" name="Action" value="Approve" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> <span data-i18n="BtnApproveAll">Duyệt tất cả</span></button>
-                            <button type="submit" name="Action" value="Reject" class="btn btn-danger btn-sm"><i class="bi bi-x-lg"></i> <span data-i18n="BtnRejectAll">Từ chối tất cả</span></button>
+                            <span class="text-muted">Da chon <strong id="selectedCount">0</strong></span>
+                            <input type="text" name="Comments" class="form-control" placeholder="Nhan xet (tuy chon)" style="max-width:300px" />
+                            <button type="submit" name="Action" value="Approve" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Duyet tat ca</button>
+                            <button type="submit" name="Action" value="Reject" class="btn btn-danger btn-sm"><i class="bi bi-x-lg"></i> Tu choi tat ca</button>
                         </div>
                     </div>
                 </form>
@@ -67,25 +78,49 @@
     @if (Model.ProcessedApprovals.Any())
     {
         <div class="glass-card">
-            <div class="card-header"><h3><i class="bi bi-check-circle text-success"></i> <span data-i18n="ApproveTabDone">Đã xử lý</span></h3></div>
+            <div class="card-header"><h3><i class="bi bi-check-circle text-success"></i> Da xu ly</h3></div>
             <div class="card-body" style="padding:0">
                 <table class="data-table">
                     <thead>
-                        <tr><th data-i18n="ColReqCode">Mã đơn</th><th data-i18n="ColType">Loại</th><th data-i18n="ColRequester">Người gửi</th><th data-i18n="ColStatus">Trạng thái</th><th data-i18n="ColComment">Nhận xét</th><th data-i18n="ColProcessedDate">Ngày xử lý</th></tr>
+                        <tr>
+                            <th>Ma don</th>
+                            <th>Loai</th>
+                            <th>Nguoi gui</th>
+                            <th>Trang thai</th>
+                            <th>SLA</th>
+                            <th>Nhan xet</th>
+                            <th>Ngay xu ly</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        @foreach (var a in Model.ProcessedApprovals.Take(20))
+                        @foreach (var approval in Model.ProcessedApprovals.Take(20))
                         {
-                            var sCss = a.Status.ToLower();
-                            var sText = a.Status switch { "Approved" => "Đã duyệt", "Rejected" => "Từ chối", "Skipped" => "Bỏ qua", _ => a.Status };
-                            var sI18n = a.Status switch { "Approved" => "TblApproved", "Rejected" => "TblRejected", "Skipped" => "TblSkipped", _ => "" };
-                            <tr onclick="location.href='@Url.Action("Detail", "Requests", new { id = a.RequestId })'" style="cursor:pointer">
-                                <td><strong class="text-primary">@a.Request?.RequestCode</strong></td>
-                                <td>@a.Request?.FormTemplate?.Name</td>
-                                <td>@a.Request?.Requester?.FullName</td>
-                                <td><span class="status-badge @sCss" data-i18n="@sI18n">@sText</span></td>
-                                <td class="text-muted">@(a.Comments?.Length > 40 ? a.Comments.Substring(0, 40) + "..." : a.Comments ?? "—")</td>
-                                <td class="text-muted">@a.ActionDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                            Model.ApprovalSla.TryGetValue(approval.Id, out var processedSla);
+                            var statusCss = approval.Status.ToLower();
+                            var statusText = approval.Status switch
+                            {
+                                "Approved" => "Da duyet",
+                                "Rejected" => "Tu choi",
+                                "Skipped" => "Bo qua",
+                                _ => approval.Status
+                            };
+
+                            <tr onclick="location.href='@Url.Action("Detail", "Requests", new { id = approval.RequestId })'" style="cursor:pointer">
+                                <td><strong class="text-primary">@approval.Request?.RequestCode</strong></td>
+                                <td>@approval.Request?.FormTemplate?.Name</td>
+                                <td>@approval.Request?.Requester?.FullName</td>
+                                <td><span class="status-badge @statusCss">@statusText</span></td>
+                                <td>
+                                    @if (processedSla != null)
+                                    {
+                                        <div class="sla-stack">
+                                            <span class="status-badge @(processedSla.IsBreached ? "rejected" : "approved")">@processedSla.StatusText</span>
+                                            <span class="sla-time">@(processedSla.DueAt?.ToString("Han dd/MM HH:mm") ?? "")</span>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-muted">@(approval.Comments?.Length > 40 ? approval.Comments.Substring(0, 40) + "..." : approval.Comments ?? "-")</td>
+                                <td class="text-muted">@approval.ActionDate?.ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
                         }
                     </tbody>
@@ -101,7 +136,11 @@
         document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = el.checked);
         updateBulkUI();
     }
-    document.addEventListener('change', function (e) { if (e.target.classList.contains('bulk-check')) updateBulkUI(); });
+
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('bulk-check')) updateBulkUI();
+    });
+
     function updateBulkUI() {
         const checked = document.querySelectorAll('.bulk-check:checked').length;
         const bar = document.getElementById('bulkActions');
@@ -109,6 +148,7 @@
         const cnt = document.getElementById('selectedCount');
         if (cnt) cnt.textContent = checked;
     }
+
     function showBulkModal() {
         document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = true);
         updateBulkUI();
@@ -123,6 +163,7 @@
         padding: 12px 16px !important;
         vertical-align: middle;
     }
+
     .data-table th {
         font-size: 11px;
         text-transform: uppercase;
@@ -131,7 +172,25 @@
         color: var(--text-muted);
         border-bottom: 1px solid var(--border-glass);
     }
+
     .data-table tr:hover {
         background: rgba(92, 103, 242, 0.03);
+    }
+
+    .sla-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .sla-time {
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    .sla-time.overdue {
+        color: #dc2626;
+        font-weight: 700;
     }
 </style>

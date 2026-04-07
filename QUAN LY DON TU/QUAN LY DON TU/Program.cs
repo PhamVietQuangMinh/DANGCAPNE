@@ -6,6 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 var builder = WebApplication.CreateBuilder(args);
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -17,6 +18,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Session for authentication
 builder.Services.AddHttpClient<DANGCAPNE.Services.GeminiAIService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IFileService, DANGCAPNE.Services.FileService>();
+builder.Services.AddScoped<DANGCAPNE.Services.IApprovalSlaService, DANGCAPNE.Services.ApprovalSlaService>();
+builder.Services.AddScoped<DANGCAPNE.Services.IApprovedRequestPdfService, DANGCAPNE.Services.ApprovedRequestPdfService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

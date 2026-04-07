@@ -6,6 +6,7 @@ using DANGCAPNE.Models.HR;
 using DANGCAPNE.Models.Requests;
 using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.Workflow;
+using DANGCAPNE.Services;
 using DANGCAPNE.ViewModels;
 using Newtonsoft.Json;
 
@@ -16,12 +17,14 @@ namespace DANGCAPNE.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly DANGCAPNE.Services.GeminiAIService _aiService;
+        private readonly IApprovalSlaService _slaService;
 
-        public RequestsController(ApplicationDbContext context, IWebHostEnvironment env, DANGCAPNE.Services.GeminiAIService aiService)
+        public RequestsController(ApplicationDbContext context, IWebHostEnvironment env, DANGCAPNE.Services.GeminiAIService aiService, IApprovalSlaService slaService)
         {
             _context = context;
             _env = env;
             _aiService = aiService;
+            _slaService = slaService;
         }
 
         public async Task<IActionResult> Index(string? status, string? type, string? search, int page = 1)
@@ -373,15 +376,40 @@ namespace DANGCAPNE.Controllers
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
             var request = await _context.Requests
+                .Include(r => r.FormTemplate)
                 .FirstOrDefaultAsync(r => r.Id == id && r.RequesterId == userId);
 
             if (request == null || (request.Status != "RequestEdit" && request.Status != "Draft")) 
                 return NotFound();
 
+            var template = await _context.FormTemplates
+                .Include(f => f.Workflow).ThenInclude(w => w!.Steps.OrderBy(s => s.StepOrder))
+                .Include(f => f.Fields.OrderBy(ff => ff.DisplayOrder))
+                    .ThenInclude(ff => ff.Options.OrderBy(o => o.DisplayOrder))
+                .FirstOrDefaultAsync(f => f.Id == request.FormTemplateId);
+
+            if (template == null)
+            {
+                return NotFound();
+            }
+
+            var submittedFormData = template.Fields
+                .ToDictionary(f => f.FieldName, f => form[f.FieldName].ToString());
+
+            var validationMessage = await ValidateCreateRequestAsync(template, form, userId.Value, tenantId);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                var invalidModel = await BuildCreateViewModelAsync(template, userId.Value, tenantId, submittedFormData, form["Title"].ToString(), validationMessage);
+                invalidModel.Priority = form["Priority"].ToString() ?? "Normal";
+                ViewBag.RequestId = id;
+                return View(invalidModel);
+            }
+
             request.Title = form["Title"].ToString() ?? request.Title;
             request.Priority = form["Priority"].ToString() ?? request.Priority;
             request.Status = "Pending";
             request.CurrentStepOrder = 1;
+            request.CompletedAt = null;
 
             var oldData = await _context.RequestData.Where(d => d.RequestId == id).ToListAsync();
             _context.RequestData.RemoveRange(oldData);
@@ -419,20 +447,30 @@ namespace DANGCAPNE.Controllers
                         FileName = file.FileName,
                         FilePath = $"/uploads/{newFileName}",
                         FileSize = file.Length,
-                        ContentType = file.ContentType
+                        ContentType = file.ContentType,
+                        UploadedById = userId.Value
                     });
                 }
             }
 
             var approvals = await _context.RequestApprovals.Where(a => a.RequestId == id).ToListAsync();
-            foreach (var app in approvals)
+            _context.RequestApprovals.RemoveRange(approvals);
+
+            var approvalSteps = await BuildApprovalStepsAsync(template, userId.Value, tenantId);
+            foreach (var step in approvalSteps)
             {
-                if (app.Status != "Pending") {
-                    app.Status = "Pending";
-                    app.ActionDate = null;
-                    app.Comments = null;
-                }
+                _context.RequestApprovals.Add(new RequestApproval
+                {
+                    RequestId = request.Id,
+                    StepOrder = step.StepOrder,
+                    StepName = step.StepName,
+                    ApproverId = step.ApproverId,
+                    Status = "Pending",
+                    CreatedAt = DateTime.Now
+                });
             }
+
+            request.CurrentStepOrder = approvalSteps.First().StepOrder;
 
             _context.RequestAuditLogs.Add(new RequestAuditLog
             {
@@ -515,10 +553,13 @@ namespace DANGCAPNE.Controllers
                 currentApproval = null;
             }
 
+            var approvalSla = await _slaService.BuildForRequestAsync(request, approvals, formData);
+
             var model = new RequestDetailViewModel
             {
                 Request = request,
                 ApprovalHistory = approvals,
+                ApprovalSla = approvalSla,
                 Comments = comments,
                 AuditLogs = auditLogs,
                 FormData = formData,
@@ -1161,14 +1202,10 @@ namespace DANGCAPNE.Controllers
         {
             var steps = new List<ApprovalStepDraft>();
             var directManagerId = await ResolveDirectManagerIdAsync(requesterId);
-            var hrUserId = await ResolveRoleUserIdAsync(tenantId, "HR");
-            var directorUserId = await ResolveDirectorUserIdAsync();
-            var accountantUserId = await ResolveAccountingUserIdAsync();
-            var category = template.Category ?? string.Empty;
-            var requiresDirector = template.Id == 3 || template.Id == 4 || template.Id == 5 || template.Id == 9 ||
-                                   category.Equals("Travel", StringComparison.OrdinalIgnoreCase) ||
-                                   category.Equals("Expense", StringComparison.OrdinalIgnoreCase) ||
-                                   category.Equals("Equipment", StringComparison.OrdinalIgnoreCase);
+            var hrUserId = await ResolveRoleUserIdAsync(tenantId, "HR", requesterId);
+            var accountantUserId = (int?)null;
+            var directorUserId = (int?)null;
+            var requiresDirector = false;
             var isSalaryAdvance = template.Id == 13 || (template.Name?.Contains("ứng lương", StringComparison.OrdinalIgnoreCase) ?? false);
 
             void AddStep(string stepName, int? approverId)
@@ -1222,15 +1259,20 @@ namespace DANGCAPNE.Controllers
                 .Select(d => (int?)d.DelegateId)
                 .FirstOrDefaultAsync();
 
-            return delegation ?? managerId;
+            if (delegation.HasValue && delegation.Value != requesterId)
+            {
+                return delegation;
+            }
+
+            return managerId;
         }
 
-        private async Task<int?> ResolveRoleUserIdAsync(int tenantId, string roleName)
+        private async Task<int?> ResolveRoleUserIdAsync(int tenantId, string roleName, int? excludeUserId = null)
         {
             return await (from ur in _context.UserRoles
                           join r in _context.Roles on ur.RoleId equals r.Id
                           join u in _context.Users on ur.UserId equals u.Id
-                          where r.TenantId == tenantId && r.Name == roleName
+                          where r.TenantId == tenantId && r.Name == roleName && (!excludeUserId.HasValue || u.Id != excludeUserId.Value)
                           orderby u.Id
                           select (int?)u.Id)
                 .FirstOrDefaultAsync();
@@ -1253,6 +1295,24 @@ namespace DANGCAPNE.Controllers
                 .Select(u => (int?)u.Id)
                 .FirstOrDefaultAsync();
         }
+
+        private async Task<string?> ValidateApprovalRoutingAsync(int requesterId, int tenantId)
+        {
+            var directManagerId = await ResolveDirectManagerIdAsync(requesterId);
+            if (!directManagerId.HasValue)
+            {
+                return "ChÆ°a cáº¥u hÃ¬nh TrÆ°á»Ÿng phÃ²ng trá»±c tiáº¿p cho nhÃ¢n viÃªn nÃ y, nÃªn chÆ°a thá»ƒ gá»­i Ä‘Æ¡n.";
+            }
+
+            var hrUserId = await ResolveRoleUserIdAsync(tenantId, "HR", requesterId);
+            if (!hrUserId.HasValue)
+            {
+                return "Há»‡ thá»‘ng chÆ°a cÃ³ ngÆ°á»i duyá»‡t HR kháº£ dá»¥ng, nÃªn chÆ°a thá»ƒ gá»­i Ä‘Æ¡n.";
+            }
+
+            return null;
+        }
+
         private sealed record TemplateFieldSeed(int Id, string Label, string FieldName, string FieldType, bool IsRequired, int DisplayOrder, int Width);
         private sealed record TemplateOptionSeed(int Id, int FormFieldId, string Label, string Value, int DisplayOrder);
         private sealed record ApprovalStepDraft(int StepOrder, string StepName, int ApproverId);

@@ -186,7 +186,7 @@
                     </div>
                 </div>
 
-                <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;padding-top:24px;border-top:1px solid var(--border-glass)">
+                <div class="request-form-actions" style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border-glass)">
                     <a href="@Url.Action("SelectTemplate", "Requests")" class="btn btn-outline"><i class="bi bi-arrow-left"></i> <span data-i18n="BtnBack">Quay lại</span></a>
                     <button type="button" class="btn btn-outline" onclick="saveDraft()"><i class="bi bi-save"></i> <span data-i18n="BtnSaveDraft">Lưu nháp</span></button>
                     <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> <span data-i18n="BtnSubmitReq">Gửi đơn</span></button>
@@ -271,6 +271,30 @@
     .ot-rule-message.error {
         background: rgba(239, 68, 68, 0.12);
         color: #dc2626;
+    }
+    .request-form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+    @@media (max-width: 640px) {
+        .request-form-actions {
+            flex-direction: column-reverse;
+        }
+        .request-form-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .leave-grid,
+        .leave-preview {
+            grid-template-columns: 1fr;
+        }
+        .mini-badge {
+            width: 100%;
+            justify-content: center;
+            text-align: center;
+        }
     }
 </style>
 

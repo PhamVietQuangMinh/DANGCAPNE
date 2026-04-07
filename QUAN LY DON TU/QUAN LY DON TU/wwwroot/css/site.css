@@ -391,6 +391,74 @@ a:hover {
     padding: 32px 40px 40px;
 }
 
+.content-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.content-grid-sidebar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 24px;
+}
+
+.info-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.action-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.inline-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap > .table,
+.table-wrap > .data-table {
+    min-width: 640px;
+}
+
+.meta-box {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-glass);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.attachment-item a {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 /* ====== TOP HEADER ====== */
 .top-header {
     position: sticky;
@@ -406,10 +474,18 @@ a:hover {
     padding: 0 32px;
 }
 
+.top-header > .d-flex {
+    min-width: 0;
+    flex: 1;
+}
+
 .top-header .page-title {
     font-family: 'Raleway', sans-serif;
     font-size: 20px;
     font-weight: 700;
+    line-height: 1.25;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .header-actions {
@@ -463,6 +539,8 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .card-header h3 {
@@ -680,6 +758,14 @@ a:hover {
     gap: 24px;
 }
 
+.form-row > * {
+    min-width: 0;
+}
+
+.form-row > .col-12 {
+    grid-column: 1 / -1;
+}
+
 .form-group {
     margin-bottom: 24px;
 }
@@ -725,6 +811,40 @@ select.form-control {
 select.form-control option {
     background: #ffffff;
     color: var(--text-primary);
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+input[type="file"].form-control {
+    padding: 8px 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+input[type="file"].form-control::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(92, 103, 242, 0.12);
+    color: var(--accent-primary);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive > .table,
+.table-responsive > .data-table {
+    min-width: 640px;
 }
 
 .btn {
@@ -1074,6 +1194,15 @@ select.form-control option {
         padding: 20px;
     }
 
+    .top-header {
+        padding: 0 20px;
+        gap: 12px;
+    }
+
+    .top-header .page-title {
+        font-size: 18px;
+    }
+
     .mobile-toggle {
         display: inline-flex;
     }
@@ -1096,6 +1225,154 @@ select.form-control option {
 
     .grid-3 {
         grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .content-grid-2,
+    .content-grid-sidebar,
+    .info-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-content {
+        padding: 16px;
+    }
+
+    .top-header {
+        min-height: var(--header-height);
+        height: auto;
+        padding: 12px 16px;
+        align-items: flex-start;
+    }
+
+    .top-header > .d-flex {
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .top-header .page-title {
+        font-size: 16px;
+    }
+
+    .header-actions {
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .header-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+    }
+
+    #langDisplay {
+        display: none;
+    }
+
+    .card-header,
+    .card-body {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .page-header {
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .page-header > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .page-title {
+        font-size: 20px;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .data-table th,
+    .data-table td,
+    .table th,
+    .table td {
+        padding: 12px 14px;
+    }
+
+    .filter-bar {
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .filter-bar form {
+        gap: 16px;
+    }
+
+    .search-input,
+    .template-search-wrap {
+        min-width: 0;
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .action-row {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .action-row .btn,
+    .inline-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .inline-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .table-wrap > .table,
+    .table-wrap > .data-table,
+    .table-responsive > .table,
+    .table-responsive > .data-table {
+        min-width: 560px;
+    }
+
+    .meta-box {
+        padding: 16px;
+    }
+
+    .attachment-item {
+        align-items: flex-start;
+    }
+
+    input[type="file"].form-control::file-selector-button {
+        display: block;
+        margin-right: 0;
+        margin-bottom: 8px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    .page-title {
+        font-size: 18px;
+    }
+
+    .table-wrap > .table,
+    .table-wrap > .data-table,
+    .table-responsive > .table,
+    .table-responsive > .data-table {
+        min-width: 520px;
     }
 }
 
@@ -2187,7 +2464,7 @@ select.form-control option {
 }
 
 /* Calendar */
-.calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+.calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; min-width:560px; }
 .cal-head { font-weight:700; font-size:12px; text-align:center; color:var(--text-muted); }
 .cal-cell { min-height:70px; border:1px solid var(--border-glass); background:var(--bg-glass); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; }
 .cal-cell.empty { background:transparent; border:none; }

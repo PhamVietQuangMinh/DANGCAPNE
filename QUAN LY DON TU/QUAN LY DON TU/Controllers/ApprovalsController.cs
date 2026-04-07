@@ -7,6 +7,7 @@ using DANGCAPNE.Models.HR;
 using DANGCAPNE.Models.Requests;
 using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.Workflow;
+using DANGCAPNE.Services;
 using DANGCAPNE.ViewModels;
 
 namespace DANGCAPNE.Controllers
@@ -15,11 +16,15 @@ namespace DANGCAPNE.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IApprovalSlaService _slaService;
+        private readonly IApprovedRequestPdfService _pdfService;
 
-        public ApprovalsController(ApplicationDbContext context, IHubContext<NotificationHub> hubContext)
+        public ApprovalsController(ApplicationDbContext context, IHubContext<NotificationHub> hubContext, IApprovalSlaService slaService, IApprovedRequestPdfService pdfService)
         {
             _context = context;
             _hubContext = hubContext;
+            _slaService = slaService;
+            _pdfService = pdfService;
         }
 
         public async Task<IActionResult> Index(string? status)
@@ -48,6 +53,7 @@ namespace DANGCAPNE.Controllers
             {
                 PendingApprovals = pending,
                 ProcessedApprovals = processed,
+                ApprovalSla = await _slaService.BuildForApprovalsAsync(pending.Concat(processed).ToList()),
                 StatusFilter = status,
                 TotalPending = pending.Count
             };
@@ -80,6 +86,7 @@ namespace DANGCAPNE.Controllers
 
             var request = approval.Request!;
             var oldStatus = request.Status;
+            var finalApproved = false;
 
             if (model.Action == "Approve")
             {
@@ -144,6 +151,7 @@ namespace DANGCAPNE.Controllers
                 {
                     request.Status = "Approved";
                     request.CompletedAt = DateTime.Now;
+                    finalApproved = true;
                 }
 
                 if (request.Status == "Approved")
@@ -284,6 +292,10 @@ namespace DANGCAPNE.Controllers
 
             await SyncExtendedBusinessRequestStatusAsync(request.Id, request.Status, userId.Value, model.Comments);
             await _context.SaveChangesAsync();
+            if (finalApproved)
+            {
+                await _pdfService.GenerateApprovedPdfAsync(request.Id, userId.Value);
+            }
 
             TempData["Success"] = model.Action switch
             {
@@ -304,6 +316,7 @@ namespace DANGCAPNE.Controllers
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
             int processed = 0;
+            var approvedRequestIds = new List<int>();
             foreach (var approvalId in model.ApprovalIds)
             {
                 var approval = await _context.RequestApprovals
@@ -378,6 +391,8 @@ namespace DANGCAPNE.Controllers
                 }
                 else if (model.Action == "Approve" && request.Status == "Approved")
                 {
+                    approvedRequestIds.Add(request.Id);
+
                     // Full approval
                     _context.Notifications.Add(new Models.SystemModels.Notification
                     {
@@ -444,6 +459,11 @@ namespace DANGCAPNE.Controllers
 
             await _context.SaveChangesAsync();
             TempData["Success"] = $"Đã xử lý {processed} đơn thành công!";
+            foreach (var requestId in approvedRequestIds.Distinct())
+            {
+                await _pdfService.GenerateApprovedPdfAsync(requestId, userId.Value);
+            }
+
             return RedirectToAction("Index");
         }
 

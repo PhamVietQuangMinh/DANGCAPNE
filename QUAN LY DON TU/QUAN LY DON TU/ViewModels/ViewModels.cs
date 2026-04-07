@@ -103,6 +103,7 @@ namespace DANGCAPNE.ViewModels
     {
         public Request? Request { get; set; }
         public List<RequestApproval> ApprovalHistory { get; set; } = new();
+        public Dictionary<int, ApprovalSlaViewModel> ApprovalSla { get; set; } = new();
         public List<RequestComment> Comments { get; set; } = new();
         public List<RequestAuditLog> AuditLogs { get; set; } = new();
         public bool CanApprove { get; set; }
@@ -119,8 +120,19 @@ namespace DANGCAPNE.ViewModels
     {
         public List<RequestApproval> PendingApprovals { get; set; } = new();
         public List<RequestApproval> ProcessedApprovals { get; set; } = new();
+        public Dictionary<int, ApprovalSlaViewModel> ApprovalSla { get; set; } = new();
         public string? StatusFilter { get; set; }
         public int TotalPending { get; set; }
+    }
+
+    public class ApprovalSlaViewModel
+    {
+        public int ApprovalId { get; set; }
+        public DateTime? DueAt { get; set; }
+        public bool IsOverdue { get; set; }
+        public bool IsBreached { get; set; }
+        public string StatusText { get; set; } = string.Empty;
+        public string RemainingText { get; set; } = string.Empty;
     }
 
     public class ApprovalActionViewModel

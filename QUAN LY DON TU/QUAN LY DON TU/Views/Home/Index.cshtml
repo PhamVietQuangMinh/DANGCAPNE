@@ -6,13 +6,13 @@
 }
 <div class="page-content">
     <div class="stagger-elem" style="margin-bottom:24px">
-        <div class="glass-card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
-            <div>
+        <div class="glass-card dashboard-summary-card" style="padding:16px 20px;">
+            <div class="dashboard-summary-main">
                 <div class="text-muted" style="font-size:12px">Thời gian hiện tại</div>
                 <div style="font-size:28px;font-weight:800" id="clockTime">@DateTime.Now.ToString("HH:mm")</div>
                 <div class="text-muted" style="font-size:12px">@DateTime.Now.ToString("dd/MM/yyyy") · @Model.RoleName</div>
             </div>
-            <div class="d-flex align-center gap-12">
+            <div class="dashboard-summary-pills d-flex align-center gap-12">
                 <div class="stat-pill">
                     <div class="pill-label">Chờ xử lý</div>
                     <div class="pill-value">@Model.TotalPendingRequests</div>
@@ -269,10 +269,72 @@
         .data-table tr:hover {
             background: rgba(92, 103, 242, 0.03);
         }
+        .dashboard-summary-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .dashboard-summary-main {
+            min-width: 0;
+        }
+        .dashboard-summary-pills {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .dashboard-panels-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .dashboard-span-2 {
+            grid-column: span 2;
+        }
+        .dashboard-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .dashboard-table-wrap .data-table {
+            min-width: 640px;
+        }
+        @@media (max-width: 900px) {
+            .dashboard-summary-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .dashboard-summary-pills {
+                justify-content: flex-start;
+            }
+            .dashboard-panels-grid {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-span-2 {
+                grid-column: span 1;
+            }
+        }
+        @@media (max-width: 640px) {
+            .dashboard-summary-card {
+                padding: 16px;
+            }
+            .dashboard-summary-pills {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px !important;
+            }
+            .stat-pill {
+                min-width: 0;
+                width: 100%;
+            }
+        }
+        @@media (max-width: 420px) {
+            .dashboard-summary-pills {
+                grid-template-columns: 1fr;
+            }
+        }
         </style>
     }
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div class="dashboard-panels-grid">
         @if (Model.PendingApprovals.Any())
         {
             <div class="glass-card">
@@ -280,7 +342,7 @@
                     <h3 data-i18n="TitleNeedApproval"><i class="bi bi-clock-fill text-warning"></i> Đơn cần duyệt</h3>
                     <a href="@Url.Action("Index", "Approvals")" class="btn btn-outline btn-sm" data-i18n="BtnViewAll">Xem tất cả</a>
                 </div>
-                <div class="card-body" style="padding:0">
+                <div class="card-body dashboard-table-wrap" style="padding:0">
                     <table class="data-table">
                         <thead><tr><th data-i18n="ColReqCode">Mã đơn</th><th data-i18n="ColRequester">Người gửi</th><th data-i18n="ColType">Loại</th><th data-i18n="ColDate">Ngày</th></tr></thead>
                         <tbody>
@@ -304,7 +366,7 @@
                 <h3 data-i18n="TitleRecent"><i class="bi bi-file-text-fill text-info"></i> Đơn gần đây</h3>
                 <a href="@Url.Action("Index", "Requests")" class="btn btn-outline btn-sm" data-i18n="BtnViewAll">Xem tất cả</a>
             </div>
-            <div class="card-body" style="padding:0">
+            <div class="card-body dashboard-table-wrap" style="padding:0">
                 @if (Model.RecentRequests.Any())
                 {
                     <table class="data-table">
@@ -338,9 +400,9 @@
 
         @if (Model.TeamLeaveBalances.Any())
         {
-            <div class="glass-card" style="grid-column:span 2">
+            <div class="glass-card dashboard-span-2">
                 <div class="card-header"><h3 data-i18n="TitleTeamLeave"><i class="bi bi-people-fill text-success"></i> Quỹ phép nhóm</h3></div>
-                <div class="card-body" style="padding:0">
+                <div class="card-body dashboard-table-wrap" style="padding:0">
                     <table class="data-table">
                         <thead><tr><th data-i18n="ColEmp">Nhân viên</th><th data-i18n="ColTotalLeave">Tổng phép</th><th data-i18n="ColUsed">Đã dùng</th><th data-i18n="ColRemain">Còn lại</th><th data-i18n="ColProgress">Tiến độ</th></tr></thead>
                         <tbody>

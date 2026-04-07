@@ -4,11 +4,11 @@
 }
 
 <div class="attendance-page-wrapper" style="background: #f8fafc; min-height: calc(100vh - 100px); padding: 24px; color: #1e293b; font-family: 'Inter', sans-serif;">
-    <div class="container-fluid" style="width: 100%; max-width: 100%; padding: 0 12px;">
+    <div class="container-fluid attendance-shell" style="width: 100%; max-width: 100%; padding: 0 12px;">
         
         <!-- Header Title Bar -->
-        <div class="d-flex justify-content-between align-items-center mb-24">
-            <div class="d-flex align-items-center gap-16">
+        <div class="attendance-topbar d-flex justify-content-between align-items-center mb-24">
+            <div class="attendance-topbar-main d-flex align-items-center gap-16">
                 <div style="width: 44px; height: 44px; background: #eef2ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #4f46e5;">
                     <i class="bi bi-person-bounding-box" style="font-size: 24px;"></i>
                 </div>
@@ -16,13 +16,13 @@
                     <div style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Cảm biến AI</div>
                     <div style="font-size: 22px; font-weight: 800; color: #0f172a;">Xác thực khuôn mặt</div>
                 </div>
-                <div id="statusBadge" class="status-badge-mockup ms-16">HỆ THỐNG SẴN SÀNG</div>
+                <div id="statusBadge" class="status-badge-mockup attendance-status-badge">HỆ THỐNG SẴN SÀNG</div>
             </div>
         </div>
 
         <!-- Main Content Card (Full Screen) -->
         <div class="attendance-card-mockup" style="width: 100%;">
-            <div class="d-flex flex-row align-items-stretch" style="min-height: 580px;">
+            <div class="attendance-main-grid d-flex flex-row align-items-stretch" style="min-height: 580px;">
                 <!-- LEFT: Camera Area (65%) -->
                 <div class="camera-side" style="flex: 0 0 65%; border-right: 1px solid #f1f5f9; padding: 48px;">
                     <div id="videoWrapper" class="video-container-mockup">
@@ -272,4 +272,123 @@
         position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #4f46e5; box-shadow: 0 0 15px #4f46e5; z-index: 6; display: none; animation: scanLineAnimMock 3s infinite ease-in-out;
     }
     @@keyframes scanLineAnimMock { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+    .attendance-shell,
+    .attendance-topbar-main,
+    .attendance-main-grid,
+    .camera-side,
+    .info-side {
+        min-width: 0;
+    }
+
+    @@media (max-width: 900px) {
+        .attendance-main-grid {
+            flex-direction: column;
+        }
+        .camera-side,
+        .info-side {
+            flex: 1 1 auto !important;
+            width: 100%;
+            padding: 24px !important;
+        }
+        .camera-side {
+            border-right: 0 !important;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .video-container-mockup {
+            height: 420px;
+        }
+        #liveClock {
+            font-size: 72px !important;
+            letter-spacing: -3px !important;
+        }
+        #liveDate {
+            font-size: 14px !important;
+            letter-spacing: 2px !important;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .attendance-page-wrapper {
+            padding: 16px !important;
+        }
+        .attendance-shell {
+            padding: 0 !important;
+        }
+        .attendance-topbar {
+            align-items: flex-start !important;
+            gap: 12px;
+        }
+        .attendance-topbar-main {
+            align-items: flex-start !important;
+            gap: 12px !important;
+            flex: 1;
+        }
+        .attendance-topbar-main > div:nth-child(2) {
+            min-width: 0;
+        }
+        .attendance-topbar-main > div:nth-child(2) > div:last-child {
+            font-size: 18px !important;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+        .attendance-status-badge {
+            margin-left: 0 !important;
+            padding: 8px 12px;
+            font-size: 10px;
+            text-align: center;
+            align-self: flex-start;
+        }
+        .attendance-card-mockup {
+            border-radius: 24px;
+        }
+        .camera-side,
+        .info-side {
+            padding: 16px !important;
+        }
+        .video-container-mockup {
+            height: 300px;
+            border-radius: 24px;
+        }
+        .video-actual-mockup,
+        .camera-standby-mockup {
+            border-radius: 18px;
+        }
+        .frame-ring-mockup {
+            border-radius: 28px;
+        }
+        .camera-standby-mockup .mb-40 {
+            margin-bottom: 20px !important;
+            font-size: 64px !important;
+        }
+        .btn-start-mockup {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 16px;
+            border-radius: 16px;
+        }
+        .results-hint,
+        .loc-status-mockup,
+        #statusMessage {
+            font-size: 15px !important;
+        }
+        .clock-display-mockup,
+        .results-hint {
+            margin-bottom: 24px !important;
+        }
+        #liveClock {
+            font-size: 56px !important;
+            line-height: 0.95 !important;
+            letter-spacing: -2px !important;
+            overflow-wrap: anywhere;
+        }
+        #liveDate {
+            font-size: 12px !important;
+            letter-spacing: 1px !important;
+            margin-top: 10px !important;
+        }
+        .info-side > div[style*="height: 1px"] {
+            margin-bottom: 24px !important;
+        }
+    }
 </style>

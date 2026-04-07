@@ -33,11 +33,12 @@
         </form>
     </div>
 
-    <div class="glass-card">
-        <div class="card-body" style="padding:0">
+    <div class="glass-card request-list-shell">
+        <div class="card-body request-list-body" style="padding:0">
             @if (Model.Requests.Any())
             {
-                <table class="data-table">
+                <div class="table-wrap request-list-table-wrap">
+                <table class="data-table request-list-table">
                     <thead>
                         <tr>
                             <th data-i18n="ColReqCode">Mã đơn</th>
@@ -57,17 +58,18 @@
                             var statusI18n = r.Status switch { "Pending" => "TblPending", "Approved" => "TblApproved", "Rejected" => "TblRejected", "InProgress" => "TblInProgress", "Cancelled" => "TblCancelled", _ => "" };
                             var priCss = r.Priority switch { "High" => "high", "Urgent" => "urgent", "Low" => "low", _ => "normal" };
                             <tr onclick="location.href='@Url.Action("Detail", new { id = r.Id })'" style="cursor:pointer">
-                                <td><strong class="text-primary">@r.RequestCode</strong></td>
-                                <td>@r.Title</td>
-                                <td><i class="bi @r.FormTemplate?.Icon" style="color:@r.FormTemplate?.IconColor"></i> @r.FormTemplate?.Name</td>
-                                <td>@r.Requester?.FullName</td>
-                                <td><span class="status-badge @statusCss" data-i18n="@statusI18n">@statusText</span></td>
-                                <td><span class="priority-badge @priCss">@r.Priority</span></td>
-                                <td class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td data-label="Mã đơn"><strong class="text-primary">@r.RequestCode</strong></td>
+                                <td data-label="Tiêu đề">@r.Title</td>
+                                <td data-label="Loại"><i class="bi @r.FormTemplate?.Icon" style="color:@r.FormTemplate?.IconColor"></i> @r.FormTemplate?.Name</td>
+                                <td data-label="Người tạo">@r.Requester?.FullName</td>
+                                <td data-label="Trạng thái"><span class="status-badge @statusCss" data-i18n="@statusI18n">@statusText</span></td>
+                                <td data-label="Ưu tiên"><span class="priority-badge @priCss">@r.Priority</span></td>
+                                <td data-label="Ngày tạo" class="text-muted">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
                         }
                     </tbody>
                 </table>
+                </div>
             }
             else
             {
@@ -108,5 +110,51 @@
     }
     .data-table tr:hover {
         background: rgba(92, 103, 242, 0.03);
+    }
+    @@media (max-width: 640px) {
+        .request-list-table-wrap {
+            overflow: visible;
+        }
+        .request-list-table {
+            min-width: 0;
+        }
+        .request-list-table thead {
+            display: none;
+        }
+        .request-list-table,
+        .request-list-table tbody,
+        .request-list-table tr,
+        .request-list-table td {
+            display: block;
+            width: 100%;
+        }
+        .request-list-table tr {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+        .request-list-table td {
+            border: 0;
+            padding: 0 0 10px 0 !important;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .request-list-table td:last-child {
+            padding-bottom: 0 !important;
+        }
+        .request-list-table td::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-muted);
+        }
+        .request-list-table .status-badge,
+        .request-list-table .priority-badge {
+            max-width: 100%;
+            white-space: normal;
+        }
     }
 </style>

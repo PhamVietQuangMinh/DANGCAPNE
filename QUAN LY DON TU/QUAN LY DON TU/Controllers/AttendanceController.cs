@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Models.Timekeeping;
-using System;
+using System.Net;
 
 namespace DANGCAPNE.Controllers
 {
@@ -19,22 +19,22 @@ namespace DANGCAPNE.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
-            
+
             var user = await _context.Users.FindAsync(userId);
             ViewBag.HasFaceRegistered = !string.IsNullOrEmpty(user?.FaceDescriptorFront);
             ViewBag.FaceDescriptorFront = user?.FaceDescriptorFront;
             ViewBag.AvatarUrl = user?.AvatarUrl;
-            
+
             var today = DateTime.Today;
             var timesheet = await _context.Timesheets
                 .FirstOrDefaultAsync(t => t.UserId == userId && t.Date == today);
-            
-            // Đã có cả Check-in và Check-out = Hoàn thành
+
             ViewBag.IsTodayCompleted = timesheet?.CheckOut != null;
-            // Đã Check-in nhưng chưa Check-out
             ViewBag.IsCheckInDone = timesheet?.CheckIn != null && timesheet?.CheckOut == null;
             ViewBag.CheckInTime = timesheet?.CheckIn?.ToString("HH:mm:ss");
-            
+            ViewBag.IsIntranet = IsInternalNetwork(HttpContext.Connection.RemoteIpAddress);
+            ViewBag.ClientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
             return View();
         }
 
@@ -67,11 +67,10 @@ namespace DANGCAPNE.Controllers
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
             bool isAdmin = roles.Contains("Admin");
             bool isHR = roles.Contains("HR");
-            if (!isAdmin && !isHR) return RedirectToAction("Index"); // Chỉ Admin/HR
+            if (!isAdmin && !isHR) return RedirectToAction("Index");
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
-            // Mặc định xem tháng hiện tại
             var from = fromDate ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             var to = toDate ?? DateTime.Today;
 
@@ -116,32 +115,31 @@ namespace DANGCAPNE.Controllers
         public async Task<IActionResult> SaveFaceDescriptorFront(string descriptor)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return Json(new { success = false, message = "Phiên hết hạn" });
+            if (userId == null) return Json(new { success = false, message = "Phien het han" });
 
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return Json(new { success = false, message = "User không tồn tại" });
+            if (user == null) return Json(new { success = false, message = "User khong ton tai" });
 
             user.FaceDescriptorFront = descriptor;
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Đăng ký khuôn mặt thành công" });
+            return Json(new { success = true, message = "Dang ky khuon mat thanh cong" });
         }
 
         [HttpPost]
         public async Task<IActionResult> CheckIn(double? lat, double? lon, string? wifiName, string? wifiBssid, string? qrCode, string? photoBase64, bool? faceMatched)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return Json(new { success = false, message = "Phiên đăng nhập hết hạn" });
-            
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) return Json(new { success = false, message = "Không tìm thấy người dùng" });
+            if (userId == null) return Json(new { success = false, message = "Phien dang nhap het han" });
 
-            // Kiểm tra xác thực khuôn mặt nếu user đã đăng ký
-            if (!string.IsNullOrEmpty(user.FaceDescriptorFront))
-            {
-                if (faceMatched != true)
-                    return Json(new { success = false, message = "Xác thực khuôn mặt thất bại. Vui lòng quét lại đúng gương mặt chủ tài khoản." });
-            }
+            if (!IsInternalNetwork(HttpContext.Connection.RemoteIpAddress))
+                return Json(new { success = false, message = "Ban dang o ngoai mang noi bo, khong the cham cong." });
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return Json(new { success = false, message = "Khong tim thay nguoi dung" });
+
+            if (!string.IsNullOrEmpty(user.FaceDescriptorFront) && faceMatched != true)
+                return Json(new { success = false, message = "Xac thuc khuon mat that bai." });
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
@@ -150,24 +148,23 @@ namespace DANGCAPNE.Controllers
 
             string source = "FaceRecognition";
 
-            // Kiểm tra QRCode, Wifi, GPS nếu có cấu hình...
             if (config != null && !string.IsNullOrEmpty(config.QrCodeKey))
             {
                 if (qrCode != config.QrCodeKey)
-                    return Json(new { success = false, message = "Mã QR không hợp lệ cho chi nhánh này" });
+                    return Json(new { success = false, message = "Ma QR khong hop le" });
                 source = "QRCode";
             }
             if (config != null && !string.IsNullOrEmpty(config.WifiBssid))
             {
                 if (wifiBssid != config.WifiBssid)
-                    return Json(new { success = false, message = "Vui lòng kết nối đúng Wifi văn phòng" });
+                    return Json(new { success = false, message = "Vui long ket noi dung Wifi van phong" });
                 source = "Wifi";
             }
             if (config != null && config.AllowedLatitude.HasValue && lat.HasValue)
             {
                 double distance = CalculateDistance(lat.Value, lon!.Value, config.AllowedLatitude.Value, config.AllowedLongitude!.Value);
                 if (distance > config.AllowedRadiusMeters)
-                    return Json(new { success = false, message = $"Bạn đang ở quá xa văn phòng ({Math.Round(distance)}m)" });
+                    return Json(new { success = false, message = $"Ban dang o qua xa van phong ({Math.Round(distance)}m)" });
                 source = "GPS";
             }
 
@@ -175,7 +172,6 @@ namespace DANGCAPNE.Controllers
             var timesheet = await _context.Timesheets
                 .FirstOrDefaultAsync(t => t.UserId == userId && t.Date == today);
 
-            // ===== LƯỢT 1: CHECK-IN =====
             if (timesheet == null)
             {
                 timesheet = new Timesheet
@@ -195,21 +191,18 @@ namespace DANGCAPNE.Controllers
                 };
                 _context.Timesheets.Add(timesheet);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, type = "checkin", message = "Chấm công VÀO thành công", time = DateTime.Now.ToString("HH:mm:ss") });
+                return Json(new { success = true, type = "checkin", message = "Vao thanh cong", time = DateTime.Now.ToString("HH:mm:ss") });
             }
 
-            // ===== LƯỢT 2: CHECK-OUT =====
             if (timesheet.CheckOut == null)
             {
                 timesheet.CheckOut = DateTime.Now;
-                // Tính giờ làm (đảm bảo >= 0)
                 var workHours = (timesheet.CheckOut.Value - timesheet.CheckIn!.Value).TotalHours;
                 timesheet.WorkHours = Math.Round(Math.Max(workHours, 0), 2);
-                
-                // Trạng thái dựa trên giờ quy định 18:00
+
                 var now = DateTime.Now;
                 var targetCheckOut = new DateTime(now.Year, now.Month, now.Day, 18, 0, 0);
-                
+
                 if (now < targetCheckOut)
                 {
                     timesheet.Status = "EarlyLeave";
@@ -218,24 +211,19 @@ namespace DANGCAPNE.Controllers
                 {
                     timesheet.Status = "Present";
                 }
-                
+
                 timesheet.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
 
-                var statusMsg = timesheet.WorkHours >= 8
-                    ? $"✅ Đủ giờ ({timesheet.WorkHours.ToString("0.##")}h)"
-                    : $"⚠️ Thiếu giờ ({timesheet.WorkHours.ToString("0.##")}h / 8h)";
-
-                return Json(new { success = true, type = "checkout", message = "Chấm công RA thành công. " + statusMsg, time = DateTime.Now.ToString("HH:mm:ss") });
+                return Json(new { success = true, type = "checkout", message = "Ra thanh cong", time = DateTime.Now.ToString("HH:mm:ss") });
             }
 
-            // Cả 2 lượt đã đủ
-            return Json(new { success = false, message = "Bạn đã hoàn thành đủ 2 lần chấm công cho hôm nay rồi!" });
+            return Json(new { success = false, message = "Ban da hoan thanh du 2 lan cham cong hom nay." });
         }
 
         private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
         {
-            var R = 6371e3; // metres
+            var R = 6371e3;
             var p1 = lat1 * Math.PI / 180;
             var p2 = lat2 * Math.PI / 180;
             var dp = (lat2 - lat1) * Math.PI / 180;
@@ -246,7 +234,41 @@ namespace DANGCAPNE.Controllers
                     Math.Sin(dl / 2) * Math.Sin(dl / 2);
             var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
 
-            return R * c; // in metres
+            return R * c;
+        }
+
+        private static bool IsInternalNetwork(IPAddress? ip)
+        {
+            if (ip == null)
+                return false;
+
+            if (IPAddress.IsLoopback(ip))
+                return true;
+
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                var bytes = ip.GetAddressBytes();
+                if (bytes.Length == 4)
+                {
+                    if (bytes[0] == 10)
+                        return true;
+
+                    if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+                        return true;
+
+                    if (bytes[0] == 192 && bytes[1] == 168)
+                        return true;
+                }
+            }
+
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {
+                var text = ip.ToString();
+                if (text.StartsWith("fc", StringComparison.OrdinalIgnoreCase) || text.StartsWith("fd", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

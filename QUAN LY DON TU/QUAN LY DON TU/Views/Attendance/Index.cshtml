@@ -31,13 +31,19 @@
                         <div id="cameraStandby" class="camera-standby-mockup">
                             <div class="mb-40" style="font-size: 100px; color: #f1f5f9;"><i class="bi bi-camera-video-off"></i></div>
                             <div style="color: #94a3b8; font-size: 15px; font-weight: 600; margin-bottom: 32px;">Camera đang ở chế độ chờ</div>
-                            <button id="btnStartCamera" class="btn-start-mockup">
+                            <button id="btnStartCamera" class="btn-start-mockup" @(ViewBag.IsIntranet == true ? "" : "disabled")>
                                 @if (ViewBag.IsCheckInDone) {
                                     <i class="bi bi-door-open me-10"></i> <span>Bắt đầu Chấm công RA</span>
                                 } else {
                                     <i class="bi bi-power me-10"></i> <span>Bắt đầu chấm công</span>
                                 }
                             </button>
+                            @if (ViewBag.IsIntranet != true)
+                            {
+                                <div style="margin-top: 16px; color: #ef4444; font-weight: 700; font-size: 14px; text-align: center;">
+                                    Ngoai mang noi bo. Vui long ket noi wifi cong ty de cham cong.
+                                </div>
+                            }
                         </div>
 
                         <div class="video-actual-mockup">
@@ -60,7 +66,7 @@
                     <div style="width: 100%; height: 1px; background: #f1f5f9; margin-bottom: 40px;"></div>
 
                     <div id="locationStatus" class="loc-status-mockup">
-                        Văn phòng chính - Landmark
+                        @(ViewBag.IsIntranet == true ? "Mang noi bo da xac nhan" : $"Ngoai mang noi bo ({ViewBag.ClientIp})")
                     </div>
                     
                     <div id="statusMessage" class="mt-40" style="font-weight: 700; color: #4f46e5; min-height: 24px; font-size: 18px;"></div>
@@ -102,6 +108,7 @@
         const faceDescriptorModel = '@Html.Raw(ViewBag.FaceDescriptorFront)';
         const avatarUrl = '@ViewBag.AvatarUrl';
         const MODEL_URL = '/lib/face-api/models';
+        const isIntranet = @((ViewBag.IsIntranet == true).ToString().ToLower());
 
         async function loadModels() {
             try {
@@ -125,8 +132,14 @@
             } catch (err) { console.error(err); statusBadge.innerText = "LỖI KẾT NỐI"; }
         }
 
+        if (!isIntranet) {
+            statusBadge.innerText = "KHONG THUOC INTRANET";
+            statusMessage.innerText = "Ket noi vao mang noi bo de mo khoa cham cong.";
+        }
+
         if (btnStartCamera) {
             btnStartCamera.onclick = async () => {
+                if (!isIntranet) return;
                 btnStartCamera.disabled = true;
                 btnStartCamera.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
                 await startCamera();
@@ -226,7 +239,9 @@
             } catch(e) { Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Mất kết nối server.' }); }
         }
 
-        loadModels();
+        if (isIntranet) {
+            loadModels();
+        }
     </script>
 }
 

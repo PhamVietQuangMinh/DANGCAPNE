@@ -374,39 +374,43 @@
         <form method="post" asp-action="Login">
 
             <div class="form-group">
-                <label class="form-label-glass" data-i18n="LabelEmail">Tên đăng nhập</label>
+                <label class="form-label-glass" data-i18n="LabelEmployeeCode">Tên đăng nhập</label>
                 <div class="glass-input-wrap">
                     <i class="bi bi-person-fill input-icon"></i>
                     <input
-                        type="email"
-                        name="Email"
+                        type="text"
+                        name="EmployeeCodeOrEmail"
                         class="glass-input"
-                        placeholder="email@congty.com"
-                        data-i18n="PlaceholderEmail"
+                        placeholder="VD: NV001 / AD001 / HR001 / MNG001 / KT001"
+                        data-i18n="PlaceholderEmployeeCode"
                         required
                         autofocus />
                 </div>
             </div>
-
             <div class="form-group">
-                <label class="form-label-glass" data-i18n="LabelPass">Mật khẩu</label>
+                <label class="form-label-glass">Dia chi IP (bat buoc lan dau)</label>
                 <div class="glass-input-wrap">
-                    <i class="bi bi-lock-fill input-icon"></i>
+                    <i class="bi bi-globe2 input-icon"></i>
                     <input
-                        type="password"
-                        name="Password"
+                        type="text"
+                        name="LoginIp"
                         class="glass-input"
-                        placeholder="••••••••"
-                        data-i18n="PlaceholderPass"
-                        required />
+                        placeholder="VD: 192.168.1.10" />
                 </div>
-                <div class="forgot-row">
-                    <a href="#" class="forgot-link" data-i18n="ForgotPass">Quên mật khẩu?</a>
+                <div style="margin-top:8px; color:#e2e8f0; font-size:12px; font-weight:600;">
+                    IP he thong dang nhan: <span style="color:#ffffff;">@ViewBag.DetectedIp</span>
                 </div>
             </div>
 
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; font-weight:600;">
+                    <input type="checkbox" name="RememberMe" value="true" />
+                    Ghi nho dang nhap 30 ngay
+                </label>
+            </div>
+
             <button type="submit" class="btn-glass-login">
-                <span data-i18n="BtnLogin">Đăng nhập</span>
+                <span data-i18n="BtnLogin">Check in</span>
                 <i class="bi bi-arrow-right-circle-fill"></i>
             </button>
         </form>
@@ -421,26 +425,19 @@
         <p class="login-footer-text">DANGCAPNE &copy; 2025 · <span data-i18n="SecurityPolicy">Bảo mật & Quyền riêng tư</span></p>
     </div>
 
-    <script>
-        const loginDict = {
+    <script>        const loginDict = {
             "vi": {
-                "LoginTitle": "Chào mừng trở lại",
-                "LabelEmail": "TÊN ĐĂNG NHẬP",
-                "PlaceholderEmail": "email@congty.com",
-                "LabelPass": "MẬT KHẨU",
-                "PlaceholderPass": "••••••••",
-                "ForgotPass": "Quên mật khẩu?",
-                "BtnLogin": "ĐĂNG NHẬP",
-                "SecurityPolicy": "Bảo mật & Quyền riêng tư"
+                "LoginTitle": "Chao mung tro lai",
+                "LabelEmployeeCode": "MA NHAN SU",
+                "PlaceholderEmployeeCode": "VD: NV001 / AD001 / HR001 / MNG001 / KT001",
+                "BtnLogin": "CHECK IN",
+                "SecurityPolicy": "Bao mat & Quyen rieng tu"
             },
             "en": {
                 "LoginTitle": "Welcome back",
-                "LabelEmail": "USERNAME",
-                "PlaceholderEmail": "email@company.com",
-                "LabelPass": "PASSWORD",
-                "PlaceholderPass": "••••••••",
-                "ForgotPass": "Forgot password?",
-                "BtnLogin": "SIGN IN",
+                "LabelEmployeeCode": "EMPLOYEE CODE",
+                "PlaceholderEmployeeCode": "Ex: NV001 / AD001 / HR001 / MNG001 / KT001",
+                "BtnLogin": "CHECK IN",
                 "SecurityPolicy": "Security & Privacy"
             }
         };
@@ -486,3 +483,12 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

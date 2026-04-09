@@ -370,6 +370,24 @@ namespace DANGCAPNE.Data
                 """,
                 """
                 ALTER TABLE "AuthAuditLogs" ADD COLUMN IF NOT EXISTS "CreatedAt" timestamp without time zone NOT NULL DEFAULT NOW();
+                """,
+                """
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "RegisteredMacAddress" character varying(32) NULL;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "RegisteredLoginIp" character varying(64) NULL;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "RememberMeTokenHash" character varying(128) NULL;
+                ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "RememberMeExpiresAt" timestamp without time zone NULL;
+                UPDATE "Users"
+                SET "EmployeeCode" = CASE
+                    WHEN "Email" = 'admin@company.com' THEN 'AD001'
+                    WHEN "Email" = 'hr@company.com' THEN 'HR001'
+                    WHEN "Email" = 'manager@company.com' THEN 'MNG001'
+                    WHEN "Email" = 'employee@company.com' THEN 'NV001'
+                    WHEN "Email" = 'accountant@company.com' THEN 'KT001'
+                    WHEN "Email" = 'dev@company.com' THEN 'NV002'
+                    WHEN "Email" = 'sales@company.com' THEN 'NV003'
+                    WHEN "Email" = 'marketing@company.com' THEN 'NV004'
+                    ELSE "EmployeeCode"
+                END;
                 """
             };
 

@@ -6,10 +6,15 @@ using DANGCAPNE.Models.Organization;
 using Microsoft.AspNetCore.SignalR;
 using DANGCAPNE.Hubs;
 using Npgsql;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 namespace DANGCAPNE.Controllers
 {
     public class AccountController : Controller
     {
+        private const string RememberMeCookieName = "DANGCAPNE_REMEMBER";
+        private const int RememberMeDays = 30;
         private readonly ApplicationDbContext _context;
         private readonly Services.IFileService _fileService;
         private readonly IHubContext<NotificationHub> _hubContext;
@@ -21,61 +26,105 @@ namespace DANGCAPNE.Controllers
             _hubContext = hubContext;
         }
 
-        [HttpGet]
-        public IActionResult Login()
+                [HttpGet]
+        public async Task<IActionResult> Login()
         {
             if (HttpContext.Session.GetInt32("UserId") != null)
-                return RedirectToAction("Index", "Home");
+                return RedirectToHomeBySessionRole();
+
+            if (await TryLoginFromRememberCookieAsync())
+                return RedirectToHomeBySessionRole();
+
+            ViewBag.DetectedIp = NormalizeIp(HttpContext.Connection.RemoteIpAddress?.ToString()) ?? "Khong xac dinh";
             return View();
         }
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
+            ViewBag.DetectedIp = NormalizeIp(HttpContext.Connection.RemoteIpAddress?.ToString()) ?? "Khong xac dinh";
+
+            if (!IsInternalNetwork(HttpContext.Connection.RemoteIpAddress))
             {
-                await WriteAuthAuditLog(null, model.Email, "LoginFailed", false, "Missing credentials");
-                ViewBag.Error = "Vui lòng nhập đầy đủ thông tin đăng nhập.";
+                await WriteAuthAuditLog(null, model.EmployeeCodeOrEmail, "LoginFailed", false, "Outside intranet");
+                ViewBag.Error = "Ban dang o ngoai mang noi bo. Khong the check in.";
                 return View(model);
             }
 
-            var passwordHash = HashPassword(model.Password);
+            if (string.IsNullOrWhiteSpace(model.EmployeeCodeOrEmail))
+            {
+                await WriteAuthAuditLog(null, model.EmployeeCodeOrEmail, "LoginFailed", false, "Missing employee code");
+                ViewBag.Error = "Vui long nhap ma nhan vien.";
+                return View(model);
+            }
+
+            var credential = model.EmployeeCodeOrEmail.Trim();
             var user = await _context.Users
                 .Include(u => u.Department)
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Email == model.Email && u.PasswordHash == passwordHash);
+                .FirstOrDefaultAsync(u =>
+                    u.EmployeeCode == credential);
 
             if (user == null)
             {
-                await WriteAuthAuditLog(null, model.Email, "LoginFailed", false, "Invalid email or password");
-                ViewBag.Error = "Email hoặc mật khẩu không chính xác.";
+                await WriteAuthAuditLog(null, model.EmployeeCodeOrEmail, "LoginFailed", false, "Invalid employee code");
+                ViewBag.Error = "Ma nhan vien khong ton tai.";
                 return View(model);
             }
 
             if (user.Status == "PendingApproval")
             {
                 await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Pending approval");
-                ViewBag.Error = "Tài khoản của bạn đang chờ quản lý phê duyệt. Vui lòng quay lại sau.";
+                ViewBag.Error = "Tai khoan dang cho phe duyet.";
                 return View(model);
             }
 
             if (user.Status == "Rejected")
             {
                 await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Registration rejected");
-                ViewBag.Error = "Yêu cầu đăng ký của bạn đã bị từ chối. Vui lòng liên hệ bộ phận nhân sự.";
+                ViewBag.Error = "Tai khoan da bi tu choi.";
                 return View(model);
             }
 
             if (user.Status != "Active")
             {
                 await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Inactive account");
-                ViewBag.Error = "Tài khoản của bạn hiện đang bị khóa hoặc không khả dụng.";
+                ViewBag.Error = "Tai khoan dang bi khoa hoac khong kha dung.";
                 return View(model);
             }
 
-            // Biometric Interception
+            var remoteIp = NormalizeIp(HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (string.IsNullOrWhiteSpace(remoteIp))
+            {
+                await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Remote IP unavailable");
+                ViewBag.Error = "Khong xac dinh duoc IP thiet bi.";
+                return View(model);
+            }
+
+            if (string.IsNullOrWhiteSpace(user.RegisteredLoginIp))
+            {
+                var inputIp = NormalizeIp(model.LoginIp);
+                if (string.IsNullOrWhiteSpace(inputIp))
+                {
+                    await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Missing first-time IP input");
+                    ViewBag.Error = "Lan dau dang nhap ban phai nhap dia chi IP.";
+                    return View(model);
+                }
+
+                if (!string.Equals(inputIp, remoteIp, StringComparison.OrdinalIgnoreCase))
+                {
+                    await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Input IP mismatch");
+                    ViewBag.Error = "IP ban nhap khong trung voi IP he thong nhan duoc.";
+                    return View(model);
+                }
+
+                user.RegisteredLoginIp = remoteIp;
+                await _context.SaveChangesAsync();
+            }
+
             HttpContext.Session.SetInt32("PendingUserId", user.Id);
-            await WriteAuthAuditLog(user.Id, user.Email, "LoginSuccess", true, "Password verified, awaiting biometric verification");
+            HttpContext.Session.SetString("PendingRememberMe", model.RememberMe ? "1" : "0");
+            await WriteAuthAuditLog(user.Id, user.Email, "LoginSuccess", true, "Employee code accepted, awaiting biometric verification");
 
             if (!user.IsBiometricEnrolled)
             {
@@ -158,12 +207,24 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpGet]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             var email = HttpContext.Session.GetString("Email");
+            if (userId.HasValue)
+            {
+                var user = await _context.Users.FindAsync(userId.Value);
+                if (user != null)
+                {
+                    user.RememberMeTokenHash = null;
+                    user.RememberMeExpiresAt = null;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             _ = WriteAuthAuditLog(userId, email, "Logout", true, "User logged out");
             HttpContext.Session.Clear();
+            Response.Cookies.Delete(RememberMeCookieName);
             return RedirectToAction("Login");
         }
 
@@ -543,18 +604,67 @@ namespace DANGCAPNE.Controllers
                 if (live == null || live.Length == 0 || front == null || front.Length == 0)
                     return BadRequest(new { success = false, message = "Dữ liệu sinh trắc không hợp lệ." });
 
-                // Tính khoảng cách Euclidean
                 float distFront = CalculateEuclideanDistance(live!, front!);
                 float distLeft = left != null ? CalculateEuclideanDistance(live!, left!) : 99f;
                 float distRight = right != null ? CalculateEuclideanDistance(live!, right!) : 99f;
-
                 float minDistance = Math.Min(distFront, Math.Min(distLeft, distRight));
 
-                Console.WriteLine($"[FaceVerify] User {user.Id} ({user.FullName}) - distFront: {distFront:F4}, distLeft: {distLeft:F4}, distRight: {distRight:F4}, minDist: {minDistance:F4}");
+                // Practical thresholds: keep user-friendly acceptance, but still block cross-account takeover.
+                const float acceptThreshold = 0.52f;
+                const float betterMatchMargin = 0.03f;
+                const float suspiciousOtherThreshold = 0.47f;
 
-                // Ngưỡng lỏng hơn: 0.52 (để người thật không bị kẹt vì cam/ánh sáng).
-                if (minDistance > 0.52) 
-                    return BadRequest(new { success = false, message = $"Khuôn mặt không khớp! (Độ lệch: {minDistance:F2}). Vui lòng thử lại." });
+                float bestOtherDistance = 99f;
+                int? bestOtherUserId = null;
+                string? bestOtherUserName = null;
+
+                var otherUsers = await _context.Users
+                    .Where(u => u.IsBiometricEnrolled && u.Id != user.Id && !string.IsNullOrEmpty(u.FaceDescriptorFront))
+                    .Select(u => new { u.Id, u.FullName, u.FaceDescriptorFront, u.FaceDescriptorLeft, u.FaceDescriptorRight })
+                    .ToListAsync();
+
+                foreach (var other in otherUsers)
+                {
+                    var otherFront = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorFront ?? "[]");
+                    if (otherFront == null || otherFront.Length == 0) continue;
+
+                    float otherDistFront = CalculateEuclideanDistance(live!, otherFront);
+
+                    float otherDistLeft = 99f;
+                    if (!string.IsNullOrWhiteSpace(other.FaceDescriptorLeft))
+                    {
+                        var otherLeft = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorLeft ?? "[]");
+                        if (otherLeft != null && otherLeft.Length == live!.Length)
+                            otherDistLeft = CalculateEuclideanDistance(live!, otherLeft);
+                    }
+
+                    float otherDistRight = 99f;
+                    if (!string.IsNullOrWhiteSpace(other.FaceDescriptorRight))
+                    {
+                        var otherRight = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorRight ?? "[]");
+                        if (otherRight != null && otherRight.Length == live!.Length)
+                            otherDistRight = CalculateEuclideanDistance(live!, otherRight);
+                    }
+
+                    float otherMin = Math.Min(otherDistFront, Math.Min(otherDistLeft, otherDistRight));
+                    if (otherMin < bestOtherDistance)
+                    {
+                        bestOtherDistance = otherMin;
+                        bestOtherUserId = other.Id;
+                        bestOtherUserName = other.FullName;
+                    }
+                }
+
+                Console.WriteLine($"[FaceVerify] User {user.Id} ({user.FullName}) - distFront: {distFront:F4}, distLeft: {distLeft:F4}, distRight: {distRight:F4}, minDist: {minDistance:F4}, bestOther: {bestOtherDistance:F4} (uid={bestOtherUserId})");
+
+                if (minDistance > acceptThreshold)
+                    return BadRequest(new { success = false, message = $"Khuon mat khong khop! (Do lech: {minDistance:F2}). Vui long thu lai." });
+
+                // Only reject when another enrolled user is both:
+                // 1) suspiciously close in absolute distance, and
+                // 2) clearly better than the target account by a margin.
+                if (bestOtherDistance < suspiciousOtherThreshold && (bestOtherDistance + betterMatchMargin) < minDistance)
+                    return BadRequest(new { success = false, message = $"Xac thuc that bai: khuon mat nay gan voi tai khoan khac ({bestOtherUserName ?? "Unknown"}), he thong tu choi dang nhap nham tai khoan." });
 
                 // AUTO CHECK-IN: If face matches during login, record it as a check-in
                 var today = DateTime.Today;
@@ -596,7 +706,7 @@ namespace DANGCAPNE.Controllers
             return (float)Math.Sqrt(sum);
         }
 
-        [HttpGet]
+                [HttpGet]
         public async Task<IActionResult> FinalizeLogin()
         {
             var userId = HttpContext.Session.GetInt32("PendingUserId");
@@ -607,9 +717,43 @@ namespace DANGCAPNE.Controllers
                 .Include(u => u.Position)
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Id == userId);
-                
+
             if (user == null) return RedirectToAction("Login");
 
+            ApplyUserSession(user);
+
+            if (HttpContext.Session.GetString("PendingRememberMe") == "1")
+            {
+                SetRememberMeCookie(user);
+            }
+            else
+            {
+                user.RememberMeTokenHash = null;
+                user.RememberMeExpiresAt = null;
+                Response.Cookies.Delete(RememberMeCookieName);
+            }
+
+            await _context.SaveChangesAsync();
+
+            HttpContext.Session.Remove("PendingUserId");
+            HttpContext.Session.Remove("PendingRememberMe");
+
+            return RedirectToHomeBySessionRole();
+        }
+
+        private IActionResult RedirectToHomeBySessionRole()
+        {
+            var primaryRole = HttpContext.Session.GetString("PrimaryRole");
+            if (string.Equals(primaryRole, "Employee", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Attendance");
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        private void ApplyUserSession(User user)
+        {
             HttpContext.Session.SetInt32("UserId", user.Id);
             HttpContext.Session.SetInt32("TenantId", user.TenantId);
             HttpContext.Session.SetString("FullName", user.FullName);
@@ -618,7 +762,7 @@ namespace DANGCAPNE.Controllers
             HttpContext.Session.SetString("EmployeeCode", user.EmployeeCode);
             HttpContext.Session.SetString("Department", user.Department?.Name ?? "");
 
-            var roles = user.UserRoles.Select(ur => ur.Role?.Name ?? "").ToList();
+            var roles = user.UserRoles.Select(ur => ur.Role?.Name ?? "").Where(r => !string.IsNullOrWhiteSpace(r)).ToList();
             var primaryRole = roles.FirstOrDefault() ?? "Employee";
             var isAccountant =
                 roles.Contains("Accountant") ||
@@ -634,10 +778,125 @@ namespace DANGCAPNE.Controllers
 
             HttpContext.Session.SetString("Roles", string.Join(",", roles));
             HttpContext.Session.SetString("PrimaryRole", primaryRole);
+        }
 
-            HttpContext.Session.Remove("PendingUserId");
+        private static string? NormalizeIp(string? ipText)
+        {
+            if (string.IsNullOrWhiteSpace(ipText))
+            {
+                return null;
+            }
 
-            return RedirectToAction("Index", "Home");
+            if (!System.Net.IPAddress.TryParse(ipText.Trim(), out var ip))
+            {
+                return null;
+            }
+
+            // Treat IPv4/IPv6 loopback as the same value for first-time IP registration.
+            if (System.Net.IPAddress.IsLoopback(ip))
+            {
+                return "127.0.0.1";
+            }
+
+            return ip.MapToIPv6().IsIPv4MappedToIPv6
+                ? ip.MapToIPv4().ToString()
+                : ip.ToString();
+        }
+
+        private static bool IsInternalNetwork(System.Net.IPAddress? ip)
+        {
+            if (ip == null)
+                return false;
+
+            if (System.Net.IPAddress.IsLoopback(ip))
+                return true;
+
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                var bytes = ip.GetAddressBytes();
+                if (bytes.Length == 4)
+                {
+                    if (bytes[0] == 10)
+                        return true;
+                    if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+                        return true;
+                    if (bytes[0] == 192 && bytes[1] == 168)
+                        return true;
+                }
+            }
+
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {
+                var text = ip.ToString();
+                if (text.StartsWith("fc", StringComparison.OrdinalIgnoreCase) || text.StartsWith("fd", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string HashRememberToken(string token)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{token}|DANGCAPNE_REMEMBER"));
+            return Convert.ToBase64String(bytes);
+        }
+
+        private void SetRememberMeCookie(User user)
+        {
+            var token = Guid.NewGuid().ToString("N");
+            user.RememberMeTokenHash = HashRememberToken(token);
+            user.RememberMeExpiresAt = DateTime.UtcNow.AddDays(RememberMeDays);
+
+            Response.Cookies.Append(RememberMeCookieName, $"{user.Id}.{token}", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(RememberMeDays),
+                IsEssential = true
+            });
+        }
+
+        private async Task<bool> TryLoginFromRememberCookieAsync()
+        {
+            if (!IsInternalNetwork(HttpContext.Connection.RemoteIpAddress))
+            {
+                return false;
+            }
+
+            if (!Request.Cookies.TryGetValue(RememberMeCookieName, out var rememberValue) || string.IsNullOrWhiteSpace(rememberValue))
+            {
+                return false;
+            }
+
+            var parts = rememberValue.Split('.', 2, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2 || !int.TryParse(parts[0], out var userId))
+            {
+                Response.Cookies.Delete(RememberMeCookieName);
+                return false;
+            }
+
+            var user = await _context.Users
+                .Include(u => u.Department)
+                .Include(u => u.Position)
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId && u.Status == "Active");
+
+            if (user == null || string.IsNullOrWhiteSpace(user.RememberMeTokenHash) || !user.RememberMeExpiresAt.HasValue || user.RememberMeExpiresAt < DateTime.UtcNow)
+            {
+                Response.Cookies.Delete(RememberMeCookieName);
+                return false;
+            }
+
+            var computedHash = HashRememberToken(parts[1]);
+            if (!string.Equals(user.RememberMeTokenHash, computedHash, StringComparison.Ordinal))
+            {
+                Response.Cookies.Delete(RememberMeCookieName);
+                return false;
+            }
+
+            ApplyUserSession(user);
+            return true;
         }
     }
 
@@ -659,3 +918,5 @@ namespace DANGCAPNE.Controllers
         public string? LiveDescriptor { get; set; }
     }
 }
+
+

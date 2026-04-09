@@ -10,8 +10,8 @@ namespace DANGCAPNE.ViewModels
 {
     public class LoginViewModel
     {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string EmployeeCodeOrEmail { get; set; } = string.Empty;
+        public string? LoginIp { get; set; }
         public bool RememberMe { get; set; }
     }
 

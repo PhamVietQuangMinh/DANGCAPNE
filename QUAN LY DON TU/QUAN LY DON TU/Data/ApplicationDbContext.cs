@@ -643,14 +643,14 @@ namespace DANGCAPNE.Data
             // Users - Use simple hash for demo
             var pwHash = BCryptSimple("Admin@123");
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, TenantId = 1, FullName = "Nguyễn Văn Admin", Email = "admin@company.com", PasswordHash = pwHash, EmployeeCode = "NV001", DepartmentId = 1, BranchId = 1, JobTitleId = 1, PositionId = 1, Phone = "0901234567" },
-                new User { Id = 2, TenantId = 1, FullName = "Trần Thị HR", Email = "hr@company.com", PasswordHash = pwHash, EmployeeCode = "NV002", DepartmentId = 3, BranchId = 1, JobTitleId = 3, PositionId = 3, Phone = "0901234568" },
-                new User { Id = 3, TenantId = 1, FullName = "Lê Văn Manager", Email = "manager@company.com", PasswordHash = pwHash, EmployeeCode = "NV003", DepartmentId = 2, BranchId = 1, JobTitleId = 3, PositionId = 2, Phone = "0901234569" },
-                new User { Id = 4, TenantId = 1, FullName = "Phạm Thị Employee", Email = "employee@company.com", PasswordHash = pwHash, EmployeeCode = "NV004", DepartmentId = 2, BranchId = 1, JobTitleId = 6, Phone = "0901234570" },
-                new User { Id = 5, TenantId = 1, FullName = "Hoàng Văn Dev", Email = "dev@company.com", PasswordHash = pwHash, EmployeeCode = "NV005", DepartmentId = 2, BranchId = 1, JobTitleId = 5, Phone = "0901234571" },
-                new User { Id = 6, TenantId = 1, FullName = "Vũ Thị Kế Toán", Email = "accountant@company.com", PasswordHash = pwHash, EmployeeCode = "NV006", DepartmentId = 4, BranchId = 1, JobTitleId = 3, PositionId = 4, Phone = "0901234572" },
-                new User { Id = 7, TenantId = 1, FullName = "Đỗ Văn Sales", Email = "sales@company.com", PasswordHash = pwHash, EmployeeCode = "NV007", DepartmentId = 5, BranchId = 1, JobTitleId = 6, Phone = "0901234573" },
-                new User { Id = 8, TenantId = 1, FullName = "Ngô Thị Marketing", Email = "marketing@company.com", PasswordHash = pwHash, EmployeeCode = "NV008", DepartmentId = 6, BranchId = 1, JobTitleId = 6, Phone = "0901234574" }
+                new User { Id = 1, TenantId = 1, FullName = "Nguyễn Văn Admin", Email = "admin@company.com", PasswordHash = pwHash, EmployeeCode = "AD001", DepartmentId = 1, BranchId = 1, JobTitleId = 1, PositionId = 1, Phone = "0901234567" },
+                new User { Id = 2, TenantId = 1, FullName = "Trần Thị HR", Email = "hr@company.com", PasswordHash = pwHash, EmployeeCode = "HR001", DepartmentId = 3, BranchId = 1, JobTitleId = 3, PositionId = 3, Phone = "0901234568" },
+                new User { Id = 3, TenantId = 1, FullName = "Lê Văn Manager", Email = "manager@company.com", PasswordHash = pwHash, EmployeeCode = "MNG001", DepartmentId = 2, BranchId = 1, JobTitleId = 3, PositionId = 2, Phone = "0901234569" },
+                new User { Id = 4, TenantId = 1, FullName = "Phạm Thị Employee", Email = "employee@company.com", PasswordHash = pwHash, EmployeeCode = "NV001", DepartmentId = 2, BranchId = 1, JobTitleId = 6, Phone = "0901234570" },
+                new User { Id = 5, TenantId = 1, FullName = "Hoàng Văn Dev", Email = "dev@company.com", PasswordHash = pwHash, EmployeeCode = "NV002", DepartmentId = 2, BranchId = 1, JobTitleId = 5, Phone = "0901234571" },
+                new User { Id = 6, TenantId = 1, FullName = "Vũ Thị Kế Toán", Email = "accountant@company.com", PasswordHash = pwHash, EmployeeCode = "KT001", DepartmentId = 4, BranchId = 1, JobTitleId = 3, PositionId = 4, Phone = "0901234572" },
+                new User { Id = 7, TenantId = 1, FullName = "Đỗ Văn Sales", Email = "sales@company.com", PasswordHash = pwHash, EmployeeCode = "NV003", DepartmentId = 5, BranchId = 1, JobTitleId = 6, Phone = "0901234573" },
+                new User { Id = 8, TenantId = 1, FullName = "Ngô Thị Marketing", Email = "marketing@company.com", PasswordHash = pwHash, EmployeeCode = "NV004", DepartmentId = 6, BranchId = 1, JobTitleId = 6, Phone = "0901234574" }
             );
 
             // UserRoles
@@ -1091,3 +1091,4 @@ namespace DANGCAPNE.Data
         }
     }
 }
+

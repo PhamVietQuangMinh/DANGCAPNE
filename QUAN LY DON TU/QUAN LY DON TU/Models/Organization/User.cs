@@ -77,6 +77,13 @@ namespace DANGCAPNE.Models.Organization
         public string? FaceDescriptorRight { get; set; }
         public string? PortraitImage { get; set; }
         public string? TrustedDeviceId { get; set; }
+        [MaxLength(32)]
+        public string? RegisteredMacAddress { get; set; }
+        [MaxLength(64)]
+        public string? RegisteredLoginIp { get; set; }
+        [MaxLength(128)]
+        public string? RememberMeTokenHash { get; set; }
+        public DateTime? RememberMeExpiresAt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;

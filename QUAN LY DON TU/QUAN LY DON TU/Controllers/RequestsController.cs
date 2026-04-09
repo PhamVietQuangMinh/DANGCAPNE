@@ -186,9 +186,31 @@ namespace DANGCAPNE.Controllers
             _context.Requests.Add(request);
             await _context.SaveChangesAsync();
 
+            var leaveDayCount = (double?)null;
+            (double previousYearUsage, double currentYearUsage)? annualLeaveAllocation = null;
+            if (template.Id == 1)
+            {
+                var startDate = ParseDateOrNull(form["start_date"]);
+                var endDate = ParseDateOrNull(form["end_date"]);
+                if (startDate.HasValue && endDate.HasValue)
+                {
+                    leaveDayCount = await CountWorkingLeaveDaysAsync(tenantId, startDate.Value, endDate.Value);
+                }
+
+                if (string.Equals(form["leave_type"].ToString(), "AL", StringComparison.OrdinalIgnoreCase) && leaveDayCount.HasValue)
+                {
+                    var annualBuckets = await GetAnnualLeaveBucketsAsync(userId.Value, tenantId);
+                    annualLeaveAllocation = AllocateAnnualLeave(annualBuckets, leaveDayCount.Value);
+                }
+            }
+
             foreach (var field in template.Fields)
             {
                 var val = form[field.FieldName].ToString();
+                if (template.Id == 1 && field.FieldName == "total_days" && leaveDayCount.HasValue)
+                {
+                    val = leaveDayCount.Value.ToString("0.##", CultureInfo.InvariantCulture);
+                }
                 if (!string.IsNullOrEmpty(val))
                 {
                     _context.RequestData.Add(new RequestData
@@ -414,15 +436,39 @@ namespace DANGCAPNE.Controllers
             var oldData = await _context.RequestData.Where(d => d.RequestId == id).ToListAsync();
             _context.RequestData.RemoveRange(oldData);
 
+            (double previousYearUsage, double currentYearUsage)? annualLeaveAllocation = null;
+            if (template.Id == 1)
+            {
+                var startDate = ParseDateOrNull(form["start_date"]);
+                var endDate = ParseDateOrNull(form["end_date"]);
+                if (startDate.HasValue && endDate.HasValue && string.Equals(form["leave_type"].ToString(), "AL", StringComparison.OrdinalIgnoreCase))
+                {
+                    var leaveDayCount = await CountWorkingLeaveDaysAsync(tenantId, startDate.Value, endDate.Value);
+                    var annualBuckets = await GetAnnualLeaveBucketsAsync(userId.Value, tenantId);
+                    annualLeaveAllocation = AllocateAnnualLeave(annualBuckets, leaveDayCount);
+                }
+            }
+
             foreach (var key in form.Keys)
             {
                 if (key != "__RequestVerificationToken" && key != "Title" && key != "Priority" && !form.Files.Any(f => f.Name == key))
                 {
+                    var value = form[key].ToString();
+                    if (template.Id == 1 && key == "total_days")
+                    {
+                        var startDate = ParseDateOrNull(form["start_date"]);
+                        var endDate = ParseDateOrNull(form["end_date"]);
+                        if (startDate.HasValue && endDate.HasValue)
+                        {
+                            value = (await CountWorkingLeaveDaysAsync(tenantId, startDate.Value, endDate.Value)).ToString("0.##", CultureInfo.InvariantCulture);
+                        }
+                    }
+
                     _context.RequestData.Add(new RequestData
                     {
                         RequestId = request.Id,
                         FieldKey = key,
-                        FieldValue = form[key].ToString()
+                        FieldValue = value
                     });
                 }
             }
@@ -451,6 +497,24 @@ namespace DANGCAPNE.Controllers
                         UploadedById = userId.Value
                     });
                 }
+            }
+
+            if (annualLeaveAllocation.HasValue)
+            {
+                _context.RequestData.Add(new RequestData
+                {
+                    RequestId = request.Id,
+                    FieldKey = "annual_leave_prev_year_used",
+                    FieldValue = annualLeaveAllocation.Value.previousYearUsage.ToString("0.##", CultureInfo.InvariantCulture),
+                    FieldType = "Number"
+                });
+                _context.RequestData.Add(new RequestData
+                {
+                    RequestId = request.Id,
+                    FieldKey = "annual_leave_current_year_used",
+                    FieldValue = annualLeaveAllocation.Value.currentYearUsage.ToString("0.##", CultureInfo.InvariantCulture),
+                    FieldType = "Number"
+                });
             }
 
             var approvals = await _context.RequestApprovals.Where(a => a.RequestId == id).ToListAsync();
@@ -1000,6 +1064,7 @@ namespace DANGCAPNE.Controllers
             if (template.Id == 1)
             {
                 model.AnnualLeaveBuckets = await GetAnnualLeaveBucketsAsync(userId, tenantId);
+                model.HolidayDates = await GetHolidayDateTokensAsync(tenantId);
             }
 
             if (template.Id == 2)
@@ -1028,10 +1093,7 @@ namespace DANGCAPNE.Controllers
                     return "Đến ngày phải lớn hơn hoặc bằng từ ngày.";
                 }
 
-                if (requestedDays <= 0)
-                {
-                    requestedDays = (endDate.Value.Date - startDate.Value.Date).TotalDays + 1;
-                }
+                requestedDays = await CountWorkingLeaveDaysAsync(tenantId, startDate.Value, endDate.Value);
 
                 if (requestedDays <= 0)
                 {
@@ -1137,6 +1199,69 @@ namespace DANGCAPNE.Controllers
                     Remaining = currentRemaining
                 }
             };
+        }
+
+        private async Task<List<string>> GetHolidayDateTokensAsync(int tenantId)
+        {
+            var currentYear = DateTime.Now.Year;
+            var nextYear = currentYear + 1;
+
+            var holidays = await _context.Holidays
+                .AsNoTracking()
+                .Where(h => h.TenantId == tenantId && (h.IsRecurring || h.Date.Year == currentYear || h.Date.Year == nextYear))
+                .ToListAsync();
+
+            return holidays
+                .Select(h => h.IsRecurring
+                    ? h.Date.ToString("MM-dd", CultureInfo.InvariantCulture)
+                    : h.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
+                .Distinct()
+                .ToList();
+        }
+
+        private async Task<double> CountWorkingLeaveDaysAsync(int tenantId, DateTime startDate, DateTime endDate)
+        {
+            if (endDate.Date < startDate.Date)
+            {
+                return 0;
+            }
+
+            var holidaySet = new HashSet<string>(await GetHolidayDateTokensAsync(tenantId), StringComparer.OrdinalIgnoreCase);
+            var count = 0d;
+
+            for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+            {
+                if (date.DayOfWeek == DayOfWeek.Sunday)
+                {
+                    continue;
+                }
+
+                var exactToken = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                var recurringToken = date.ToString("MM-dd", CultureInfo.InvariantCulture);
+                if (holidaySet.Contains(exactToken) || holidaySet.Contains(recurringToken))
+                {
+                    continue;
+                }
+
+                count += 1;
+            }
+
+            return count;
+        }
+
+        private static (double previousYearUsage, double currentYearUsage) AllocateAnnualLeave(
+            IReadOnlyList<AnnualLeaveBucketViewModel> annualBuckets,
+            double requestedDays)
+        {
+            if (annualBuckets.Count == 0 || requestedDays <= 0)
+            {
+                return (0, 0);
+            }
+
+            var previousYearRemaining = annualBuckets[0].Remaining;
+            var previousYearUsage = Math.Min(previousYearRemaining, requestedDays);
+            var currentYearUsage = Math.Max(0, requestedDays - previousYearUsage);
+            return (previousYearUsage, currentYearUsage);
         }
 
         private async Task<List<OvertimePlanItemViewModel>> GetOvertimePlanItemsAsync(int userId, int tenantId)

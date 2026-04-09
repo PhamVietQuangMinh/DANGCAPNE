@@ -79,6 +79,51 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Ngày nhận việc</label>
+                                <input type="date" name="User.HireDate" class="form-control" value="@(Model.User?.HireDate.ToString("yyyy-MM-dd"))" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">Thiết lập lương</label>
+                                <div class="form-row">
+                                    <div class="col-6">
+                                        <label class="form-label">Lương cơ bản</label>
+                                        <input type="number" min="0" step="1000" name="User.BaseSalary" class="form-control" value="@(Model.User?.BaseSalary ?? 0)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Hệ số lương</label>
+                                        <input type="number" min="0.1" step="0.1" name="User.SalaryCoefficient" class="form-control" value="@(Model.User?.SalaryCoefficient ?? 1)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Chuẩn ngày công / tháng</label>
+                                        <input type="number" min="1" step="1" name="User.StandardWorkDays" class="form-control" value="@(Model.User?.StandardWorkDays ?? 26)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Chuẩn giờ / ngày</label>
+                                        <input type="number" min="1" step="0.5" name="User.StandardWorkHoursPerDay" class="form-control" value="@(Model.User?.StandardWorkHoursPerDay ?? 8)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Hệ số OT</label>
+                                        <input type="number" min="1" step="0.1" name="User.OvertimeHourlyMultiplier" class="form-control" value="@(Model.User?.OvertimeHourlyMultiplier ?? 1.5m)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Phạt đi trễ / phút</label>
+                                        <input type="number" min="0" step="500" name="User.LatePenaltyPerMinute" class="form-control" value="@(Model.User?.LatePenaltyPerMinute ?? 2000)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Phụ cấp cố định</label>
+                                        <input type="number" min="0" step="1000" name="User.FixedAllowance" class="form-control" value="@(Model.User?.FixedAllowance ?? 0)" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Thu nhập khác</label>
+                                        <input type="number" min="0" step="1000" name="User.OtherIncome" class="form-control" value="@(Model.User?.OtherIncome ?? 0)" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="action-row" style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border-glass)">
                         <a href="@Url.Action("Index", new { tab = "users" })" class="btn btn-outline"><i class="bi bi-arrow-left"></i> <span data-i18n="BtnBack">Quay lại</span></a>

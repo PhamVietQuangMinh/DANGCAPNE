@@ -604,6 +604,7 @@ namespace DANGCAPNE.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Department)
+                .Include(u => u.Position)
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Id == userId);
                 
@@ -618,8 +619,21 @@ namespace DANGCAPNE.Controllers
             HttpContext.Session.SetString("Department", user.Department?.Name ?? "");
 
             var roles = user.UserRoles.Select(ur => ur.Role?.Name ?? "").ToList();
+            var primaryRole = roles.FirstOrDefault() ?? "Employee";
+            var isAccountant =
+                roles.Contains("Accountant") ||
+                string.Equals(user.Department?.Code, "ACC", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(user.Department?.Name, "Phòng Kế toán", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(user.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase) ||
+                user.Email.Contains("accountant", StringComparison.OrdinalIgnoreCase);
+
+            if (isAccountant)
+            {
+                primaryRole = "Accountant";
+            }
+
             HttpContext.Session.SetString("Roles", string.Join(",", roles));
-            HttpContext.Session.SetString("PrimaryRole", roles.FirstOrDefault() ?? "Employee");
+            HttpContext.Session.SetString("PrimaryRole", primaryRole);
 
             HttpContext.Session.Remove("PendingUserId");
 

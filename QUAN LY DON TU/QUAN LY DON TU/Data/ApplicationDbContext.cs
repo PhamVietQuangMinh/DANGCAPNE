@@ -123,6 +123,8 @@ namespace DANGCAPNE.Data
         public DbSet<ExchangeRate> ExchangeRates { get; set; }
         public DbSet<AssetCategory> AssetCategories { get; set; }
         public DbSet<Asset> Assets { get; set; }
+        public DbSet<PayrollClosure> PayrollClosures { get; set; }
+        public DbSet<PayrollSlip> PayrollSlips { get; set; }
 
         // Module 6: Multi-Tenant & System
         public DbSet<Tenant> Tenants { get; set; }
@@ -264,6 +266,32 @@ namespace DANGCAPNE.Data
                 .WithMany()
                 .HasForeignKey(a => a.AssignedToUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PayrollClosure>()
+                .HasOne(p => p.ClosedByUser)
+                .WithMany()
+                .HasForeignKey(p => p.ClosedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PayrollClosure>()
+                .HasIndex(p => new { p.TenantId, p.PayrollMonth })
+                .IsUnique();
+
+            modelBuilder.Entity<PayrollSlip>()
+                .HasOne(p => p.PayrollClosure)
+                .WithMany()
+                .HasForeignKey(p => p.PayrollClosureId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PayrollSlip>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PayrollSlip>()
+                .HasIndex(p => new { p.PayrollClosureId, p.UserId })
+                .IsUnique();
 
             // Notification
             modelBuilder.Entity<Notification>()
@@ -826,8 +854,8 @@ namespace DANGCAPNE.Data
 
             // SLA Configs
             modelBuilder.Entity<SlaConfig>().HasData(
-                new SlaConfig { Id = 1, TenantId = 1, FormTemplateId = 1, ReminderHours = 24, EscalationHours = 48 },
-                new SlaConfig { Id = 2, TenantId = 1, FormTemplateId = 4, ReminderHours = 12, EscalationHours = 24 }
+                new SlaConfig { Id = 1, TenantId = 1, FormTemplateId = 1, ReminderHours = 4, EscalationHours = 8 },
+                new SlaConfig { Id = 2, TenantId = 1, FormTemplateId = 4, ReminderHours = 24, EscalationHours = 36 }
             );
 
             // Leave Balances for 2026

@@ -27,7 +27,10 @@
                     var isAdmin = roles.Contains("Admin");
                     var isHR = roles.Contains("HR");
                     var isManager = roles.Contains("Manager");
-                    var isEmployeeOnly = !isAdmin && !isHR && !isManager;
+                    var isAccountant = string.Equals(Context.Session.GetString("PrimaryRole"), "Accountant", StringComparison.OrdinalIgnoreCase)
+                        || roles.Contains("Accountant")
+                        || string.Equals(Context.Session.GetString("Department"), "Phòng Kế toán", StringComparison.OrdinalIgnoreCase);
+                    var isEmployeeOnly = !isAdmin && !isHR && !isManager && !isAccountant;
                     var currentAdminTab = Context.Request.Query["tab"].ToString();
                 }
                 <div class="nav-section">
@@ -40,34 +43,58 @@
                         <span class="badge-count" id="sidebarNotifCount" style="display:none"></span>
                     </a>
                 </div>
-                <div class="nav-section">
-                    <div class="nav-section-title" data-i18n="NavEmp">Nhân viên</div>
-                    <a href="@Url.Action("EmployeeRequests", "Home")" class="nav-link @(currentAction == "EmployeeRequests" ? "active" : "")" data-i18n="NavEmpRequests">
-                        <i class="bi bi-clipboard-check"></i> Quản lý đơn từ
-                    </a>
-                    @if (isEmployeeOnly)
-                    {
-                        <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
-                            <i class="bi bi-clock-history"></i> Timeline cháº¥m cÃ´ng
+                @if (!isAccountant)
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title" data-i18n="NavEmp">Nhân viên</div>
+                        <a href="@Url.Action("EmployeeRequests", "Home")" class="nav-link @(currentAction == "EmployeeRequests" ? "active" : "")" data-i18n="NavEmpRequests">
+                            <i class="bi bi-clipboard-check"></i> Quản lý đơn từ
                         </a>
-                        <a href="@Url.Action("Index", "Shift")" class="nav-link @(currentController == "Shift" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpSchedule">
-                            <i class="bi bi-calendar3"></i> Lá»‹ch biá»ƒu & ca lÃ m
+                        @if (isEmployeeOnly)
+                        {
+                            <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
+                                <i class="bi bi-clock-history"></i> Timeline chấm công
+                            </a>
+                            <a href="@Url.Action("Index", "Shift")" class="nav-link @(currentController == "Shift" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpSchedule">
+                                <i class="bi bi-calendar3"></i> Lịch biểu & ca làm
+                            </a>
+                        }
+                        <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpAttendance">
+                            <i class="bi bi-clock-fill"></i> Chấm công
                         </a>
-                    }
-                    <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpAttendance">
-                        <i class="bi bi-clock-fill"></i> Chấm công
-                    </a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title" data-i18n="NavRequests">Đơn từ</div>
-                    <a href="@Url.Action("SelectTemplate", "Requests")" class="nav-link @(currentAction == "SelectTemplate" ? "active" : "")" data-i18n="NavCreate">
-                        <i class="bi bi-plus-circle-fill"></i> Tạo đơn mới
-                    </a>
-                    <a href="@Url.Action("Index", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Index" ? "active" : "")" data-i18n="NavMyReq">
-                        <i class="bi bi-file-earmark-text-fill"></i> Đơn từ hệ thống
-                    </a>
-                </div>
-                @if (isManager || isAdmin || isHR)
+                    </div>
+                }
+                @if (isAccountant)
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title">Kế toán</div>
+                        <a href="@Url.Action("Index", "Home")" class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                            <i class="bi bi-cash-stack"></i> Dashboard kế toán
+                        </a>
+                        <a href="@Url.Action("Index", "Approvals")" class="nav-link @(currentController == "Approvals" && currentAction == "Index" ? "active" : "")">
+                            <i class="bi bi-wallet2"></i> Duyệt nghiệp vụ lương
+                        </a>
+                        <a href="@Url.Action("PayrollRecords", "Home")" class="nav-link @(currentController == "Home" && currentAction == "PayrollRecords" ? "active" : "")">
+                            <i class="bi bi-receipt-cutoff"></i> Hồ sơ lương
+                        </a>
+                        <a href="@Url.Action("Index", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Index" ? "active" : "")">
+                            <i class="bi bi-folder2-open"></i> Đơn từ tài chính
+                        </a>
+                    </div>
+                }
+                @if (!isAccountant)
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title" data-i18n="NavRequests">Đơn từ</div>
+                        <a href="@Url.Action("SelectTemplate", "Requests")" class="nav-link @(currentAction == "SelectTemplate" ? "active" : "")" data-i18n="NavCreate">
+                            <i class="bi bi-plus-circle-fill"></i> Tạo đơn mới
+                        </a>
+                        <a href="@Url.Action("Index", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Index" ? "active" : "")" data-i18n="NavMyReq">
+                            <i class="bi bi-file-earmark-text-fill"></i> Đơn từ hệ thống
+                        </a>
+                    </div>
+                }
+                @if ((isManager || isAdmin || isHR) && !isAccountant)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title" data-i18n="NavApproval">Phê duyệt</div>

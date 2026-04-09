@@ -98,6 +98,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXR0ZW5kYW5jZVxUaW1lbGluZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/PC/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Home/AccountantDashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxBY2NvdW50YW50RGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/PC/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Home/EmployeeRequests.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxFbXBsb3llZVJlcXVlc3RzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -116,6 +120,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/PC/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/PC/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Home/PayrollRecords.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQYXlyb2xsUmVjb3Jkcy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/PC/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Home/Privacy.cshtml]

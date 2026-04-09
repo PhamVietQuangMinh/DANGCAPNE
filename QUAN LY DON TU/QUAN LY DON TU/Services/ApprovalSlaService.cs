@@ -153,45 +153,19 @@ namespace DANGCAPNE.Services
             IReadOnlyDictionary<string, string> formData,
             SlaConfig? config)
         {
-            if (request.FormTemplateId == 1)
+            if (request.FormTemplateId == 1 ||
+                string.Equals(request.FormTemplate?.Category, "Leave", StringComparison.OrdinalIgnoreCase))
             {
-                var leaveDays = TryGetLeaveDays(formData);
-                if (leaveDays >= 1 && leaveDays <= 3)
-                {
-                    return request.CreatedAt.AddMinutes(30);
-                }
-
-                if (leaveDays >= 4)
-                {
-                    return request.CreatedAt.AddMinutes(60);
-                }
+                return request.CreatedAt.AddHours(config?.ReminderHours ?? 4);
             }
 
-            var fallbackHours = approval.StepName.Contains("HR", StringComparison.OrdinalIgnoreCase)
-                ? config?.EscalationHours ?? 48
-                : config?.ReminderHours ?? 24;
-
-            return request.CreatedAt.AddHours(fallbackHours);
-        }
-
-        private static decimal TryGetLeaveDays(IReadOnlyDictionary<string, string> formData)
-        {
-            if (formData.TryGetValue("total_days", out var rawValue) &&
-                decimal.TryParse(rawValue, out var parsed) &&
-                parsed > 0)
+            if (request.FormTemplate?.RequiresFinancialApproval == true ||
+                string.Equals(request.FormTemplate?.Category, "Expense", StringComparison.OrdinalIgnoreCase))
             {
-                return parsed;
+                return request.CreatedAt.AddHours(config?.ReminderHours ?? 24);
             }
 
-            if (formData.TryGetValue("start_date", out var startRaw) &&
-                formData.TryGetValue("end_date", out var endRaw) &&
-                DateTime.TryParse(startRaw, out var startDate) &&
-                DateTime.TryParse(endRaw, out var endDate))
-            {
-                return (decimal)(endDate.Date - startDate.Date).TotalDays + 1;
-            }
-
-            return 0;
+            return request.CreatedAt.AddHours(config?.ReminderHours ?? 8);
         }
 
         private static string BuildRemainingText(DateTime dueAt, string approvalStatus)

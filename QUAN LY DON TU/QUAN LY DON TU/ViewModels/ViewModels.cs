@@ -3,6 +3,8 @@ using DANGCAPNE.Models.Requests;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.SystemModels;
+using DANGCAPNE.Models.Finance;
+using DANGCAPNE.Models.HR;
 
 namespace DANGCAPNE.ViewModels
 {
@@ -46,6 +48,51 @@ namespace DANGCAPNE.ViewModels
         public List<Shift> Shifts { get; set; } = new();
         public List<User> Colleagues { get; set; } = new();
         public List<ShiftSwapRequest> ShiftSwapRequests { get; set; } = new();
+    }
+
+    public class AccountantDashboardViewModel
+    {
+        public User? CurrentUser { get; set; }
+        public string RoleName { get; set; } = "Accountant";
+        public int UnreadNotifications { get; set; }
+        public string SelectedPayrollMonth { get; set; } = string.Empty;
+        public bool IsMonthClosed { get; set; }
+        public int TotalPayrollEmployees { get; set; }
+        public int TotalTimesheets { get; set; }
+        public decimal TotalWorkHours { get; set; }
+        public decimal TotalOtHours { get; set; }
+        public int PendingFinanceApprovals { get; set; }
+        public int PendingSalaryAdvanceCount { get; set; }
+        public int LateAttendanceCount { get; set; }
+        public int AbsentAttendanceCount { get; set; }
+        public List<Request> PendingApprovals { get; set; } = new();
+        public List<SalaryAdvanceRequest> SalaryAdvances { get; set; } = new();
+        public List<PayrollEmployeeSummaryViewModel> PayrollEmployees { get; set; } = new();
+        public List<PayrollClosure> RecentClosures { get; set; } = new();
+        public List<PayrollSlip> RecentPayrollSlips { get; set; } = new();
+    }
+
+    public class PayrollEmployeeSummaryViewModel
+    {
+        public int UserId { get; set; }
+        public string EmployeeName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; } = string.Empty;
+        public int WorkingDays { get; set; }
+        public decimal WorkHours { get; set; }
+        public decimal OtHours { get; set; }
+        public int LateDays { get; set; }
+        public int AbsentDays { get; set; }
+    }
+
+    public class PayrollRecordsViewModel
+    {
+        public string SelectedPayrollMonth { get; set; } = string.Empty;
+        public List<PayrollSlip> PayrollSlips { get; set; } = new();
+        public List<PayrollClosure> PayrollClosures { get; set; } = new();
+        public decimal TotalNetSalary { get; set; }
+        public decimal TotalAdvanceDeduction { get; set; }
+        public decimal TotalLatePenalty { get; set; }
+        public PayrollSlip? SelectedPayrollSlip { get; set; }
     }
 
     public class LeaveBalanceSummary
@@ -97,6 +144,7 @@ namespace DANGCAPNE.ViewModels
         public string? FormError { get; set; }
         public List<AnnualLeaveBucketViewModel> AnnualLeaveBuckets { get; set; } = new();
         public List<OvertimePlanItemViewModel> OvertimePlans { get; set; } = new();
+        public List<string> HolidayDates { get; set; } = new();
     }
 
     public class RequestDetailViewModel

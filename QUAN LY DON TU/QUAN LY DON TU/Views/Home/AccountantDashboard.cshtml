@@ -1,0 +1,689 @@
+@model DANGCAPNE.ViewModels.AccountantDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard kế toán";
+}
+
+<style>
+    .finance-shell {
+        display: grid;
+        gap: 24px;
+    }
+
+    .finance-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+        gap: 24px;
+        align-items: stretch;
+    }
+
+    .finance-banner {
+        position: relative;
+        overflow: hidden;
+        padding: 28px;
+        color: #f8fafc;
+        background:
+            radial-gradient(circle at top right, rgba(251, 191, 36, 0.20), transparent 28%),
+            radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.18), transparent 34%),
+            linear-gradient(135deg, #0b132b 0%, #1e293b 52%, #334155 100%);
+    }
+
+    .finance-banner::after {
+        content: "";
+        position: absolute;
+        inset: auto -40px -70px auto;
+        width: 180px;
+        height: 180px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .finance-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.10);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .finance-title {
+        margin: 16px 0 10px;
+        font-size: clamp(28px, 4vw, 42px);
+        font-weight: 900;
+        line-height: 1.05;
+        color: #f8fafc;
+        text-shadow: 0 6px 24px rgba(15, 23, 42, 0.38);
+    }
+
+    .finance-subtitle {
+        max-width: 700px;
+        font-size: 15px;
+        line-height: 1.7;
+        color: rgba(248,250,252,0.82);
+    }
+
+    .finance-hero-metrics {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .finance-hero-metric {
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(8px);
+    }
+
+    .finance-hero-metric label {
+        display: block;
+        font-size: 12px;
+        color: rgba(248,250,252,0.72);
+        margin-bottom: 6px;
+    }
+
+    .finance-hero-metric strong {
+        font-size: 24px;
+        font-weight: 900;
+    }
+
+    .finance-control-card {
+        padding: 24px;
+        background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+        border: 1px solid rgba(249, 115, 22, 0.18);
+    }
+
+    .finance-control-card h3 {
+        margin-bottom: 6px;
+    }
+
+    .finance-control-card p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .finance-form-grid {
+        display: grid;
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .finance-form-grid label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        color: #0f172a;
+    }
+
+    .finance-form-grid input,
+    .finance-form-grid textarea {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid #d6d3d1;
+        background: #fff;
+        padding: 12px 14px;
+        font: inherit;
+    }
+
+    .finance-form-grid textarea {
+        min-height: 92px;
+        resize: vertical;
+    }
+
+    .finance-status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .finance-status-chip.open {
+        background: #ecfeff;
+        color: #155e75;
+    }
+
+    .finance-status-chip.closed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .finance-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .finance-stat {
+        position: relative;
+        overflow: hidden;
+        padding: 22px 20px;
+        border-radius: 22px;
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        background: #fff;
+    }
+
+    .finance-stat:nth-child(1) { background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%); }
+    .finance-stat:nth-child(2) { background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%); }
+    .finance-stat:nth-child(3) { background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%); }
+    .finance-stat:nth-child(4) { background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 100%); }
+
+    .finance-stat-label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .finance-stat-value {
+        margin: 8px 0 6px;
+        font-size: 34px;
+        font-weight: 900;
+        color: #0f172a;
+    }
+
+    .finance-stat-sub {
+        font-size: 13px;
+        color: #475569;
+    }
+
+    .finance-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 24px;
+    }
+
+    .finance-panel {
+        overflow: hidden;
+    }
+
+    .finance-panel .card-header {
+        padding-bottom: 0;
+    }
+
+    .finance-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .finance-month-switcher {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .finance-month-switcher input {
+        min-width: 160px;
+        border-radius: 12px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 12px;
+        background: #fff;
+        font: inherit;
+    }
+
+    .finance-table {
+        width: 100%;
+        min-width: 640px;
+        border-collapse: collapse;
+    }
+
+    .finance-table th,
+    .finance-table td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        vertical-align: middle;
+    }
+
+    .finance-table th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+    }
+
+    .finance-table-wrap {
+        overflow-x: auto;
+    }
+
+    .finance-list {
+        display: grid;
+        gap: 14px;
+        padding: 20px;
+    }
+
+    .finance-list-item {
+        padding: 16px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .finance-list-item-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .finance-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .finance-tag.warn {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .finance-tag.ok {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .finance-caption {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .finance-formula {
+        padding: 18px 20px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+        border: 1px solid rgba(59, 130, 246, 0.14);
+    }
+
+    .finance-formula code {
+        display: block;
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #0f172a;
+        color: #e2e8f0;
+        white-space: normal;
+    }
+
+    @@media (max-width: 1180px) {
+        .finance-hero,
+        .finance-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .finance-stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 720px) {
+        .finance-hero-metrics,
+        .finance-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .finance-banner,
+        .finance-control-card {
+            padding: 20px;
+        }
+
+        .finance-panel-header {
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="page-content finance-shell">
+    <section class="finance-hero">
+        <div class="glass-card finance-banner stagger-elem">
+            <div class="finance-kicker">
+                <i class="bi bi-bank2"></i>
+                Kỳ lương @Model.SelectedPayrollMonth
+            </div>
+            <h1 class="finance-title">Dashboard kế toán tập trung vào bảng lương, công và đối soát nghiệp vụ.</h1>
+            <p class="finance-subtitle">
+                Theo dõi nhanh toàn bộ nhân sự tính lương, khối lượng giờ công, OT, đơn tạm ứng và các điểm cần khóa sổ trước khi chốt tháng.
+            </p>
+
+            <div class="finance-hero-metrics">
+                <div class="finance-hero-metric">
+                    <label>Nhân sự tính lương</label>
+                    <strong>@Model.TotalPayrollEmployees</strong>
+                </div>
+                <div class="finance-hero-metric">
+                    <label>Tổng giờ công</label>
+                    <strong>@Model.TotalWorkHours.ToString("N1")</strong>
+                </div>
+                <div class="finance-hero-metric">
+                    <label>Thông báo chưa đọc</label>
+                    <strong>@Model.UnreadNotifications</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card finance-control-card stagger-elem">
+            <h3><i class="bi bi-lock-fill text-warning"></i> Chốt lương theo tháng</h3>
+            <p>Chức năng này dùng để khóa kỳ lương sau khi đã rà soát công, OT và các khoản tạm ứng liên quan.</p>
+
+            <form method="get" asp-action="Index" asp-controller="Home" class="finance-form-grid" style="margin-bottom:16px;">
+                <div>
+                    <label for="payrollMonthFilter">Tháng cần xem</label>
+                    <input id="payrollMonthFilter" type="month" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                </div>
+                <button type="submit" class="btn btn-outline">
+                    <i class="bi bi-search"></i> Xem dữ liệu tháng
+                </button>
+            </form>
+
+            <form method="post" asp-action="ClosePayroll" asp-controller="Home" class="finance-form-grid">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                <div>
+                    <label for="closureNotes">Ghi chú chốt lương</label>
+                    <textarea id="closureNotes" name="notes" placeholder="Ví dụ: Đã đối soát OT, đã xác nhận tạm ứng lương và khóa bảng công."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" @(Model.IsMonthClosed ? "disabled" : null)>
+                    <i class="bi bi-check2-square"></i> Chốt lương tháng @Model.SelectedPayrollMonth
+                </button>
+            </form>
+
+            <div class="finance-status-chip @(Model.IsMonthClosed ? "closed" : "open")">
+                <i class="bi @(Model.IsMonthClosed ? "bi-shield-check" : "bi-hourglass-split")"></i>
+                @(Model.IsMonthClosed ? $"Tháng {Model.SelectedPayrollMonth} đã được chốt." : $"Tháng {Model.SelectedPayrollMonth} chưa chốt, vẫn có thể tiếp tục rà soát.")
+            </div>
+        </div>
+    </section>
+
+    <section class="finance-stats-grid stagger-elem">
+        <article class="finance-stat">
+            <div class="finance-stat-label">Bản ghi chấm công</div>
+            <div class="finance-stat-value">@Model.TotalTimesheets</div>
+            <div class="finance-stat-sub">Tổng bản ghi trong kỳ lương đang xem</div>
+        </article>
+        <article class="finance-stat">
+            <div class="finance-stat-label">Phê duyệt chờ kế toán</div>
+            <div class="finance-stat-value">@Model.PendingFinanceApprovals</div>
+            <div class="finance-stat-sub">Các đơn đang cần kế toán xử lý</div>
+        </article>
+        <article class="finance-stat">
+            <div class="finance-stat-label">Tạm ứng lương</div>
+            <div class="finance-stat-value">@Model.PendingSalaryAdvanceCount</div>
+            <div class="finance-stat-sub">Đơn pending hoặc approved trong tháng</div>
+        </article>
+        <article class="finance-stat">
+            <div class="finance-stat-label">Điểm cần rà soát</div>
+            <div class="finance-stat-value">@(Model.LateAttendanceCount + Model.AbsentAttendanceCount)</div>
+            <div class="finance-stat-sub">@Model.LateAttendanceCount đi muộn, @Model.AbsentAttendanceCount vắng mặt</div>
+        </article>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <div class="finance-panel-header">
+                    <div>
+                        <h3><i class="bi bi-people-fill text-primary"></i> Bảng tổng hợp nhân sự tính lương</h3>
+                        <span class="finance-caption">Bảng này đổi theo tháng bạn chọn, không bị cố định ở tháng 4.</span>
+                    </div>
+                    <form method="get" asp-action="Index" asp-controller="Home" class="finance-month-switcher">
+                        <input type="month" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                        <button type="submit" class="btn btn-outline btn-sm">
+                            <i class="bi bi-arrow-repeat"></i> Xem tháng
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body finance-table-wrap" style="padding:0;">
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th>Nhân sự</th>
+                            <th>Phòng ban</th>
+                            <th>Ngày công</th>
+                            <th>Giờ công</th>
+                            <th>OT</th>
+                            <th>Đi muộn</th>
+                            <th>Vắng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.PayrollEmployees.Any())
+                    {
+                        foreach (var employee in Model.PayrollEmployees)
+                        {
+                            <tr>
+                                <td><strong>@employee.EmployeeName</strong></td>
+                                <td>@employee.DepartmentName</td>
+                                <td>@employee.WorkingDays</td>
+                                <td>@employee.WorkHours.ToString("N1") giờ</td>
+                                <td>@employee.OtHours.ToString("N1") giờ</td>
+                                <td>@employee.LateDays</td>
+                                <td>@employee.AbsentDays</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Chưa có dữ liệu công cho tháng @Model.SelectedPayrollMonth.</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-clock-history text-success"></i> Lịch sử chốt lương</h3>
+                <span class="finance-caption">Các kỳ lương đã khóa sổ gần đây</span>
+            </div>
+            <div class="finance-list">
+                @if (Model.RecentClosures.Any())
+                {
+                    foreach (var closure in Model.RecentClosures)
+                    {
+                        <article class="finance-list-item">
+                            <div class="finance-list-item-top">
+                                <div>
+                                    <strong>Tháng @closure.PayrollMonth</strong>
+                                    <div class="finance-caption">Chốt lúc @closure.ClosedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                </div>
+                                <span class="finance-tag ok"><i class="bi bi-check2-circle"></i> Đã chốt</span>
+                            </div>
+                            <div class="finance-caption">
+                                @closure.EmployeeCount nhân sự · @closure.TotalWorkHours.ToString("N1") giờ công · @closure.TotalOtHours.ToString("N1") giờ OT
+                            </div>
+                            <div class="finance-caption">
+                                Thực hiện bởi: @(closure.ClosedByUser?.FullName ?? "Không xác định")
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(closure.Notes))
+                            {
+                                <div class="finance-caption">Ghi chú: @closure.Notes</div>
+                            }
+                        </article>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:10px 0;">
+                        <i class="bi bi-journal-x"></i>
+                        <h3>Chưa có tháng lương nào được chốt</h3>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-calculator text-primary"></i> Phép tính lương đang áp dụng</h3>
+            </div>
+            <div class="finance-list">
+                <div class="finance-formula">
+                    <strong>1. Lương tháng chuẩn</strong>
+                    <code>Lương chuẩn = Lương cơ bản x Hệ số lương</code>
+                </div>
+                <div class="finance-formula">
+                    <strong>2. Lương chính</strong>
+                    <code>Lương / giờ = (Lương chuẩn / Chuẩn ngày công) / Chuẩn giờ/ngày
+Lương chính = Lương / giờ x Giờ công thực tế</code>
+                </div>
+                <div class="finance-formula">
+                    <strong>3. OT, đi trễ và thực lĩnh</strong>
+                    <code>Lương OT = Lương / giờ x Hệ số OT x Giờ OT
+Phạt đi trễ = Phạt / phút x Tổng phút đi trễ
+Thực lĩnh = Lương chính + Lương OT + Phụ cấp + Thu nhập khác - Phạt đi trễ - Tạm ứng lương</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-wallet2 text-warning"></i> Đơn tạm ứng lương cần theo dõi</h3>
+                <span class="finance-caption">Lọc theo kỳ lương @Model.SelectedPayrollMonth</span>
+            </div>
+            <div class="finance-list">
+                @if (Model.SalaryAdvances.Any())
+                {
+                    foreach (var request in Model.SalaryAdvances)
+                    {
+                        <article class="finance-list-item">
+                            <div class="finance-list-item-top">
+                                <div>
+                                    <strong>@(request.User?.FullName ?? "Không xác định")</strong>
+                                    <div class="finance-caption">Cần trước ngày @request.NeededByDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                                <span class="finance-tag warn">@request.Status</span>
+                            </div>
+                            <div class="finance-caption">Số tiền: @request.Amount.ToString("N0") VND</div>
+                            <div class="finance-caption">Lý do: @request.Reason</div>
+                        </article>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:10px 0;">
+                        <i class="bi bi-cash-coin"></i>
+                        <h3>Không có đơn tạm ứng lương đang mở</h3>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-check2-square text-info"></i> Hồ sơ chờ kế toán phê duyệt</h3>
+                <a href="@Url.Action("Index", "Approvals")" class="btn btn-outline btn-sm">Mở danh sách duyệt</a>
+            </div>
+            <div class="finance-list">
+                @if (Model.PendingApprovals.Any())
+                {
+                    foreach (var item in Model.PendingApprovals)
+                    {
+                        <article class="finance-list-item">
+                            <div class="finance-list-item-top">
+                                <div>
+                                    <strong>@item.RequestCode</strong>
+                                    <div class="finance-caption">@(item.FormTemplate?.Name ?? "Không xác định")</div>
+                                </div>
+                                <span class="finance-tag warn">Đang chờ</span>
+                            </div>
+                            <div class="finance-caption">Người gửi: @(item.Requester?.FullName ?? "Không xác định")</div>
+                            <div class="finance-caption">Ngày tạo: @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            <a href="@Url.Action("Detail", "Requests", new { id = item.Id })" class="btn btn-ghost btn-sm mt-16">
+                                <i class="bi bi-arrow-right-circle"></i> Xem chi tiết
+                            </a>
+                        </article>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:10px 0;">
+                        <i class="bi bi-patch-check"></i>
+                        <h3>Không có hồ sơ nào đang chờ kế toán</h3>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem" style="grid-column: 1 / -1;">
+            <div class="card-header">
+                <h3><i class="bi bi-file-earmark-pdf text-danger"></i> Phiếu lương đã sinh cho tháng @Model.SelectedPayrollMonth</h3>
+                <span class="finance-caption">Các file PDF được tạo tự động khi chốt lương tháng.</span>
+            </div>
+            <div class="card-body finance-table-wrap" style="padding:0;">
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th>Nhân sự</th>
+                            <th>Lương chính</th>
+                            <th>OT</th>
+                            <th>Phạt đi trễ</th>
+                            <th>Tạm ứng</th>
+                            <th>Thực lĩnh</th>
+                            <th>Phiếu lương</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.RecentPayrollSlips.Any())
+                    {
+                        foreach (var slip in Model.RecentPayrollSlips)
+                        {
+                            <tr>
+                                <td><strong>@(slip.User?.FullName ?? "Không xác định")</strong></td>
+                                <td>@slip.MainSalary.ToString("N0")</td>
+                                <td>@slip.OvertimeSalary.ToString("N0")</td>
+                                <td>@slip.LatePenalty.ToString("N0")</td>
+                                <td>@slip.AdvanceDeduction.ToString("N0")</td>
+                                <td><strong>@slip.NetSalary.ToString("N0")</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(slip.PdfPath))
+                                    {
+                                        <a href="@slip.PdfPath" target="_blank" class="btn btn-outline btn-sm">
+                                            <i class="bi bi-download"></i> Mở PDF
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa có</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Tháng @Model.SelectedPayrollMonth chưa có phiếu lương nào được sinh.</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>

@@ -301,6 +301,7 @@
 @section Scripts {
 <script>
     const annualLeaveBuckets = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.AnnualLeaveBuckets));
+    const holidayDates = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.HolidayDates));
     let autoSaveTimer;
 
     function saveDraft() {
@@ -371,8 +372,21 @@
             return;
         }
 
-        const diffDays = Math.floor((endDate.getTime() - startDate.getTime()) / 86400000) + 1;
-        totalDaysInput.value = diffDays;
+        const holidaySet = new Set((holidayDates || []).map(x => String(x)));
+        let workingDays = 0;
+        for (let current = new Date(startDate); current <= endDate; current.setDate(current.getDate() + 1)) {
+            const exactToken = current.toISOString().slice(0, 10);
+            const recurringToken = exactToken.slice(5);
+            if (current.getDay() === 0) {
+                continue;
+            }
+            if (holidaySet.has(exactToken) || holidaySet.has(recurringToken)) {
+                continue;
+            }
+            workingDays += 1;
+        }
+
+        totalDaysInput.value = workingDays;
         updateAnnualLeavePreview();
     }
     function updateOtRuleMessage() {

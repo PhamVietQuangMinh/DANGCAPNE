@@ -1,0 +1,355 @@
+@model DANGCAPNE.ViewModels.PayrollRecordsViewModel
+@{
+    ViewData["Title"] = "Hồ sơ lương";
+}
+
+<style>
+    .payroll-records {
+        display: grid;
+        gap: 24px;
+    }
+
+    .payroll-records-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .payroll-records-filter {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .payroll-records-filter input {
+        border-radius: 12px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 12px;
+        background: #fff;
+        font: inherit;
+    }
+
+    .payroll-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .payroll-selected-card {
+        padding: 22px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .payroll-selected-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .payroll-selected-title {
+        font-size: 28px;
+        font-weight: 900;
+        margin: 0 0 4px;
+    }
+
+    .payroll-selected-sub {
+        color: rgba(248,250,252,0.72);
+        font-size: 14px;
+    }
+
+    .payroll-selected-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .payroll-selected-item {
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .payroll-selected-item label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: rgba(248,250,252,0.66);
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .payroll-selected-item strong {
+        font-size: 24px;
+        color: #fff;
+    }
+
+    .payroll-summary-card {
+        padding: 20px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .payroll-summary-card label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .payroll-summary-card strong {
+        font-size: 30px;
+        color: #0f172a;
+    }
+
+    .payroll-table {
+        width: 100%;
+        min-width: 900px;
+        border-collapse: collapse;
+    }
+
+    .payroll-table th,
+    .payroll-table td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        vertical-align: middle;
+    }
+
+    .payroll-table th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+    }
+
+    .payroll-row-link {
+        cursor: pointer;
+        transition: background-color 0.18s ease;
+    }
+
+    .payroll-row-link:hover {
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .payroll-row-link.active {
+        background: rgba(99, 102, 241, 0.10);
+    }
+
+    .payroll-table-wrap {
+        overflow-x: auto;
+    }
+
+    .payroll-closure-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .payroll-closure-item {
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    @@media (max-width: 900px) {
+        .payroll-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .payroll-selected-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .payroll-selected-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-content payroll-records">
+    <div class="glass-card">
+        <div class="card-body">
+            <div class="payroll-records-header">
+                <div>
+                    <h2 style="margin-bottom:6px;">Hồ sơ lương</h2>
+                </div>
+                <form method="get" asp-action="PayrollRecords" asp-controller="Home" class="payroll-records-filter">
+                    <input type="month" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                    <button type="submit" class="btn btn-outline btn-sm">
+                        <i class="bi bi-search"></i> Xem tháng
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.SelectedPayrollSlip != null)
+    {
+        <div class="payroll-selected-card glass-card">
+            <div class="payroll-selected-header">
+                <div>
+                    <h3 class="payroll-selected-title">@(Model.SelectedPayrollSlip.User?.FullName ?? "Không xác định")</h3>
+                    <div class="payroll-selected-sub">
+                        @(Model.SelectedPayrollSlip.User?.Position?.Name ?? "Nhân viên") · @(Model.SelectedPayrollSlip.User?.Department?.Name ?? "--") · Tháng @Model.SelectedPayrollMonth
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.SelectedPayrollSlip.PdfPath))
+                {
+                    <a href="@Model.SelectedPayrollSlip.PdfPath" target="_blank" class="btn btn-outline btn-sm">
+                        <i class="bi bi-file-earmark-pdf"></i> Mở phiếu lương
+                    </a>
+                }
+            </div>
+            <div class="payroll-selected-grid">
+                <div class="payroll-selected-item">
+                    <label>Thực lĩnh</label>
+                    <strong>@Model.SelectedPayrollSlip.NetSalary.ToString("N0")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Lương chính</label>
+                    <strong>@Model.SelectedPayrollSlip.MainSalary.ToString("N0")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Lương OT</label>
+                    <strong>@Model.SelectedPayrollSlip.OvertimeSalary.ToString("N0")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Tạm ứng</label>
+                    <strong>@Model.SelectedPayrollSlip.AdvanceDeduction.ToString("N0")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Phạt đi trễ</label>
+                    <strong>@Model.SelectedPayrollSlip.LatePenalty.ToString("N0")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Giờ công</label>
+                    <strong>@Model.SelectedPayrollSlip.ActualWorkHours.ToString("N1")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Giờ OT</label>
+                    <strong>@Model.SelectedPayrollSlip.OvertimeHours.ToString("N1")</strong>
+                </div>
+                <div class="payroll-selected-item">
+                    <label>Đi trễ</label>
+                    <strong>@Model.SelectedPayrollSlip.LateMinutes.ToString("N0") phút</strong>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="payroll-summary-grid">
+        <div class="payroll-summary-card glass-card">
+            <label>Tổng thực lĩnh</label>
+            <strong>@Model.TotalNetSalary.ToString("N0")</strong>
+        </div>
+        <div class="payroll-summary-card glass-card">
+            <label>Tổng trừ tạm ứng</label>
+            <strong>@Model.TotalAdvanceDeduction.ToString("N0")</strong>
+        </div>
+        <div class="payroll-summary-card glass-card">
+            <label>Tổng phạt đi trễ</label>
+            <strong>@Model.TotalLatePenalty.ToString("N0")</strong>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <h3><i class="bi bi-receipt text-primary"></i> Phiếu lương tháng @Model.SelectedPayrollMonth</h3>
+        </div>
+        <div class="card-body payroll-table-wrap" style="padding:0;">
+            <table class="payroll-table">
+                <thead>
+                    <tr>
+                        <th>Nhân sự</th>
+                        <th>Phòng ban</th>
+                        <th>Lương chính</th>
+                        <th>OT</th>
+                        <th>Phạt</th>
+                        <th>Tạm ứng</th>
+                        <th>Thực lĩnh</th>
+                        <th>Phiếu PDF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.PayrollSlips.Any())
+                {
+                    foreach (var slip in Model.PayrollSlips)
+                    {
+                        var isActive = Model.SelectedPayrollSlip?.UserId == slip.UserId;
+                        <tr class="payroll-row-link @(isActive ? "active" : "")" onclick="location.href='@Url.Action("PayrollRecords", "Home", new { payrollMonth = Model.SelectedPayrollMonth, selectedUserId = slip.UserId })'">
+                            <td><strong>@(slip.User?.FullName ?? "Không xác định")</strong></td>
+                            <td>@(slip.User?.Department?.Name ?? "--")</td>
+                            <td>@slip.MainSalary.ToString("N0")</td>
+                            <td>@slip.OvertimeSalary.ToString("N0")</td>
+                            <td>@slip.LatePenalty.ToString("N0")</td>
+                            <td>@slip.AdvanceDeduction.ToString("N0")</td>
+                            <td><strong>@slip.NetSalary.ToString("N0")</strong></td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(slip.PdfPath))
+                                {
+                                    <a href="@slip.PdfPath" target="_blank" class="btn btn-outline btn-sm" onclick="event.stopPropagation();">
+                                        <i class="bi bi-file-earmark-pdf"></i> Mở phiếu
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa có</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Tháng @Model.SelectedPayrollMonth chưa có dữ liệu phiếu lương.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <h3><i class="bi bi-clock-history text-success"></i> Lịch sử chốt lương</h3>
+        </div>
+        <div class="card-body payroll-closure-list">
+            @if (Model.PayrollClosures.Any())
+            {
+                foreach (var closure in Model.PayrollClosures)
+                {
+                    <div class="payroll-closure-item">
+                        <strong>Tháng @closure.PayrollMonth</strong>
+                        <div class="text-muted">Chốt lúc @closure.ClosedAt.ToString("dd/MM/yyyy HH:mm") bởi @(closure.ClosedByUser?.FullName ?? "Không xác định")</div>
+                        <div class="text-muted">@closure.EmployeeCount nhân sự · @closure.TotalWorkHours.ToString("N1") giờ công · @closure.TotalOtHours.ToString("N1") giờ OT</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-journal-x"></i>
+                    <h3>Chưa có kỳ lương nào được chốt</h3>
+                </div>
+            }
+        </div>
+    </div>
+</div>

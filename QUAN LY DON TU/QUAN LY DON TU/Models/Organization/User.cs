@@ -35,6 +35,29 @@ namespace DANGCAPNE.Models.Organization
         public DateTime HireDate { get; set; } = DateTime.Now;
         public DateTime? TerminationDate { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal BaseSalary { get; set; } = 0;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal SalaryCoefficient { get; set; } = 1;
+
+        public int StandardWorkDays { get; set; } = 26;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal StandardWorkHoursPerDay { get; set; } = 8;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OvertimeHourlyMultiplier { get; set; } = 1.5m;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal LatePenaltyPerMinute { get; set; } = 2000;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FixedAllowance { get; set; } = 0;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OtherIncome { get; set; } = 0;
+
         [MaxLength(50)]
         public string Status { get; set; } = "Active"; // Active, Inactive, OnLeave, Terminated
 

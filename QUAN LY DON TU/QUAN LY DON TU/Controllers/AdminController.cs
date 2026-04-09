@@ -253,6 +253,7 @@ namespace DANGCAPNE.Controllers
         public async Task<IActionResult> SaveUser(UserEditViewModel model, int[]? roleIds)
         {
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var defaultBaseSalary = ResolveDefaultBaseSalary(model.User?.DepartmentId, model.User?.JobTitleId, model.User?.PositionId);
 
             User user;
             if (model.User?.Id > 0)
@@ -265,6 +266,15 @@ namespace DANGCAPNE.Controllers
                 user.BranchId = model.User.BranchId;
                 user.JobTitleId = model.User.JobTitleId;
                 user.PositionId = model.User.PositionId;
+                user.HireDate = model.User.HireDate;
+                user.BaseSalary = model.User.BaseSalary > 0 ? model.User.BaseSalary : defaultBaseSalary;
+                user.SalaryCoefficient = model.User.SalaryCoefficient;
+                user.StandardWorkDays = model.User.StandardWorkDays;
+                user.StandardWorkHoursPerDay = model.User.StandardWorkHoursPerDay;
+                user.OvertimeHourlyMultiplier = model.User.OvertimeHourlyMultiplier;
+                user.LatePenaltyPerMinute = model.User.LatePenaltyPerMinute;
+                user.FixedAllowance = model.User.FixedAllowance;
+                user.OtherIncome = model.User.OtherIncome;
                 user.UpdatedAt = DateTime.Now;
             }
             else
@@ -279,6 +289,15 @@ namespace DANGCAPNE.Controllers
                     BranchId = model.User?.BranchId,
                     JobTitleId = model.User?.JobTitleId,
                     PositionId = model.User?.PositionId,
+                    HireDate = model.User?.HireDate ?? DateTime.Now,
+                    BaseSalary = (model.User?.BaseSalary ?? 0) > 0 ? model.User!.BaseSalary : defaultBaseSalary,
+                    SalaryCoefficient = model.User?.SalaryCoefficient ?? 1,
+                    StandardWorkDays = model.User?.StandardWorkDays ?? 26,
+                    StandardWorkHoursPerDay = model.User?.StandardWorkHoursPerDay ?? 8,
+                    OvertimeHourlyMultiplier = model.User?.OvertimeHourlyMultiplier ?? 1.5m,
+                    LatePenaltyPerMinute = model.User?.LatePenaltyPerMinute ?? 2000,
+                    FixedAllowance = model.User?.FixedAllowance ?? 0,
+                    OtherIncome = model.User?.OtherIncome ?? 0,
                     PasswordHash = HashPassword("Default@123"),
                     Status = "Active"
                 };
@@ -306,6 +325,31 @@ namespace DANGCAPNE.Controllers
             await _context.SaveChangesAsync();
             TempData["Success"] = "Lưu thông tin nhân viên thành công!";
             return RedirectToAction("Index", new { tab = "users" });
+        }
+
+        private decimal ResolveDefaultBaseSalary(int? departmentId, int? jobTitleId, int? positionId)
+        {
+            if (departmentId == 1 || jobTitleId == 1 || positionId == 1)
+            {
+                return 80_000_000m;
+            }
+
+            if (departmentId == 4 || positionId == 4)
+            {
+                return 17_000_000m;
+            }
+
+            if (departmentId == 3)
+            {
+                return 15_000_000m;
+            }
+
+            if (jobTitleId == 3 || positionId == 2 || positionId == 3 || positionId == 5)
+            {
+                return 25_000_000m;
+            }
+
+            return 10_000_000m;
         }
 
         [HttpPost]

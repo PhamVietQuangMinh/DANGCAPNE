@@ -107,4 +107,75 @@ namespace DANGCAPNE.Models.Finance
         [ForeignKey("AssignedToUserId")]
         public virtual Organization.User? AssignedToUser { get; set; }
     }
+
+    public class PayrollClosure
+    {
+        [Key]
+        public int Id { get; set; }
+        public int TenantId { get; set; }
+        [Required, MaxLength(20)]
+        public string PayrollMonth { get; set; } = string.Empty; // yyyy-MM
+        public int ClosedByUserId { get; set; }
+        public DateTime ClosedAt { get; set; } = DateTime.Now;
+        public int EmployeeCount { get; set; }
+        public int TimesheetCount { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalWorkHours { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalOtHours { get; set; }
+        public int PendingAdvanceCount { get; set; }
+        [MaxLength(1000)]
+        public string? Notes { get; set; }
+
+        [ForeignKey("ClosedByUserId")]
+        public virtual Organization.User? ClosedByUser { get; set; }
+    }
+
+    public class PayrollSlip
+    {
+        [Key]
+        public int Id { get; set; }
+        public int TenantId { get; set; }
+        public int PayrollClosureId { get; set; }
+        public int UserId { get; set; }
+        [Required, MaxLength(20)]
+        public string PayrollMonth { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal BaseSalary { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal SalaryCoefficient { get; set; }
+        public int StandardWorkDays { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal StandardWorkHoursPerDay { get; set; }
+        public int ActualWorkingDays { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ActualWorkHours { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OvertimeHours { get; set; }
+        public int LateMinutes { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal HourlyRate { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MainSalary { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OvertimeSalary { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal FixedAllowance { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OtherIncome { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal LatePenalty { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AdvanceDeduction { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal NetSalary { get; set; }
+        [MaxLength(500)]
+        public string? PdfPath { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [ForeignKey("PayrollClosureId")]
+        public virtual PayrollClosure? PayrollClosure { get; set; }
+        [ForeignKey("UserId")]
+        public virtual Organization.User? User { get; set; }
+    }
 }

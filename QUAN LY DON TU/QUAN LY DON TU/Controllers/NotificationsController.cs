@@ -37,7 +37,7 @@ namespace DANGCAPNE.Controllers
             if (notification != null)
             {
                 notification.IsRead = true;
-                notification.ReadAt = DateTime.Now;
+                notification.ReadAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
             return Ok();
@@ -56,7 +56,7 @@ namespace DANGCAPNE.Controllers
             foreach (var n in unread)
             {
                 n.IsRead = true;
-                n.ReadAt = DateTime.Now;
+                n.ReadAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();

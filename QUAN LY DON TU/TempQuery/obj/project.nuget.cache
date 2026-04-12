@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "dgSpecHash": "3fXCavNYt2Y=",
+  "success": true,
+  "projectFilePath": "c:\\Users\\PC\\DANGCAPNE\\QUAN LY DON TU\\TempQuery\\TempQuery.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\PC\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\PC\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\PC\\.nuget\\packages\\npgsql\\8.0.2\\npgsql.8.0.2.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Npgsql' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-x9vc-6hfv-hg8c",
+      "projectPath": "c:\\Users\\PC\\DANGCAPNE\\QUAN LY DON TU\\TempQuery\\TempQuery.csproj",
+      "warningLevel": 1,
+      "filePath": "c:\\Users\\PC\\DANGCAPNE\\QUAN LY DON TU\\TempQuery\\TempQuery.csproj",
+      "libraryId": "Npgsql",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

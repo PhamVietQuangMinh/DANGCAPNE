@@ -35,16 +35,22 @@ namespace DANGCAPNE.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+            var roles = GetCurrentRoles();
+            if (!CanAccessEmployeeDirectory(roles)) return RedirectToAction("AccessDenied", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
             var isAdmin = roles.Contains("Admin");
+            var isIT = roles.Contains("IT") || roles.Contains("ITManager");
             tab = tab?.Trim().ToLowerInvariant() switch
             {
                 "timekeeping" => "timekeeping",
                 "requeststats" when isAdmin => "requeststats",
                 _ => "users"
             };
+
+            if (isIT && !isAdmin && tab != "users")
+            {
+                tab = "users";
+            }
 
             var normalizedEmployeeSearch = employeeSearch?.Trim();
             var normalizedAttendanceSearch = attendanceSearch?.Trim();
@@ -182,27 +188,39 @@ namespace DANGCAPNE.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
+            var roles = GetCurrentRoles();
+            if (!CanManageEmployeeProfiles(roles))
+                return RedirectToAction("AccessDenied", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
             var user = await _context.Users
                 .Include(u => u.UserRoles)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
 
             var manager = await _context.UserManagers
-                .Where(um => um.UserId == id && um.IsPrimary && (um.EndDate == null || um.EndDate > DateTime.Now))
+                .Where(um => um.UserId == id && um.IsPrimary && (um.EndDate == null || um.EndDate > DateTime.UtcNow))
                 .FirstOrDefaultAsync();
 
             var model = new UserEditViewModel
             {
                 User = user,
-                AllRoles = await _context.Roles.Where(r => r.TenantId == tenantId).ToListAsync(),
-                SelectedRoleIds = user?.UserRoles.Select(ur => ur.RoleId).ToList() ?? new(),
+                AllRoles = CanManageRoleAssignments(roles)
+                    ? await _context.Roles.Where(r => r.TenantId == tenantId).OrderBy(r => r.Name).ToListAsync()
+                    : new List<Role>(),
+                SelectedRoleIds = user.UserRoles.Select(ur => ur.RoleId).ToList(),
                 Departments = await _context.Departments.Where(d => d.TenantId == tenantId).ToListAsync(),
                 Branches = await _context.Branches.Where(b => b.TenantId == tenantId).ToListAsync(),
                 JobTitles = await _context.JobTitles.Where(j => j.TenantId == tenantId).ToListAsync(),
                 Positions = await _context.Positions.Where(p => p.TenantId == tenantId).ToListAsync(),
                 ManagerId = manager?.ManagerId,
-                PotentialManagers = await _context.Users.Where(u => u.TenantId == tenantId && u.Id != id && u.Status == "Active").ToListAsync()
+                PotentialManagers = await _context.Users.Where(u => u.TenantId == tenantId && u.Id != id && u.Status == "Active").ToListAsync(),
+                CanManageRoles = CanManageRoleAssignments(roles),
+                CanAutoGenerateEmployeeCode = CanAutoGenerateEmployeeCode(roles)
             };
 
             return View(model);
@@ -214,8 +232,8 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
 
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager"))
+            var roles = GetCurrentRoles();
+            if (!CanAccessEmployeeDirectory(roles))
                 return RedirectToAction("AccessDenied", "Account");
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
@@ -243,7 +261,14 @@ namespace DANGCAPNE.Controllers
                     .Where(r => r.TenantId == tenantId && (r.RequesterId == id || r.TargetUserId == id))
                     .OrderByDescending(r => r.CreatedAt)
                     .Take(10)
-                    .ToListAsync()
+                    .ToListAsync(),
+                CanEditEmployee = CanManageEmployeeProfiles(roles),
+                CanManageTechnicalAccess = CanManageTechnicalAccess(roles),
+                RolesSummary = string.Join(", ", employee.UserRoles
+                    .Select(ur => ur.Role?.Name)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Distinct()
+                    .OrderBy(name => name))
             };
 
             return View(model);
@@ -252,52 +277,74 @@ namespace DANGCAPNE.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveUser(UserEditViewModel model, int[]? roleIds)
         {
+            var roles = GetCurrentRoles();
+            if (!CanManageEmployeeProfiles(roles))
+                return RedirectToAction("AccessDenied", "Account");
+
+            if (model.User == null)
+            {
+                TempData["Error"] = "Không tìm thấy dữ liệu nhân viên cần lưu.";
+                return RedirectToAction("Index", new { tab = "users" });
+            }
+
+            var inputUser = model.User;
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
-            var defaultBaseSalary = ResolveDefaultBaseSalary(model.User?.DepartmentId, model.User?.JobTitleId, model.User?.PositionId);
+            var defaultBaseSalary = ResolveDefaultBaseSalary(inputUser.DepartmentId, inputUser.JobTitleId, inputUser.PositionId);
+            var normalizedEmployeeCode = NormalizeEmployeeCode(inputUser.EmployeeCode);
+            var autoGeneratedCode = false;
+            if (string.IsNullOrWhiteSpace(normalizedEmployeeCode) || string.Equals(normalizedEmployeeCode, "PENDING", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedEmployeeCode = await GenerateNextEmployeeCodeAsync(tenantId, inputUser.DepartmentId, inputUser.Id > 0 ? inputUser.Id : null);
+                autoGeneratedCode = true;
+            }
 
             User user;
-            if (model.User?.Id > 0)
+            if (inputUser.Id > 0)
             {
-                user = await _context.Users.FindAsync(model.User.Id) ?? new();
-                user.FullName = model.User.FullName;
-                user.Email = model.User.Email;
-                user.EmployeeCode = model.User.EmployeeCode;
-                user.DepartmentId = model.User.DepartmentId;
-                user.BranchId = model.User.BranchId;
-                user.JobTitleId = model.User.JobTitleId;
-                user.PositionId = model.User.PositionId;
-                user.HireDate = model.User.HireDate;
-                user.BaseSalary = model.User.BaseSalary > 0 ? model.User.BaseSalary : defaultBaseSalary;
-                user.SalaryCoefficient = model.User.SalaryCoefficient;
-                user.StandardWorkDays = model.User.StandardWorkDays;
-                user.StandardWorkHoursPerDay = model.User.StandardWorkHoursPerDay;
-                user.OvertimeHourlyMultiplier = model.User.OvertimeHourlyMultiplier;
-                user.LatePenaltyPerMinute = model.User.LatePenaltyPerMinute;
-                user.FixedAllowance = model.User.FixedAllowance;
-                user.OtherIncome = model.User.OtherIncome;
-                user.UpdatedAt = DateTime.Now;
+                user = await _context.Users.FirstOrDefaultAsync(u => u.Id == inputUser.Id && u.TenantId == tenantId) ?? new();
+                if (user.Id <= 0)
+                {
+                    return NotFound();
+                }
+                user.FullName = inputUser.FullName;
+                user.Email = inputUser.Email;
+                user.EmployeeCode = normalizedEmployeeCode;
+                user.DepartmentId = inputUser.DepartmentId;
+                user.BranchId = inputUser.BranchId;
+                user.JobTitleId = inputUser.JobTitleId;
+                user.PositionId = inputUser.PositionId;
+                user.HireDate = inputUser.HireDate;
+                user.BaseSalary = inputUser.BaseSalary > 0 ? inputUser.BaseSalary : defaultBaseSalary;
+                user.SalaryCoefficient = inputUser.SalaryCoefficient;
+                user.StandardWorkDays = inputUser.StandardWorkDays;
+                user.StandardWorkHoursPerDay = inputUser.StandardWorkHoursPerDay;
+                user.OvertimeHourlyMultiplier = inputUser.OvertimeHourlyMultiplier;
+                user.LatePenaltyPerMinute = inputUser.LatePenaltyPerMinute;
+                user.FixedAllowance = inputUser.FixedAllowance;
+                user.OtherIncome = inputUser.OtherIncome;
+                user.UpdatedAt = DateTime.UtcNow;
             }
             else
             {
                 user = new User
                 {
                     TenantId = tenantId,
-                    FullName = model.User?.FullName ?? "",
-                    Email = model.User?.Email ?? "",
-                    EmployeeCode = model.User?.EmployeeCode ?? "",
-                    DepartmentId = model.User?.DepartmentId,
-                    BranchId = model.User?.BranchId,
-                    JobTitleId = model.User?.JobTitleId,
-                    PositionId = model.User?.PositionId,
-                    HireDate = model.User?.HireDate ?? DateTime.Now,
-                    BaseSalary = (model.User?.BaseSalary ?? 0) > 0 ? model.User!.BaseSalary : defaultBaseSalary,
-                    SalaryCoefficient = model.User?.SalaryCoefficient ?? 1,
-                    StandardWorkDays = model.User?.StandardWorkDays ?? 26,
-                    StandardWorkHoursPerDay = model.User?.StandardWorkHoursPerDay ?? 8,
-                    OvertimeHourlyMultiplier = model.User?.OvertimeHourlyMultiplier ?? 1.5m,
-                    LatePenaltyPerMinute = model.User?.LatePenaltyPerMinute ?? 2000,
-                    FixedAllowance = model.User?.FixedAllowance ?? 0,
-                    OtherIncome = model.User?.OtherIncome ?? 0,
+                    FullName = inputUser.FullName ?? "",
+                    Email = inputUser.Email ?? "",
+                    EmployeeCode = normalizedEmployeeCode,
+                    DepartmentId = inputUser.DepartmentId,
+                    BranchId = inputUser.BranchId,
+                    JobTitleId = inputUser.JobTitleId,
+                    PositionId = inputUser.PositionId,
+                    HireDate = inputUser.HireDate,
+                    BaseSalary = inputUser.BaseSalary > 0 ? inputUser.BaseSalary : defaultBaseSalary,
+                    SalaryCoefficient = inputUser.SalaryCoefficient,
+                    StandardWorkDays = inputUser.StandardWorkDays,
+                    StandardWorkHoursPerDay = inputUser.StandardWorkHoursPerDay,
+                    OvertimeHourlyMultiplier = inputUser.OvertimeHourlyMultiplier,
+                    LatePenaltyPerMinute = inputUser.LatePenaltyPerMinute,
+                    FixedAllowance = inputUser.FixedAllowance,
+                    OtherIncome = inputUser.OtherIncome,
                     PasswordHash = HashPassword("Default@123"),
                     Status = "Active"
                 };
@@ -305,13 +352,18 @@ namespace DANGCAPNE.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            if (model.User?.Id <= 0)
+            if (CanManageRoleAssignments(roles))
             {
-                var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.TenantId == tenantId && r.Name == "Employee");
-                if (employeeRole != null && !await _context.UserRoles.AnyAsync(ur => ur.UserId == user.Id && ur.RoleId == employeeRole.Id))
-                {
-                    _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = employeeRole.Id });
-                }
+                await SyncUserRolesAsync(user.Id, tenantId, roleIds);
+            }
+            else if (inputUser.Id <= 0)
+            {
+                await EnsureDefaultEmployeeRoleAsync(user.Id, tenantId);
+            }
+
+            if (!await _context.UserRoles.AnyAsync(ur => ur.UserId == user.Id))
+            {
+                await EnsureDefaultEmployeeRoleAsync(user.Id, tenantId);
             }
 
             // Update manager
@@ -323,7 +375,9 @@ namespace DANGCAPNE.Controllers
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Lưu thông tin nhân viên thành công!";
+            TempData["Success"] = autoGeneratedCode
+                ? $"Lưu thông tin nhân viên thành công. Hệ thống đã cấp mã nhân viên {normalizedEmployeeCode}."
+                : "Lưu thông tin nhân viên thành công!";
             return RedirectToAction("Index", new { tab = "users" });
         }
 
@@ -352,6 +406,155 @@ namespace DANGCAPNE.Controllers
             return 10_000_000m;
         }
 
+        private string[] GetCurrentRoles() =>
+            (HttpContext.Session.GetString("Roles") ?? string.Empty)
+                .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        private static bool ContainsAnyRole(string[] roles, params string[] allowedRoles) =>
+            allowedRoles.Any(role => roles.Contains(role, StringComparer.OrdinalIgnoreCase));
+
+        private bool CanAccessEmployeeDirectory(string[]? roles = null) =>
+            ContainsAnyRole(roles ?? GetCurrentRoles(), "Admin", "HR", "Manager", "IT", "ITManager");
+
+        private bool CanManageEmployeeProfiles(string[]? roles = null) =>
+            ContainsAnyRole(roles ?? GetCurrentRoles(), "Admin", "HR", "IT", "ITManager");
+
+        private bool CanManageTechnicalAccess(string[]? roles = null) =>
+            ContainsAnyRole(roles ?? GetCurrentRoles(), "Admin", "IT", "ITManager");
+
+        private bool CanManageRoleAssignments(string[]? roles = null) =>
+            ContainsAnyRole(roles ?? GetCurrentRoles(), "Admin");
+
+        private bool CanAutoGenerateEmployeeCode(string[]? roles = null) =>
+            ContainsAnyRole(roles ?? GetCurrentRoles(), "Admin", "HR", "IT", "ITManager");
+
+        private async Task EnsureDefaultEmployeeRoleAsync(int userId, int tenantId)
+        {
+            var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.TenantId == tenantId && r.Name == "Employee");
+            if (employeeRole != null && !await _context.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == employeeRole.Id))
+            {
+                _context.UserRoles.Add(new UserRole { UserId = userId, RoleId = employeeRole.Id });
+            }
+        }
+
+        private async Task SyncUserRolesAsync(int userId, int tenantId, int[]? roleIds)
+        {
+            var targetRoleIds = (roleIds ?? Array.Empty<int>())
+                .Distinct()
+                .ToList();
+
+            if (targetRoleIds.Count == 0)
+            {
+                var employeeRoleId = await _context.Roles
+                    .Where(r => r.TenantId == tenantId && r.Name == "Employee")
+                    .Select(r => r.Id)
+                    .FirstOrDefaultAsync();
+
+                if (employeeRoleId > 0)
+                {
+                    targetRoleIds.Add(employeeRoleId);
+                }
+            }
+
+            var validRoleIds = await _context.Roles
+                .Where(r => r.TenantId == tenantId && targetRoleIds.Contains(r.Id))
+                .Select(r => r.Id)
+                .ToListAsync();
+
+            var existingRoles = await _context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .ToListAsync();
+
+            var rolesToRemove = existingRoles
+                .Where(ur => !validRoleIds.Contains(ur.RoleId))
+                .ToList();
+
+            if (rolesToRemove.Count > 0)
+            {
+                _context.UserRoles.RemoveRange(rolesToRemove);
+            }
+
+            var existingRoleIds = existingRoles.Select(ur => ur.RoleId).ToHashSet();
+            foreach (var roleId in validRoleIds.Where(roleId => !existingRoleIds.Contains(roleId)))
+            {
+                _context.UserRoles.Add(new UserRole { UserId = userId, RoleId = roleId });
+            }
+        }
+
+        private async Task<string> GenerateNextEmployeeCodeAsync(int tenantId, int? departmentId, int? excludeUserId = null)
+        {
+            var prefix = await ResolveEmployeeCodePrefixAsync(tenantId, departmentId);
+            var query = _context.Users
+                .AsNoTracking()
+                .Where(u => u.TenantId == tenantId);
+
+            if (excludeUserId.HasValue)
+            {
+                query = query.Where(u => u.Id != excludeUserId.Value);
+            }
+
+            var codes = await query
+                .Where(u => !string.IsNullOrWhiteSpace(u.EmployeeCode))
+                .Select(u => u.EmployeeCode)
+                .ToListAsync();
+
+            var nextNumber = codes
+                .Select(code => TryExtractEmployeeCodeNumber(code, prefix))
+                .Where(number => number.HasValue)
+                .Select(number => number!.Value)
+                .DefaultIfEmpty(0)
+                .Max() + 1;
+
+            return $"{prefix}{nextNumber:000}";
+        }
+
+        private async Task<string> ResolveEmployeeCodePrefixAsync(int tenantId, int? departmentId)
+        {
+            if (!departmentId.HasValue)
+            {
+                return "NV";
+            }
+
+            var departmentCode = await _context.Departments
+                .AsNoTracking()
+                .Where(d => d.TenantId == tenantId && d.Id == departmentId.Value)
+                .Select(d => d.Code)
+                .FirstOrDefaultAsync();
+
+            return (departmentCode ?? string.Empty).Trim().ToUpperInvariant() switch
+            {
+                "BOD" => "AD",
+                "IT" => "IT",
+                "HR" => "HR",
+                "ACC" => "KT",
+                "SALES" => "KD",
+                "MKT" => "MKT",
+                _ => "NV"
+            };
+        }
+
+        private static int? TryExtractEmployeeCodeNumber(string? employeeCode, string prefix)
+        {
+            var normalized = NormalizeEmployeeCode(employeeCode);
+            if (string.IsNullOrWhiteSpace(normalized) || !normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var suffix = normalized.Substring(prefix.Length);
+            return int.TryParse(suffix, out var number) ? number : null;
+        }
+
+        private static string NormalizeEmployeeCode(string? employeeCode)
+        {
+            if (string.IsNullOrWhiteSpace(employeeCode))
+            {
+                return string.Empty;
+            }
+
+            return string.Concat(employeeCode.Where(c => !char.IsWhiteSpace(c))).Trim().ToUpperInvariant();
+        }
+
         [HttpPost]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -364,7 +567,7 @@ namespace DANGCAPNE.Controllers
             if (user != null)
             {
                 user.Status = "Inactive";
-                user.UpdatedAt = DateTime.Now;
+                user.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
                 TempData["Success"] = $"ÄÃ£ vÃ´ hiá»‡u hÃ³a nhÃ¢n viÃªn {user.FullName}.";
             }
@@ -375,78 +578,22 @@ namespace DANGCAPNE.Controllers
         [HttpPost]
         public async Task<IActionResult> ToggleUserLock(int id)
         {
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR"))
-                return RedirectToAction("AccessDenied", "Account");
-
-            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId);
-            if (user == null)
-            {
-                TempData["Error"] = "Không tìm thấy tài khoản nhân viên.";
-                return RedirectToAction("Index", new { tab = "users" });
-            }
-
-            user.Status = string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase)
-                ? "Locked"
-                : "Active";
-            user.UpdatedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = string.Equals(user.Status, "Locked", StringComparison.OrdinalIgnoreCase)
-                ? $"Đã khóa tạm thời tài khoản {user.FullName}."
-                : $"Đã mở khóa tài khoản {user.FullName}.";
-
-            return RedirectToAction("EmployeeDetails", new { id });
+            return RedirectToAction("Index", "IT");
         }
+
 
         [HttpPost]
         public async Task<IActionResult> SendResetPasswordOtp(int id)
         {
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR"))
-                return RedirectToAction("AccessDenied", "Account");
-
-            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
-            var employee = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId);
-
-            if (employee == null)
-            {
-                TempData["Error"] = "Không tìm thấy nhân viên cần cấp lại mật khẩu.";
-                return RedirectToAction("Index", new { tab = "users" });
-            }
-
-            var otp = Random.Shared.Next(100000, 999999).ToString();
-            HttpContext.Session.SetString(GetResetOtpKey(id), otp);
-            HttpContext.Session.SetString(GetResetOtpExpiryKey(id), DateTime.UtcNow.AddMinutes(10).ToString("O"));
-
-            await QueueEmailLog(
-                tenantId,
-                employee.Email,
-                $"[DANGCAPNE] Mã OTP đặt lại mật khẩu cho {employee.FullName}",
-                "Queued");
-
-            _context.Notifications.Add(new Notification
-            {
-                TenantId = tenantId,
-                UserId = employee.Id,
-                Title = "Mã OTP đặt lại mật khẩu",
-                Message = $"Mã OTP của bạn là {otp}. Mã có hiệu lực trong 10 phút.",
-                Type = "Info",
-                ActionUrl = $"/Admin/EmployeeDetails/{employee.Id}"
-            });
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = $"Đã tạo OTP cho {employee.FullName}. Mã OTP là {otp} và đã được ghi nhận vào hệ thống email demo.";
-            return RedirectToAction("EmployeeDetails", new { id });
+            return RedirectToAction("Index", "IT");
         }
+
 
         [HttpPost]
         public async Task<IActionResult> ResetPasswordWithOtp(int id, string otp)
         {
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR"))
+            var roles = GetCurrentRoles();
+            if (!CanManageTechnicalAccess(roles))
                 return RedirectToAction("AccessDenied", "Account");
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
@@ -483,7 +630,7 @@ namespace DANGCAPNE.Controllers
 
             var newPassword = GenerateRandomPassword();
             employee.PasswordHash = HashPassword(newPassword);
-            employee.UpdatedAt = DateTime.Now;
+            employee.UpdatedAt = DateTime.UtcNow;
 
             ClearResetOtp(id);
 
@@ -508,13 +655,89 @@ namespace DANGCAPNE.Controllers
             return RedirectToAction("EmployeeDetails", new { id });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ResetRegisteredLoginIp(int id)
+        {
+            var roles = GetCurrentRoles();
+            if (!CanManageTechnicalAccess(roles))
+                return RedirectToAction("AccessDenied", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var employee = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId);
+            if (employee == null)
+            {
+                TempData["Error"] = "Không tìm thấy nhân viên cần reset IP đăng nhập.";
+                return RedirectToAction("Index", new { tab = "users" });
+            }
+
+            employee.RegisteredLoginIp = null;
+            employee.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Đã xoá IP đăng nhập đã lưu của {employee.FullName}. Nhân viên sẽ phải xác nhận IP lại ở lần đăng nhập tiếp theo.";
+            return RedirectToAction("EmployeeDetails", new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetBiometricEnrollment(int id)
+        {
+            var roles = GetCurrentRoles();
+            if (!CanManageTechnicalAccess(roles))
+                return RedirectToAction("AccessDenied", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var employee = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId);
+            if (employee == null)
+            {
+                TempData["Error"] = "Không tìm thấy nhân viên cần reset sinh trắc học.";
+                return RedirectToAction("Index", new { tab = "users" });
+            }
+
+            employee.IsBiometricEnrolled = false;
+            employee.FaceDescriptorFront = null;
+            employee.FaceDescriptorLeft = null;
+            employee.FaceDescriptorRight = null;
+            employee.PortraitImage = null;
+            employee.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Đã xoá dữ liệu sinh trắc học của {employee.FullName}. Nhân viên sẽ phải đăng ký lại khuôn mặt.";
+            return RedirectToAction("EmployeeDetails", new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ClearTrustedDevice(int id)
+        {
+            var roles = GetCurrentRoles();
+            if (!CanManageTechnicalAccess(roles))
+                return RedirectToAction("AccessDenied", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var employee = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId);
+            if (employee == null)
+            {
+                TempData["Error"] = "Không tìm thấy nhân viên cần xoá thiết bị tin cậy.";
+                return RedirectToAction("Index", new { tab = "users" });
+            }
+
+            employee.TrustedDeviceId = null;
+            employee.RegisteredMacAddress = null;
+            employee.RememberMeTokenHash = null;
+            employee.RememberMeExpiresAt = null;
+            employee.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Đã xoá thiết bị tin cậy của {employee.FullName}. Thiết bị sẽ phải xác thực lại ở lần đăng nhập tiếp theo.";
+            return RedirectToAction("EmployeeDetails", new { id });
+        }
+
         [HttpGet]
         public async Task<IActionResult> Whitelist()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+            var roles = GetCurrentRoles();
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager") && !roles.Contains("IT") && !roles.Contains("ITManager")) return RedirectToAction("AccessDenied", "Account");
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
@@ -539,19 +762,22 @@ namespace DANGCAPNE.Controllers
         [HttpPost]
         public async Task<IActionResult> ApproveUser(int id)
         {
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+            var roles = GetCurrentRoles();
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager") && !roles.Contains("IT") && !roles.Contains("ITManager")) return RedirectToAction("AccessDenied", "Account");
 
             var user = await _context.Users.FindAsync(id);
             if (user != null && user.Status == "PendingApproval")
             {
                 user.Status = "Active";
-                user.UpdatedAt = DateTime.Now;
+                user.UpdatedAt = DateTime.UtcNow;
+                user.EmployeeCode = string.IsNullOrWhiteSpace(user.EmployeeCode) || string.Equals(user.EmployeeCode, "PENDING", StringComparison.OrdinalIgnoreCase)
+                    ? await GenerateNextEmployeeCodeAsync(user.TenantId, user.DepartmentId, user.Id)
+                    : NormalizeEmployeeCode(user.EmployeeCode);
                 
                 // Gán role mặc định là Employee nếu chưa có
                 if (!await _context.UserRoles.AnyAsync(ur => ur.UserId == id))
                 {
-                    var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
+                    var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.TenantId == user.TenantId && r.Name == "Employee");
                     if (employeeRole != null)
                     {
                         _context.UserRoles.Add(new UserRole { UserId = id, RoleId = employeeRole.Id });
@@ -580,7 +806,7 @@ namespace DANGCAPNE.Controllers
                     actionUrl = "/Account/Profile"
                 });
 
-                TempData["Success"] = $"Đã phê duyệt email {user.Email}!";
+                TempData["Success"] = $"Đã phê duyệt email {user.Email} và cấp mã nhân viên {user.EmployeeCode}!";
             }
             return RedirectToAction("Whitelist");
         }
@@ -588,14 +814,14 @@ namespace DANGCAPNE.Controllers
         [HttpPost]
         public async Task<IActionResult> RejectUser(int id)
         {
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager")) return RedirectToAction("AccessDenied", "Account");
+            var roles = GetCurrentRoles();
+            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager") && !roles.Contains("IT") && !roles.Contains("ITManager")) return RedirectToAction("AccessDenied", "Account");
 
             var user = await _context.Users.FindAsync(id);
             if (user != null && user.Status == "PendingApproval")
             {
                 user.Status = "Rejected";
-                user.UpdatedAt = DateTime.Now;
+                user.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
                 // Notify User
@@ -946,7 +1172,7 @@ namespace DANGCAPNE.Controllers
                 if (!string.IsNullOrEmpty(status)) record.Status = status;
                 if (notes != null) record.Notes = notes;
                 record.Source = "Manual";
-                record.UpdatedAt = DateTime.Now;
+                record.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Đã cập nhật chấm công thủ công!";
             }
@@ -980,7 +1206,7 @@ namespace DANGCAPNE.Controllers
                     record.WorkHours = Math.Round(Math.Max(hours, 0), 2);
                 }
 
-                record.UpdatedAt = DateTime.Now;
+                record.UpdatedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
@@ -1043,7 +1269,7 @@ namespace DANGCAPNE.Controllers
             }
 
             var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
-            return File(bytes, "text/csv; charset=utf-8", $"timekeeping-report-{DateTime.Now:yyyyMMddHHmmss}.csv");
+            return File(bytes, "text/csv; charset=utf-8", $"timekeeping-report-{DateTime.UtcNow:yyyyMMddHHmmss}.csv");
         }
 
         private static string HashPassword(string password)
@@ -1061,7 +1287,7 @@ namespace DANGCAPNE.Controllers
                 ToEmail = toEmail,
                 Subject = subject,
                 Status = status,
-                SentAt = DateTime.Now
+                SentAt = DateTime.UtcNow
             });
 
             await _context.SaveChangesAsync();
@@ -1090,6 +1316,32 @@ namespace DANGCAPNE.Controllers
             if (string.IsNullOrEmpty(value)) return "";
             var normalized = value.Replace("\"", "\"\"");
             return $"\"{normalized}\"";
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MigrateFaceDescriptors()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            if (!roles.Contains("Admin") && !roles.Contains("IT") && !roles.Contains("ITManager"))
+                return Json(new { success = false, message = "Chỉ Admin hoặc IT mới có quyền truy cập." });
+
+            var migrationService = HttpContext.RequestServices.GetService(typeof(DANGCAPNE.Services.IFaceDescriptorMigrationService)) as DANGCAPNE.Services.IFaceDescriptorMigrationService;
+            if (migrationService == null)
+                return Json(new { success = false, message = "Migration service không khả dụng." });
+
+            try
+            {
+                var (updated, skipped, message) = await migrationService.MigrateFaceDescriptorsFromSQLiteAsync();
+                return Json(new { success = true, updated, skipped, message });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AdminController] MigrateFaceDescriptors Error: {ex.Message}");
+                return Json(new { success = false, message = $"Lỗi migration: {ex.Message}" });
+            }
         }
     }
 }

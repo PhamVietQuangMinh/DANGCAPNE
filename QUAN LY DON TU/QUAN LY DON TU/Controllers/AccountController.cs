@@ -42,14 +42,55 @@ namespace DANGCAPNE.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            ViewBag.DetectedIp = NormalizeIp(HttpContext.Connection.RemoteIpAddress?.ToString()) ?? "Khong xac dinh";
-
-            if (!IsInternalNetwork(HttpContext.Connection.RemoteIpAddress))
+            var remoteIp = NormalizeIp(HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (string.IsNullOrWhiteSpace(remoteIp))
             {
-                await WriteAuthAuditLog(null, model.EmployeeCodeOrEmail, "LoginFailed", false, "Outside intranet");
-                ViewBag.Error = "Ban dang o ngoai mang noi bo. Khong the check in.";
+                await WriteAuthAuditLog(null, model.EmployeeCodeOrEmail, "LoginFailed", false, "Remote IP unavailable");
+                ViewBag.Error = "Khong xac dinh duoc IP thiet bi.";
                 return View(model);
             }
+
+            // ── Strict Wifi / Internal Network Check ────────────────────────────
+            // 1. Check if the credential belongs to a privileged user (Admin/IT) who can skip checks
+            var tempUser = await _context.Users
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.EmployeeCode == model.EmployeeCodeOrEmail.Trim());
+
+            bool isPrivileged = false;
+            if (tempUser != null)
+            {
+                var roleNames = tempUser.UserRoles.Select(ur => ur.Role?.Name ?? "").ToHashSet(StringComparer.OrdinalIgnoreCase);
+                isPrivileged = roleNames.Contains("IT") || roleNames.Contains("ITManager") || roleNames.Contains("Admin");
+            }
+
+            if (!isPrivileged)
+            {
+                var tenantId = tempUser?.TenantId ?? 1;
+                bool whitelistHasEntries = await _context.AllowedIps.AnyAsync(a => a.TenantId == tenantId && a.IsActive);
+
+                if (whitelistHasEntries)
+                {
+                    // Strict mode: Only manually added IPs are allowed
+                    bool ipAllowed = await _context.AllowedIps.AnyAsync(a => a.TenantId == tenantId && a.IsActive && a.IpAddress == remoteIp);
+                    if (!ipAllowed)
+                    {
+                        await WriteAuthAuditLog(tempUser?.Id, model.EmployeeCodeOrEmail, "LoginFailed", false, $"Wifi not whitelisted: {remoteIp}");
+                        ViewBag.Error = $"Wifi nay chua duoc phong IT cap quyen truy cap (IP: {remoteIp}).";
+                        return View(model);
+                    }
+                }
+                else
+                {
+                    // Open mode / Fallback: Only allow company internal network ranges
+                    if (!IsInternalNetwork(HttpContext.Connection.RemoteIpAddress))
+                    {
+                        await WriteAuthAuditLog(tempUser?.Id, model.EmployeeCodeOrEmail, "LoginFailed", false, "Outside intranet and no whitelist");
+                        ViewBag.Error = "Ban dang o ngoai mang noi bo cong ty. Vui long ket noi Wifi van phong.";
+                        return View(model);
+                    }
+                }
+            }
+            // ────────────────────────────────────────────────────────────────────
 
             if (string.IsNullOrWhiteSpace(model.EmployeeCodeOrEmail))
             {
@@ -58,12 +99,11 @@ namespace DANGCAPNE.Controllers
                 return View(model);
             }
 
-            var credential = model.EmployeeCodeOrEmail.Trim();
+            // Re-fetch user with full details if privileged check passed
             var user = await _context.Users
                 .Include(u => u.Department)
                 .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u =>
-                    u.EmployeeCode == credential);
+                .FirstOrDefaultAsync(u => u.EmployeeCode == model.EmployeeCodeOrEmail.Trim());
 
             if (user == null)
             {
@@ -93,34 +133,10 @@ namespace DANGCAPNE.Controllers
                 return View(model);
             }
 
-            var remoteIp = NormalizeIp(HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (string.IsNullOrWhiteSpace(remoteIp))
-            {
-                await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Remote IP unavailable");
-                ViewBag.Error = "Khong xac dinh duoc IP thiet bi.";
-                return View(model);
-            }
+            // ────────────────────────────────────────────────────────────────────
 
-            if (string.IsNullOrWhiteSpace(user.RegisteredLoginIp))
-            {
-                var inputIp = NormalizeIp(model.LoginIp);
-                if (string.IsNullOrWhiteSpace(inputIp))
-                {
-                    await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Missing first-time IP input");
-                    ViewBag.Error = "Lan dau dang nhap ban phai nhap dia chi IP.";
-                    return View(model);
-                }
-
-                if (!string.Equals(inputIp, remoteIp, StringComparison.OrdinalIgnoreCase))
-                {
-                    await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Input IP mismatch");
-                    ViewBag.Error = "IP ban nhap khong trung voi IP he thong nhan duoc.";
-                    return View(model);
-                }
-
-                user.RegisteredLoginIp = remoteIp;
-                await _context.SaveChangesAsync();
-            }
+            // Note: manual IP input validation and first-time registration removed per user request.
+            // Access is still restricted by internal network check and whitelist.
 
             HttpContext.Session.SetInt32("PendingUserId", user.Id);
             HttpContext.Session.SetString("PendingRememberMe", model.RememberMe ? "1" : "0");

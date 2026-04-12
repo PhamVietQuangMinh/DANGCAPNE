@@ -22,8 +22,8 @@ namespace DANGCAPNE.Models.Timekeeping
         public DateTime? ProcessedAt { get; set; }
         [MaxLength(500)]
         public string? Notes { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -53,8 +53,8 @@ namespace DANGCAPNE.Models.Timekeeping
         public DateTime? ProcessedAt { get; set; }
         [MaxLength(500)]
         public string? Notes { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -77,7 +77,7 @@ namespace DANGCAPNE.Models.Timekeeping
         public int FailedRows { get; set; }
         [MaxLength(2000)]
         public string? Summary { get; set; }
-        public DateTime ImportedAt { get; set; } = DateTime.Now;
+        public DateTime ImportedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("ImportedByUserId")]
         public virtual Organization.User? ImportedByUser { get; set; }
@@ -100,8 +100,8 @@ namespace DANGCAPNE.Models.Timekeeping
         public int GeneratedByUserId { get; set; }
         [MaxLength(1000)]
         public string? Notes { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("DepartmentId")]
         public virtual Organization.Department? Department { get; set; }
@@ -147,8 +147,8 @@ namespace DANGCAPNE.Models.Timekeeping
         [MaxLength(20)]
         public string Status { get; set; } = "Open"; // Open, InProgress, Done, Cancelled
         public DateTime? DueAt { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("ShiftId")]
         public virtual Shift? Shift { get; set; }
@@ -166,8 +166,8 @@ namespace DANGCAPNE.Models.Timekeeping
         public int UserId { get; set; }
         [MaxLength(100)]
         public string SessionToken { get; set; } = Guid.NewGuid().ToString("N");
-        public DateTime LoginAt { get; set; } = DateTime.Now;
-        public DateTime LastSeenAt { get; set; } = DateTime.Now;
+        public DateTime LoginAt { get; set; } = DateTime.UtcNow;
+        public DateTime LastSeenAt { get; set; } = DateTime.UtcNow;
         public DateTime? LogoutAt { get; set; }
         [MaxLength(20)]
         public string Status { get; set; } = "Online"; // Online, Idle, Offline

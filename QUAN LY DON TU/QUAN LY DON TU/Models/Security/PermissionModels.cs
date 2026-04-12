@@ -19,7 +19,7 @@ namespace DANGCAPNE.Models.Security
         public string Description { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class RolePermission
@@ -28,7 +28,7 @@ namespace DANGCAPNE.Models.Security
         public int Id { get; set; }
         public int RoleId { get; set; }
         public int PermissionId { get; set; }
-        public DateTime AssignedAt { get; set; } = DateTime.Now;
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("RoleId")]
         public virtual Organization.Role? Role { get; set; }
@@ -44,7 +44,7 @@ namespace DANGCAPNE.Models.Security
         public int PermissionId { get; set; }
         public int? GrantedByUserId { get; set; }
         public bool IsActive { get; set; } = true;
-        public DateTime GrantedAt { get; set; } = DateTime.Now;
+        public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }

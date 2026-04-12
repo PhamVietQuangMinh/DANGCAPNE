@@ -32,7 +32,7 @@ namespace DANGCAPNE.Models.Organization
         public int? JobTitleId { get; set; }
         public int? PositionId { get; set; }
 
-        public DateTime HireDate { get; set; } = DateTime.Now;
+        public DateTime HireDate { get; set; } = DateTime.UtcNow;
         public DateTime? TerminationDate { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
@@ -85,8 +85,8 @@ namespace DANGCAPNE.Models.Organization
         public string? RememberMeTokenHash { get; set; }
         public DateTime? RememberMeExpiresAt { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         [ForeignKey("TenantId")]

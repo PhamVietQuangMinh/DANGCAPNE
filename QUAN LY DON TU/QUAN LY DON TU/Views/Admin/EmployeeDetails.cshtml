@@ -10,7 +10,10 @@
             <p class="text-muted" style="margin-top:6px;">Hiển thị thông tin nhân viên và lịch sử chấm công lấy từ cơ sở dữ liệu trên server.</p>
         </div>
         <div class="d-flex gap-12 flex-wrap">
-            <a href="@Url.Action("EditUser", new { id = Model.Employee.Id })" class="btn btn-primary">Chỉnh sửa</a>
+            @if (Model.CanEditEmployee)
+            {
+                <a href="@Url.Action("EditUser", new { id = Model.Employee.Id })" class="btn btn-primary">Chỉnh sửa</a>
+            }
             <a href="@Url.Action("Index", new { tab = "users" })" class="btn btn-outline">Quay lại danh sách</a>
         </div>
     </div>
@@ -40,6 +43,9 @@
 
                         <dt class="col-sm-3">Chức vụ</dt>
                         <dd class="col-sm-9">@(Model.Employee.Position?.Name ?? Model.Employee.JobTitle?.Name ?? "--")</dd>
+
+                        <dt class="col-sm-3">Vai trò</dt>
+                        <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.RolesSummary) ? "--" : Model.RolesSummary)</dd>
 
                         <dt class="col-sm-3">Ngày vào làm</dt>
                         <dd class="col-sm-9">@Model.Employee.HireDate.ToString("dd/MM/yyyy")</dd>
@@ -89,6 +95,100 @@
         </div>
 
         <div class="col-5">
+            <div class="glass-card mb-24">
+                <div class="card-header">
+                    <h3><i class="bi bi-shield-lock"></i> Trạng thái truy cập</h3>
+                </div>
+                <div class="card-body">
+                    <div class="tech-status-list">
+                        <div class="tech-status-item">
+                            <span>Trạng thái tài khoản</span>
+                            <strong class="@(string.Equals(Model.Employee.Status, "Active", StringComparison.OrdinalIgnoreCase) ? "text-success" : "text-danger")">
+                                @Model.Employee.Status
+                            </strong>
+                        </div>
+                        <div class="tech-status-item">
+                            <span>Mã nhân viên</span>
+                            <strong>@(string.IsNullOrWhiteSpace(Model.Employee.EmployeeCode) ? "--" : Model.Employee.EmployeeCode)</strong>
+                        </div>
+                        <div class="tech-status-item">
+                            <span>IP đăng nhập nội bộ</span>
+                            <strong>@(string.IsNullOrWhiteSpace(Model.Employee.RegisteredLoginIp) ? "Chưa đăng ký" : Model.Employee.RegisteredLoginIp)</strong>
+                        </div>
+                        <div class="tech-status-item">
+                            <span>Sinh trắc học</span>
+                            <strong>@(Model.Employee.IsBiometricEnrolled ? "Đã đăng ký" : "Chưa đăng ký")</strong>
+                        </div>
+                        <div class="tech-status-item">
+                            <span>Thiết bị tin cậy</span>
+                            <strong>@(!string.IsNullOrWhiteSpace(Model.Employee.TrustedDeviceId) || !string.IsNullOrWhiteSpace(Model.Employee.RegisteredMacAddress) ? "Đang gắn" : "Chưa gắn")</strong>
+                        </div>
+                        <div class="tech-status-item">
+                            <span>Ghi nhớ đăng nhập</span>
+                            <strong>@(Model.Employee.RememberMeExpiresAt.HasValue ? $"Hết hạn {Model.Employee.RememberMeExpiresAt:dd/MM/yyyy HH:mm}" : "Không có")</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.CanManageTechnicalAccess)
+            {
+                <div class="glass-card mb-24">
+                    <div class="card-header">
+                        <h3><i class="bi bi-tools"></i> Tác vụ IT</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="it-ops-grid">
+                            <form asp-action="ToggleUserLock" method="post">
+                                <input type="hidden" name="id" value="@Model.Employee.Id" />
+                                <button type="submit" class="btn btn-outline w-100">
+                                    <i class="bi bi-lock"></i>
+                                    @(string.Equals(Model.Employee.Status, "Locked", StringComparison.OrdinalIgnoreCase) ? "Mở khóa tài khoản" : "Khóa/Mở khóa tài khoản")
+                                </button>
+                            </form>
+                            <form asp-action="ResetRegisteredLoginIp" method="post">
+                                <input type="hidden" name="id" value="@Model.Employee.Id" />
+                                <button type="submit" class="btn btn-outline w-100">
+                                    <i class="bi bi-router"></i> Reset IP đăng nhập
+                                </button>
+                            </form>
+                            <form asp-action="ResetBiometricEnrollment" method="post">
+                                <input type="hidden" name="id" value="@Model.Employee.Id" />
+                                <button type="submit" class="btn btn-outline w-100">
+                                    <i class="bi bi-person-bounding-box"></i> Reset sinh trắc học
+                                </button>
+                            </form>
+                            <form asp-action="ClearTrustedDevice" method="post">
+                                <input type="hidden" name="id" value="@Model.Employee.Id" />
+                                <button type="submit" class="btn btn-outline w-100">
+                                    <i class="bi bi-phone"></i> Xóa thiết bị tin cậy
+                                </button>
+                            </form>
+                            <form asp-action="SendResetPasswordOtp" method="post">
+                                <input type="hidden" name="id" value="@Model.Employee.Id" />
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-envelope-paper"></i> Tạo OTP reset mật khẩu
+                                </button>
+                            </form>
+                        </div>
+
+                        <form asp-action="ResetPasswordWithOtp" method="post" class="otp-reset-box">
+                            <input type="hidden" name="id" value="@Model.Employee.Id" />
+                            <label class="form-label" style="margin-bottom:8px;">Nhập OTP để cấp mật khẩu tạm</label>
+                            <div class="d-flex gap-8" style="flex-wrap:wrap;">
+                                <input type="text" name="otp" class="form-control" placeholder="Nhập OTP vừa tạo" style="flex:1; min-width:180px;" />
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-key"></i> Cấp lại mật khẩu
+                                </button>
+                            </div>
+                            <div class="text-muted" style="font-size:12px; margin-top:8px;">
+                                IT/Admin sẽ tạo OTP trước, sau đó nhập OTP để phát hành mật khẩu tạm thời mới.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+
             <div class="glass-card">
                 <div class="card-header">
                     <h3><i class="bi bi-info-circle"></i> Ghi chú</h3>
@@ -96,11 +196,49 @@
                 <div class="card-body">
                     <ul style="margin:0; padding-left:18px; color:#475569;">
                         <li>Dữ liệu nhân viên trên trang này được truy vấn trực tiếp từ database qua `ApplicationDbContext`.</li>
-                        <li>Phần quản lý tài khoản như khóa, reset mật khẩu, vô hiệu hóa đã được gỡ khỏi giao diện admin này.</li>
-                        <li>Bạn vẫn có thể cập nhật thông tin nhân viên cơ bản bằng nút <strong>Chỉnh sửa</strong>.</li>
+                        <li>Mã nhân viên giờ có thể được cấp tự động theo phòng ban như IT, HR, KT, KD, MKT.</li>
+                        <li>Các thao tác kỹ thuật như reset IP, reset sinh trắc học và xoá thiết bị tin cậy chỉ dành cho IT/Admin.</li>
+                        <li>@(Model.CanEditEmployee ? "Bạn vẫn có thể cập nhật thông tin nhân viên cơ bản bằng nút Chỉnh sửa." : "Bạn đang ở chế độ xem, không có quyền sửa hồ sơ nhân viên này.")</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .tech-status-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .tech-status-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-glass);
+    }
+
+    .tech-status-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .it-ops-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .otp-reset-box {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-glass);
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+</style>

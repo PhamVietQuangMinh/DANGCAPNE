@@ -179,7 +179,7 @@ namespace DANGCAPNE.Controllers
                     TenantId = tenantId,
                     UserId = userId.Value,
                     Date = today,
-                    CheckIn = DateTime.Now,
+                    CheckIn = DateTime.UtcNow,
                     Source = source,
                     GpsLatitude = lat,
                     GpsLongitude = lon,
@@ -191,17 +191,17 @@ namespace DANGCAPNE.Controllers
                 };
                 _context.Timesheets.Add(timesheet);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, type = "checkin", message = "Vao thanh cong", time = DateTime.Now.ToString("HH:mm:ss") });
+                return Json(new { success = true, type = "checkin", message = "Vao thanh cong", time = DateTime.UtcNow.ToString("HH:mm:ss") });
             }
 
             if (timesheet.CheckOut == null)
             {
-                timesheet.CheckOut = DateTime.Now;
+                timesheet.CheckOut = DateTime.UtcNow;
                 var workHours = (timesheet.CheckOut.Value - timesheet.CheckIn!.Value).TotalHours;
                 timesheet.WorkHours = Math.Round(Math.Max(workHours, 0), 2);
 
-                var now = DateTime.Now;
-                var targetCheckOut = new DateTime(now.Year, now.Month, now.Day, 18, 0, 0);
+                var now = DateTime.UtcNow;
+                var targetCheckOut = new DateTime(now.Year, now.Month, now.Day, 18, 0, 0, DateTimeKind.Utc);
 
                 if (now < targetCheckOut)
                 {
@@ -212,10 +212,10 @@ namespace DANGCAPNE.Controllers
                     timesheet.Status = "Present";
                 }
 
-                timesheet.UpdatedAt = DateTime.Now;
+                timesheet.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, type = "checkout", message = "Ra thanh cong", time = DateTime.Now.ToString("HH:mm:ss") });
+                return Json(new { success = true, type = "checkout", message = "Ra thanh cong", time = DateTime.UtcNow.ToString("HH:mm:ss") });
             }
 
             return Json(new { success = false, message = "Ban da hoan thanh du 2 lan cham cong hom nay." });

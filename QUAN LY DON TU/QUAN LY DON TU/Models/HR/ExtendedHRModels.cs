@@ -23,8 +23,8 @@ namespace DANGCAPNE.Models.HR
         public string PayrollMonth { get; set; } = string.Empty;
         [MaxLength(500)]
         public string? Notes { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -47,7 +47,7 @@ namespace DANGCAPNE.Models.HR
         public int FailedRows { get; set; }
         [MaxLength(2000)]
         public string? Summary { get; set; }
-        public DateTime ImportedAt { get; set; } = DateTime.Now;
+        public DateTime ImportedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("ImportedByUserId")]
         public virtual Organization.User? ImportedByUser { get; set; }

@@ -27,7 +27,7 @@ namespace DANGCAPNE.Models.Training
         public int UserId { get; set; }
         [MaxLength(20)]
         public string Status { get; set; } = "Enrolled";
-        public DateTime EnrolledAt { get; set; } = DateTime.Now;
+        public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; set; }
 
         [ForeignKey("CourseId")]
@@ -58,7 +58,7 @@ namespace DANGCAPNE.Models.Training
         [Key]
         public int Id { get; set; }
         public int CertificationId { get; set; }
-        public DateTime RequestedAt { get; set; } = DateTime.Now;
+        public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
         [MaxLength(20)]
         public string Status { get; set; } = "Pending";
         public int? ApprovedByUserId { get; set; }

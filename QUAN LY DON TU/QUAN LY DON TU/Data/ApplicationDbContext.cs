@@ -35,6 +35,7 @@ namespace DANGCAPNE.Data
         public DbSet<UserPermission> UserPermissions { get; set; }
         public DbSet<AuthAuditLog> AuthAuditLogs { get; set; }
         public DbSet<PasswordHistory> PasswordHistories { get; set; }
+        public DbSet<AllowedIp> AllowedIps { get; set; }
 
         // Module 2: Workflow & Dynamic Forms
         public DbSet<FormTemplate> FormTemplates { get; set; }
@@ -317,6 +318,14 @@ namespace DANGCAPNE.Data
                 .WithMany()
                 .HasForeignKey(p => p.ChangedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AllowedIp>()
+                .HasOne(a => a.AddedByUser)
+                .WithMany()
+                .HasForeignKey(a => a.AddedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<AllowedIp>().HasIndex(a => new { a.TenantId, a.IsActive });
+            modelBuilder.Entity<AllowedIp>().HasIndex(a => new { a.TenantId, a.IpAddress });
 
             // DraftRequest
             modelBuilder.Entity<DraftRequest>()
@@ -601,7 +610,9 @@ namespace DANGCAPNE.Data
                 new Role { Id = 1, TenantId = 1, Name = "Admin", Description = "Quản trị viên hệ thống" },
                 new Role { Id = 2, TenantId = 1, Name = "HR", Description = "Hành chính Nhân sự" },
                 new Role { Id = 3, TenantId = 1, Name = "Manager", Description = "Quản lý" },
-                new Role { Id = 4, TenantId = 1, Name = "Employee", Description = "Nhân viên" }
+                new Role { Id = 4, TenantId = 1, Name = "Employee", Description = "Nhân viên" },
+                new Role { Id = 5, TenantId = 1, Name = "IT", Description = "Vận hành kỹ thuật, cấp mã nhân viên và hỗ trợ truy cập" },
+                new Role { Id = 6, TenantId = 1, Name = "ITManager", Description = "Quản lý phòng IT, tách biệt với Manager chung" }
             );
 
             // Branches
@@ -645,35 +656,40 @@ namespace DANGCAPNE.Data
             modelBuilder.Entity<User>().HasData(
                 new User { Id = 1, TenantId = 1, FullName = "Nguyễn Văn Admin", Email = "admin@company.com", PasswordHash = pwHash, EmployeeCode = "AD001", DepartmentId = 1, BranchId = 1, JobTitleId = 1, PositionId = 1, Phone = "0901234567" },
                 new User { Id = 2, TenantId = 1, FullName = "Trần Thị HR", Email = "hr@company.com", PasswordHash = pwHash, EmployeeCode = "HR001", DepartmentId = 3, BranchId = 1, JobTitleId = 3, PositionId = 3, Phone = "0901234568" },
-                new User { Id = 3, TenantId = 1, FullName = "Lê Văn Manager", Email = "manager@company.com", PasswordHash = pwHash, EmployeeCode = "MNG001", DepartmentId = 2, BranchId = 1, JobTitleId = 3, PositionId = 2, Phone = "0901234569" },
+                new User { Id = 3, TenantId = 1, FullName = "Lê Văn IT Manager", Email = "itmanager@company.com", PasswordHash = pwHash, EmployeeCode = "ITM001", DepartmentId = 2, BranchId = 1, JobTitleId = 3, PositionId = 2, Phone = "0901234569" },
                 new User { Id = 4, TenantId = 1, FullName = "Phạm Thị Employee", Email = "employee@company.com", PasswordHash = pwHash, EmployeeCode = "NV001", DepartmentId = 2, BranchId = 1, JobTitleId = 6, Phone = "0901234570" },
                 new User { Id = 5, TenantId = 1, FullName = "Hoàng Văn Dev", Email = "dev@company.com", PasswordHash = pwHash, EmployeeCode = "NV002", DepartmentId = 2, BranchId = 1, JobTitleId = 5, Phone = "0901234571" },
                 new User { Id = 6, TenantId = 1, FullName = "Vũ Thị Kế Toán", Email = "accountant@company.com", PasswordHash = pwHash, EmployeeCode = "KT001", DepartmentId = 4, BranchId = 1, JobTitleId = 3, PositionId = 4, Phone = "0901234572" },
                 new User { Id = 7, TenantId = 1, FullName = "Đỗ Văn Sales", Email = "sales@company.com", PasswordHash = pwHash, EmployeeCode = "NV003", DepartmentId = 5, BranchId = 1, JobTitleId = 6, Phone = "0901234573" },
-                new User { Id = 8, TenantId = 1, FullName = "Ngô Thị Marketing", Email = "marketing@company.com", PasswordHash = pwHash, EmployeeCode = "NV004", DepartmentId = 6, BranchId = 1, JobTitleId = 6, Phone = "0901234574" }
+                new User { Id = 8, TenantId = 1, FullName = "Ngô Thị Marketing", Email = "marketing@company.com", PasswordHash = pwHash, EmployeeCode = "NV004", DepartmentId = 6, BranchId = 1, JobTitleId = 6, Phone = "0901234574" },
+                new User { Id = 9, TenantId = 1, FullName = "Nguyễn Văn Manager", Email = "manager@company.com", PasswordHash = pwHash, EmployeeCode = "MNG001", DepartmentId = 5, BranchId = 1, JobTitleId = 3, PositionId = 5, Phone = "0901234575" }
             );
 
             // UserRoles
             modelBuilder.Entity<UserRole>().HasData(
                 new UserRole { Id = 1, UserId = 1, RoleId = 1 }, // Admin
                 new UserRole { Id = 2, UserId = 2, RoleId = 2 }, // HR
-                new UserRole { Id = 3, UserId = 3, RoleId = 3 }, // Manager
+                // Removed IT Manager from Manager role per request
                 new UserRole { Id = 4, UserId = 4, RoleId = 4 }, // Employee
                 new UserRole { Id = 5, UserId = 5, RoleId = 4 },
                 new UserRole { Id = 6, UserId = 6, RoleId = 4 },
                 new UserRole { Id = 7, UserId = 7, RoleId = 4 },
                 new UserRole { Id = 8, UserId = 8, RoleId = 4 },
-                new UserRole { Id = 9, UserId = 1, RoleId = 3 } // Admin also Manager
+                new UserRole { Id = 9, UserId = 1, RoleId = 3 }, // Admin also Manager
+                new UserRole { Id = 10, UserId = 5, RoleId = 5 }, // Dev user also IT operator
+                new UserRole { Id = 11, UserId = 3, RoleId = 6 }, // Dedicated IT manager role
+                new UserRole { Id = 12, UserId = 9, RoleId = 3 }  // General manager account
             );
 
             // UserManagers
             modelBuilder.Entity<UserManager>().HasData(
-                new UserManager { Id = 1, UserId = 4, ManagerId = 3, IsPrimary = true }, // Employee -> Manager
-                new UserManager { Id = 2, UserId = 5, ManagerId = 3, IsPrimary = true }, // Dev -> Manager
-                new UserManager { Id = 3, UserId = 3, ManagerId = 1, IsPrimary = true }, // Manager -> Admin/Director
+                new UserManager { Id = 1, UserId = 4, ManagerId = 3, IsPrimary = true }, // IT staff -> IT Manager
+                new UserManager { Id = 2, UserId = 5, ManagerId = 3, IsPrimary = true }, // Dev -> IT Manager
+                new UserManager { Id = 3, UserId = 3, ManagerId = 1, IsPrimary = true }, // IT Manager -> Admin/Director
                 new UserManager { Id = 4, UserId = 2, ManagerId = 1, IsPrimary = true }, // HR -> Admin/Director
-                new UserManager { Id = 5, UserId = 7, ManagerId = 1, IsPrimary = true }, // Sales -> Director
-                new UserManager { Id = 6, UserId = 8, ManagerId = 1, IsPrimary = true }  // Marketing -> Director
+                new UserManager { Id = 5, UserId = 7, ManagerId = 9, IsPrimary = true }, // Sales -> General Manager
+                new UserManager { Id = 6, UserId = 8, ManagerId = 1, IsPrimary = true },  // Marketing -> Director
+                new UserManager { Id = 7, UserId = 9, ManagerId = 1, IsPrimary = true }   // General Manager -> Director
             );
 
             // Leave Types
@@ -944,7 +960,10 @@ namespace DANGCAPNE.Data
             modelBuilder.Entity<Permission>().HasData(
                 new Permission { Id = 1, TenantId = 1, Name = "Create Request", Code = "REQUEST_CREATE", Description = "Create request" },
                 new Permission { Id = 2, TenantId = 1, Name = "Approve Request", Code = "REQUEST_APPROVE", Description = "Approve request" },
-                new Permission { Id = 3, TenantId = 1, Name = "System Admin", Code = "SYSTEM_ADMIN", Description = "System administration" }
+                new Permission { Id = 3, TenantId = 1, Name = "System Admin", Code = "SYSTEM_ADMIN", Description = "System administration" },
+                new Permission { Id = 4, TenantId = 1, Name = "Issue Employee Code", Code = "EMPLOYEE_CODE_ISSUE", Description = "Issue employee code by department" },
+                new Permission { Id = 5, TenantId = 1, Name = "Support Account Access", Code = "ACCOUNT_SUPPORT", Description = "Reset login IP, password and access states" },
+                new Permission { Id = 6, TenantId = 1, Name = "Reset Trusted Device", Code = "DEVICE_RESET", Description = "Clear trusted device and biometric bindings" }
             );
 
             modelBuilder.Entity<RolePermission>().HasData(
@@ -953,7 +972,16 @@ namespace DANGCAPNE.Data
                 new RolePermission { Id = 3, RoleId = 1, PermissionId = 1 },
                 new RolePermission { Id = 4, RoleId = 1, PermissionId = 2 },
                 new RolePermission { Id = 5, RoleId = 1, PermissionId = 3 },
-                new RolePermission { Id = 6, RoleId = 2, PermissionId = 2 }
+                new RolePermission { Id = 6, RoleId = 2, PermissionId = 2 },
+                new RolePermission { Id = 7, RoleId = 5, PermissionId = 4 },
+                new RolePermission { Id = 8, RoleId = 5, PermissionId = 5 },
+                new RolePermission { Id = 9, RoleId = 5, PermissionId = 6 },
+                new RolePermission { Id = 10, RoleId = 1, PermissionId = 4 },
+                new RolePermission { Id = 11, RoleId = 1, PermissionId = 5 },
+                new RolePermission { Id = 12, RoleId = 1, PermissionId = 6 },
+                new RolePermission { Id = 13, RoleId = 6, PermissionId = 4 },
+                new RolePermission { Id = 14, RoleId = 6, PermissionId = 5 },
+                new RolePermission { Id = 15, RoleId = 6, PermissionId = 6 }
             );
 
             modelBuilder.Entity<UserPermission>().HasData(

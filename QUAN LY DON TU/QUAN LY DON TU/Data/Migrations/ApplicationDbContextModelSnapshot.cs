@@ -54,16 +54,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AssetAssignments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssetId = 1,
-                            AssignedAt = new DateTime(2026, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Assigned",
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.AdminOps.AssetIncident", b =>
@@ -105,18 +95,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("ReportedByUserId");
 
                     b.ToTable("AssetIncidents");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssetId = 1,
-                            Description = "Screen cracked",
-                            ReportedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ReportedByUserId = 4,
-                            Status = "Open",
-                            Type = "Damage"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.AdminOps.CarBooking", b =>
@@ -163,20 +141,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("CarBookings");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Destination = "Client Site",
-                            DriverName = "Nguyen Driver",
-                            EndTime = new DateTime(2026, 3, 12, 17, 0, 0, 0, DateTimeKind.Unspecified),
-                            PickupLocation = "Office",
-                            StartTime = new DateTime(2026, 3, 12, 8, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Pending",
-                            TenantId = 1,
-                            UserId = 5
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.AdminOps.MealRegistration", b =>
@@ -210,17 +174,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("MealRegistrations");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Date = new DateTime(2026, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            MealType = "Overtime",
-                            Notes = "Vegetarian",
-                            TenantId = 1,
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.AdminOps.UniformRequest", b =>
@@ -258,18 +211,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UniformRequests");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Quantity = 2,
-                            RequestedAt = new DateTime(2026, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Size = "L",
-                            Status = "Pending",
-                            TenantId = 1,
-                            UserId = 7
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Compliance.PolicyAcknowledgement", b =>
@@ -301,16 +242,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PolicyAcknowledgements");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AcknowledgedAt = new DateTime(2026, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            PolicyDocumentId = 1,
-                            Status = "Acknowledged",
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Compliance.PolicyDocument", b =>
@@ -348,18 +279,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PolicyDocuments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            FileUrl = "/docs/handbook.pdf",
-                            IsActive = true,
-                            PublishedAt = new DateTime(2026, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            TenantId = 1,
-                            Title = "Employee Handbook",
-                            Version = "1.0"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Finance.Asset", b =>
@@ -414,19 +333,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Assets");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssetCode = "AST-001",
-                            CategoryId = 1,
-                            Name = "Laptop Dell",
-                            PurchaseDate = new DateTime(2025, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            PurchasePrice = 15000000m,
-                            Status = "Available",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Finance.AssetCategory", b =>
@@ -453,36 +359,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AssetCategories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Máy tính xách tay",
-                            Name = "Laptop",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Màn hình máy tính",
-                            Name = "Màn hình",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Điện thoại công ty",
-                            Name = "Điện thoại",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Bàn ghế văn phòng",
-                            Name = "Bàn ghế",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Finance.Currency", b =>
@@ -514,40 +390,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Currencies");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Code = "VND",
-                            IsDefault = true,
-                            Name = "Việt Nam Đồng",
-                            Symbol = "₫"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Code = "USD",
-                            IsDefault = false,
-                            Name = "US Dollar",
-                            Symbol = "$"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Code = "EUR",
-                            IsDefault = false,
-                            Name = "Euro",
-                            Symbol = "€"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Code = "JPY",
-                            IsDefault = false,
-                            Name = "Japanese Yen",
-                            Symbol = "¥"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Finance.ExchangeRate", b =>
@@ -620,45 +462,144 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ExpenseCategories");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Code = "TAXI",
-                            IsActive = true,
-                            Name = "Tiền taxi/xe",
-                            RequiresReceipt = true,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Code = "HOTEL",
-                            IsActive = true,
-                            Name = "Tiền khách sạn",
-                            RequiresReceipt = true,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Code = "MEAL",
-                            IsActive = true,
-                            MaxAmount = 500000m,
-                            Name = "Tiền ăn uống",
-                            RequiresReceipt = false,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Code = "OTHER",
-                            IsActive = true,
-                            Name = "Chi phí khác",
-                            RequiresReceipt = true,
-                            TenantId = 1
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.Finance.PayrollClosure", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ClosedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("ClosedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EmployeeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("PayrollMonth")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("PendingAdvanceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TimesheetCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalOtHours")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalWorkHours")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClosedByUserId");
+
+                    b.HasIndex("TenantId", "PayrollMonth")
+                        .IsUnique();
+
+                    b.ToTable("PayrollClosures");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Finance.PayrollSlip", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("ActualWorkHours")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ActualWorkingDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("AdvanceDeduction")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BaseSalary")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<decimal>("FixedAllowance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("HourlyRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("LateMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("LatePenalty")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MainSalary")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("NetSalary")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OtherIncome")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OvertimeHours")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OvertimeSalary")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PayrollClosureId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PayrollMonth")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PdfPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("SalaryCoefficient")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("StandardWorkDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("StandardWorkHoursPerDay")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("PayrollClosureId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("PayrollSlips");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Finance.Project", b =>
@@ -710,34 +651,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("ManagerId");
 
                     b.ToTable("Projects");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Budget = 500000000m,
-                            Code = "PRJ-001",
-                            IsActive = true,
-                            ManagerId = 3,
-                            Name = "Dự án ERP",
-                            OtCost = 0m,
-                            StartDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Budget = 200000000m,
-                            Code = "PRJ-002",
-                            IsActive = true,
-                            ManagerId = 3,
-                            Name = "Dự án Website",
-                            OtCost = 0m,
-                            StartDate = new DateTime(2026, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.BonusRequest", b =>
@@ -785,20 +698,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("BonusRequests");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Amount = 2000000m,
-                            CreatedAt = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Reason = "Project delivery",
-                            RequestedByUserId = 3,
-                            Status = "Pending",
-                            TenantId = 1,
-                            Type = "Spot",
-                            UserId = 5
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.Candidate", b =>
@@ -838,18 +737,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Candidates");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "candidate@demo.com",
-                            FullName = "Tran Thi Candidate",
-                            Phone = "0909000001",
-                            Source = "Referral",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.CandidateApplication", b =>
@@ -881,16 +768,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("JobRequisitionId");
 
                     b.ToTable("CandidateApplications");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AppliedAt = new DateTime(2026, 3, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CandidateId = 1,
-                            JobRequisitionId = 1,
-                            Status = "Applied"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.EmployeeDocument", b =>
@@ -935,6 +812,53 @@ namespace DANGCAPNE.Data.Migrations
                     b.ToTable("EmployeeDocuments");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.HR.InsuranceImportBatch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FailedRows")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("ImportedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("SuccessRows")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalRows")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportedByUserId");
+
+                    b.ToTable("InsuranceImportBatches");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.HR.InterviewSchedule", b =>
                 {
                     b.Property<int>("Id")
@@ -973,17 +897,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("InterviewerId");
 
                     b.ToTable("InterviewSchedules");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CandidateApplicationId = 1,
-                            InterviewerId = 3,
-                            Location = "Meeting Room 1",
-                            ScheduledAt = new DateTime(2026, 3, 5, 9, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Scheduled"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.JobRequisition", b =>
@@ -1037,22 +950,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("JobTitleId");
 
                     b.ToTable("JobRequisitions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BudgetMax = 12000000m,
-                            BudgetMin = 8000000m,
-                            CreatedAt = new DateTime(2026, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = 3,
-                            DepartmentId = 3,
-                            Headcount = 1,
-                            JobTitleId = 5,
-                            Status = "Pending",
-                            TenantId = 1,
-                            Title = "HR Specialist"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.JobRequisitionApproval", b =>
@@ -1088,17 +985,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("JobRequisitionId");
 
                     b.ToTable("JobRequisitionApprovals");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ActionDate = new DateTime(2026, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ApproverId = 1,
-                            Comments = "Approved for hiring",
-                            JobRequisitionId = 1,
-                            Status = "Approved"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.OffboardingTask", b =>
@@ -1138,17 +1024,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("OffboardingTasks");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedToUserId = 2,
-                            DueDate = new DateTime(2026, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Open",
-                            TemplateId = 1,
-                            UserId = 8
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.OffboardingTaskTemplate", b =>
@@ -1182,17 +1057,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("DefaultAssigneeRoleId");
 
                     b.ToTable("OffboardingTaskTemplates");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DefaultAssigneeRoleId = 2,
-                            DefaultDueDays = 2,
-                            Description = "Collect laptop and badge",
-                            Name = "Return Assets",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.OfferLetter", b =>
@@ -1225,17 +1089,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("CandidateApplicationId");
 
                     b.ToTable("OfferLetters");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CandidateApplicationId = 1,
-                            OfferedSalary = 10000000m,
-                            SentAt = new DateTime(2026, 3, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            StartDate = new DateTime(2026, 4, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Sent"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.OnboardingTask", b =>
@@ -1275,17 +1128,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("OnboardingTasks");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedToUserId = 2,
-                            DueDate = new DateTime(2026, 3, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Open",
-                            TemplateId = 1,
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.OnboardingTaskTemplate", b =>
@@ -1319,17 +1161,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("DefaultAssigneeRoleId");
 
                     b.ToTable("OnboardingTaskTemplates");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DefaultAssigneeRoleId = 2,
-                            DefaultDueDays = 3,
-                            Description = "Prepare laptop and account",
-                            Name = "Laptop Setup",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.PerformanceCycle", b =>
@@ -1365,18 +1196,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PerformanceCycles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateTime(2026, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "2026 H1 Review",
-                            StartDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Open",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.PerformanceGoal", b =>
@@ -1413,17 +1232,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PerformanceGoals");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CycleId = 1,
-                            Status = "Active",
-                            Title = "Deliver projects on time",
-                            UserId = 4,
-                            Weight = 1.0m
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.PerformanceReview", b =>
@@ -1463,16 +1271,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PerformanceReviews");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CycleId = 1,
-                            ReviewerId = 3,
-                            Status = "Draft",
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.PerformanceReviewItem", b =>
@@ -1503,16 +1301,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("ReviewId");
 
                     b.ToTable("PerformanceReviewItems");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Comment = "Good performance",
-                            GoalId = 1,
-                            ReviewId = 1,
-                            Score = 4.0m
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.SalaryAdjustmentRequest", b =>
@@ -1558,20 +1346,72 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("SalaryAdjustmentRequests");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EffectiveDate = new DateTime(2026, 4, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ProposedSalary = 12000000m,
-                            Reason = "High performance",
-                            RequestedByUserId = 3,
-                            Status = "Pending",
-                            TenantId = 1,
-                            UserId = 4
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.HR.SalaryAdvanceRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("NeededByDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PayrollMonth")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("SourceRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("SourceRequestId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SalaryAdvanceRequests");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.SocialInsurance", b =>
@@ -1659,32 +1499,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Branches");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "123 Nguyễn Huệ, Quận 1, TP.HCM",
-                            AllowedRadius = 200.0,
-                            IsActive = true,
-                            Latitude = 10.776899999999999,
-                            Longitude = 106.7009,
-                            Name = "Trụ sở chính - TP.HCM",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Address = "456 Hoàn Kiếm, Hà Nội",
-                            AllowedRadius = 200.0,
-                            IsActive = true,
-                            Latitude = 21.028500000000001,
-                            Longitude = 105.85420000000001,
-                            Name = "Chi nhánh Hà Nội",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.Department", b =>
@@ -1731,62 +1545,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("ParentDepartmentId");
 
                     b.ToTable("Departments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Code = "BOD",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3620),
-                            IsActive = true,
-                            Name = "Ban Giám đốc",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Code = "IT",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3623),
-                            IsActive = true,
-                            Name = "Phòng Công nghệ Thông tin",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Code = "HR",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3624),
-                            IsActive = true,
-                            Name = "Phòng Nhân sự",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Code = "ACC",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3625),
-                            IsActive = true,
-                            Name = "Phòng Kế toán",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Code = "SALES",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3626),
-                            IsActive = true,
-                            Name = "Phòng Kinh doanh",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Code = "MKT",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3627),
-                            IsActive = true,
-                            Name = "Phòng Marketing",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.JobTitle", b =>
@@ -1814,64 +1572,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("JobTitles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            IsActive = true,
-                            Level = 5,
-                            Name = "Giám đốc",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsActive = true,
-                            Level = 4,
-                            Name = "Phó Giám đốc",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            IsActive = true,
-                            Level = 3,
-                            Name = "Trưởng phòng",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            IsActive = true,
-                            Level = 3,
-                            Name = "Phó phòng",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            IsActive = true,
-                            Level = 2,
-                            Name = "Chuyên viên",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            IsActive = true,
-                            Level = 1,
-                            Name = "Nhân viên",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 7,
-                            IsActive = true,
-                            Level = 0,
-                            Name = "Thực tập sinh",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.Position", b =>
@@ -1901,48 +1601,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.ToTable("Positions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DepartmentId = 1,
-                            IsActive = true,
-                            Name = "Giám đốc điều hành",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            DepartmentId = 2,
-                            IsActive = true,
-                            Name = "Trưởng phòng IT",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            DepartmentId = 3,
-                            IsActive = true,
-                            Name = "Trưởng phòng HR",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            DepartmentId = 4,
-                            IsActive = true,
-                            Name = "Kế toán trưởng",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            DepartmentId = 5,
-                            IsActive = true,
-                            Name = "Trưởng phòng KD",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.Role", b =>
@@ -1972,40 +1630,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3572),
-                            Description = "Quản trị viên hệ thống",
-                            Name = "Admin",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3576),
-                            Description = "Hành chính Nhân sự",
-                            Name = "HR",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3577),
-                            Description = "Quản lý",
-                            Name = "Manager",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3578),
-                            Description = "Nhân viên",
-                            Name = "Employee",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.Team", b =>
@@ -2088,6 +1712,9 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<decimal>("BaseSalary")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int?>("BranchId")
                         .HasColumnType("integer");
 
@@ -2116,6 +1743,9 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<string>("FaceDescriptorRight")
                         .HasColumnType("text");
 
+                    b.Property<decimal>("FixedAllowance")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -2130,10 +1760,19 @@ namespace DANGCAPNE.Data.Migrations
                     b.Property<int?>("JobTitleId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("LatePenaltyPerMinute")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Locale")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("OtherIncome")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OvertimeHourlyMultiplier")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -2154,6 +1793,30 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.Property<int?>("PositionId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RegisteredLoginIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RegisteredMacAddress")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("RememberMeExpiresAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("RememberMeTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<decimal>("SalaryCoefficient")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("StandardWorkDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("StandardWorkHoursPerDay")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2195,188 +1858,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7716),
-                            DepartmentId = 1,
-                            Email = "admin@company.com",
-                            EmployeeCode = "NV001",
-                            FullName = "Nguyễn Văn Admin",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7710),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 1,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234567",
-                            PositionId = 1,
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7716)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7725),
-                            DepartmentId = 3,
-                            Email = "hr@company.com",
-                            EmployeeCode = "NV002",
-                            FullName = "Trần Thị HR",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7725),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 3,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234568",
-                            PositionId = 3,
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7726)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7728),
-                            DepartmentId = 2,
-                            Email = "manager@company.com",
-                            EmployeeCode = "NV003",
-                            FullName = "Lê Văn Manager",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7728),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 3,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234569",
-                            PositionId = 2,
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7729)
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7731),
-                            DepartmentId = 2,
-                            Email = "employee@company.com",
-                            EmployeeCode = "NV004",
-                            FullName = "Phạm Thị Employee",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7731),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 6,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234570",
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7732)
-                        },
-                        new
-                        {
-                            Id = 5,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7734),
-                            DepartmentId = 2,
-                            Email = "dev@company.com",
-                            EmployeeCode = "NV005",
-                            FullName = "Hoàng Văn Dev",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7734),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 5,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234571",
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7734)
-                        },
-                        new
-                        {
-                            Id = 6,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7737),
-                            DepartmentId = 4,
-                            Email = "accountant@company.com",
-                            EmployeeCode = "NV006",
-                            FullName = "Vũ Thị Kế Toán",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7736),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 3,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234572",
-                            PositionId = 4,
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7737)
-                        },
-                        new
-                        {
-                            Id = 7,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7739),
-                            DepartmentId = 5,
-                            Email = "sales@company.com",
-                            EmployeeCode = "NV007",
-                            FullName = "Đỗ Văn Sales",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7739),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 6,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234573",
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7740)
-                        },
-                        new
-                        {
-                            Id = 8,
-                            AvatarUrl = "",
-                            BranchId = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7742),
-                            DepartmentId = 6,
-                            Email = "marketing@company.com",
-                            EmployeeCode = "NV008",
-                            FullName = "Ngô Thị Marketing",
-                            HireDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7742),
-                            IsBiometricEnrolled = false,
-                            JobTitleId = 6,
-                            Locale = "vi-VN",
-                            PasswordHash = "HSEqbOoWNtVcp7r8Ous+JPgWx7cfiZ9kKGR02yw1Vk8=",
-                            Phone = "0901234574",
-                            Status = "Active",
-                            TenantId = 1,
-                            TimeZone = "SE Asia Standard Time",
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7742)
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.UserManager", b =>
@@ -2406,59 +1887,9 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasIndex("ManagerId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "IsPrimary");
 
                     b.ToTable("UserManagers");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            IsPrimary = true,
-                            ManagerId = 3,
-                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7829),
-                            UserId = 4
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsPrimary = true,
-                            ManagerId = 3,
-                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7831),
-                            UserId = 5
-                        },
-                        new
-                        {
-                            Id = 3,
-                            IsPrimary = true,
-                            ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7832),
-                            UserId = 3
-                        },
-                        new
-                        {
-                            Id = 4,
-                            IsPrimary = true,
-                            ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7833),
-                            UserId = 2
-                        },
-                        new
-                        {
-                            Id = 5,
-                            IsPrimary = true,
-                            ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7834),
-                            UserId = 7
-                        },
-                        new
-                        {
-                            Id = 6,
-                            IsPrimary = true,
-                            ManagerId = 1,
-                            StartDate = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7834),
-                            UserId = 8
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Organization.UserRole", b =>
@@ -2485,71 +1916,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserRoles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7798),
-                            RoleId = 1,
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7801),
-                            RoleId = 2,
-                            UserId = 2
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7801),
-                            RoleId = 3,
-                            UserId = 3
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7802),
-                            RoleId = 4,
-                            UserId = 4
-                        },
-                        new
-                        {
-                            Id = 5,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7803),
-                            RoleId = 4,
-                            UserId = 5
-                        },
-                        new
-                        {
-                            Id = 6,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7804),
-                            RoleId = 4,
-                            UserId = 6
-                        },
-                        new
-                        {
-                            Id = 7,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7804),
-                            RoleId = 4,
-                            UserId = 7
-                        },
-                        new
-                        {
-                            Id = 8,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7805),
-                            RoleId = 4,
-                            UserId = 8
-                        },
-                        new
-                        {
-                            Id = 9,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(7806),
-                            RoleId = 3,
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Requests.DraftRequest", b =>
@@ -2644,67 +2010,13 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("Requests");
+                    b.HasIndex("TenantId", "CreatedAt");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CurrentStepOrder = 1,
-                            FormTemplateId = 1,
-                            Priority = "Normal",
-                            RequestCode = "REQ-20260305-001",
-                            RequesterId = 4,
-                            Status = "Pending",
-                            TenantId = 1,
-                            Title = "Xin nghỉ phép năm 3 ngày",
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8326)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CompletedAt = new DateTime(2026, 3, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2026, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CurrentStepOrder = 2,
-                            FormTemplateId = 2,
-                            Priority = "Normal",
-                            RequestCode = "REQ-20260307-001",
-                            RequesterId = 5,
-                            Status = "Approved",
-                            TenantId = 1,
-                            Title = "Làm thêm giờ dự án ERP",
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8333)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CurrentStepOrder = 2,
-                            FormTemplateId = 4,
-                            Priority = "High",
-                            RequestCode = "REQ-20260310-001",
-                            RequesterId = 7,
-                            Status = "InProgress",
-                            TenantId = 1,
-                            Title = "Tạm ứng đi công tác Đà Nẵng",
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8338)
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CompletedAt = new DateTime(2026, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2026, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CurrentStepOrder = 1,
-                            FormTemplateId = 1,
-                            Priority = "Normal",
-                            RequestCode = "REQ-20260311-001",
-                            RequesterId = 8,
-                            Status = "Rejected",
-                            TenantId = 1,
-                            Title = "Xin nghỉ phép 1 ngày",
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8340)
-                        });
+                    b.HasIndex("TenantId", "Status");
+
+                    b.HasIndex("TenantId", "RequesterId", "Status");
+
+                    b.ToTable("Requests");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Requests.RequestApproval", b =>
@@ -2753,84 +2065,11 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApproverId");
-
                     b.HasIndex("RequestId");
 
-                    b.ToTable("RequestApprovals");
+                    b.HasIndex("ApproverId", "Status");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ApproverId = 3,
-                            CreatedAt = new DateTime(2026, 3, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RequestId = 1,
-                            Status = "Pending",
-                            StepName = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            VerifiedByPin = false
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ActionDate = new DateTime(2026, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ApproverId = 3,
-                            CreatedAt = new DateTime(2026, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RequestId = 2,
-                            Status = "Approved",
-                            StepName = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            VerifiedByPin = false
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ActionDate = new DateTime(2026, 3, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ApproverId = 2,
-                            CreatedAt = new DateTime(2026, 3, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RequestId = 2,
-                            Status = "Approved",
-                            StepName = "HR duyệt",
-                            StepOrder = 2,
-                            VerifiedByPin = false
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ActionDate = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ApproverId = 1,
-                            CreatedAt = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RequestId = 3,
-                            Status = "Approved",
-                            StepName = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            VerifiedByPin = false
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ApproverId = 6,
-                            CreatedAt = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RequestId = 3,
-                            Status = "Pending",
-                            StepName = "Kế toán trưởng duyệt",
-                            StepOrder = 2,
-                            VerifiedByPin = false
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ActionDate = new DateTime(2026, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ApproverId = 1,
-                            Comments = "Phòng đang có nhiều người nghỉ, vui lòng chọn ngày khác",
-                            CreatedAt = new DateTime(2026, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            RequestId = 4,
-                            Status = "Rejected",
-                            StepName = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            VerifiedByPin = false
-                        });
+                    b.ToTable("RequestApprovals");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Requests.RequestAttachment", b =>
@@ -2923,47 +2162,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RequestAuditLogs");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Action = "Created",
-                            CreatedAt = new DateTime(2026, 3, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Details = "Tạo đơn xin nghỉ phép",
-                            NewStatus = "Pending",
-                            RequestId = 1,
-                            UserId = 4
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Action = "Created",
-                            CreatedAt = new DateTime(2026, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            NewStatus = "Pending",
-                            RequestId = 2,
-                            UserId = 5
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Action = "Approved",
-                            CreatedAt = new DateTime(2026, 3, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            NewStatus = "InProgress",
-                            OldStatus = "Pending",
-                            RequestId = 2,
-                            UserId = 3
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Action = "Approved",
-                            CreatedAt = new DateTime(2026, 3, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            NewStatus = "Approved",
-                            OldStatus = "InProgress",
-                            RequestId = 2,
-                            UserId = 2
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Requests.RequestComment", b =>
@@ -3035,112 +2233,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("RequestId");
 
                     b.ToTable("RequestData");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8365),
-                            FieldKey = "leave_type",
-                            FieldValue = "AL",
-                            RequestId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8367),
-                            FieldKey = "start_date",
-                            FieldValue = "2026-03-15",
-                            RequestId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8368),
-                            FieldKey = "end_date",
-                            FieldValue = "2026-03-17",
-                            RequestId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8369),
-                            FieldKey = "total_days",
-                            FieldValue = "3",
-                            RequestId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8370),
-                            FieldKey = "reason",
-                            FieldValue = "Nghỉ phép cá nhân để đi du lịch",
-                            RequestId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8370),
-                            FieldKey = "ot_date",
-                            FieldValue = "2026-03-08",
-                            RequestId = 2
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8371),
-                            FieldKey = "start_time",
-                            FieldValue = "18:00",
-                            RequestId = 2
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8372),
-                            FieldKey = "end_time",
-                            FieldValue = "21:00",
-                            RequestId = 2
-                        },
-                        new
-                        {
-                            Id = 9,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8373),
-                            FieldKey = "project",
-                            FieldValue = "PRJ-001",
-                            RequestId = 2
-                        },
-                        new
-                        {
-                            Id = 10,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8374),
-                            FieldKey = "reason",
-                            FieldValue = "Deploy module thanh toán",
-                            RequestId = 2
-                        },
-                        new
-                        {
-                            Id = 11,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8374),
-                            FieldKey = "amount",
-                            FieldValue = "15000000",
-                            RequestId = 3
-                        },
-                        new
-                        {
-                            Id = 12,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8375),
-                            FieldKey = "currency",
-                            FieldValue = "VND",
-                            RequestId = 3
-                        },
-                        new
-                        {
-                            Id = 13,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8376),
-                            FieldKey = "purpose",
-                            FieldValue = "Công tác gặp khách hàng tại Đà Nẵng",
-                            RequestId = 3
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Requests.RequestFollower", b =>
@@ -3165,6 +2257,94 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("RequestId");
 
                     b.ToTable("RequestFollowers");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Security.AuthAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("AuthAuditLogs");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Security.PasswordHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeSource")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("ChangedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordHistories");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Security.Permission", b =>
@@ -3202,38 +2382,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Permissions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Code = "REQUEST_CREATE",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8472),
-                            Description = "Create request",
-                            IsActive = true,
-                            Name = "Create Request",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Code = "REQUEST_APPROVE",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8474),
-                            Description = "Approve request",
-                            IsActive = true,
-                            Name = "Approve Request",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Code = "SYSTEM_ADMIN",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8475),
-                            Description = "System administration",
-                            IsActive = true,
-                            Name = "System Admin",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Security.RolePermission", b =>
@@ -3260,50 +2408,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("RolePermissions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8494),
-                            PermissionId = 1,
-                            RoleId = 4
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8495),
-                            PermissionId = 2,
-                            RoleId = 3
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8496),
-                            PermissionId = 1,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8496),
-                            PermissionId = 2,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8497),
-                            PermissionId = 3,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            AssignedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8498),
-                            PermissionId = 2,
-                            RoleId = 2
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Security.UserPermission", b =>
@@ -3338,17 +2442,49 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserPermissions");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            GrantedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8515),
-                            GrantedByUserId = 1,
-                            IsActive = true,
-                            PermissionId = 2,
-                            UserId = 2
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.SystemModels.DigitalSignatureProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CertificateThumbprint")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SignatureImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SignatureName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DigitalSignatureProfiles");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.SystemModels.EmailLog", b =>
@@ -3422,44 +2558,53 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EmailTemplates");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BodyHtml = "<h2>Xin chào {{ApproverName}},</h2><p>Bạn có một đơn mới cần xử lý từ <strong>{{RequesterName}}</strong>.</p><p>Loại đơn: {{FormName}}</p><p>Mã đơn: {{RequestCode}}</p><a href='{{ActionUrl}}'>Xem chi tiết</a>",
-                            IsActive = true,
-                            Name = "NewRequest",
-                            Subject = "[{{CompanyName}}] Đơn mới cần duyệt: {{RequestCode}}",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            BodyHtml = "<h2>Xin chào {{RequesterName}},</h2><p>Đơn <strong>{{RequestCode}}</strong> của bạn đã được <strong>phê duyệt</strong> bởi {{ApproverName}}.</p>",
-                            IsActive = true,
-                            Name = "Approved",
-                            Subject = "[{{CompanyName}}] Đơn {{RequestCode}} đã được duyệt",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            BodyHtml = "<h2>Xin chào {{RequesterName}},</h2><p>Đơn <strong>{{RequestCode}}</strong> của bạn đã bị <strong>từ chối</strong> bởi {{ApproverName}}.</p><p>Lý do: {{Comments}}</p>",
-                            IsActive = true,
-                            Name = "Rejected",
-                            Subject = "[{{CompanyName}}] Đơn {{RequestCode}} bị từ chối",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            BodyHtml = "<h2>Xin chào {{ApproverName}},</h2><p>Đơn <strong>{{RequestCode}}</strong> đã chờ duyệt hơn {{Hours}} giờ. Vui lòng xử lý sớm.</p>",
-                            IsActive = true,
-                            Name = "Reminder",
-                            Subject = "[{{CompanyName}}] Nhắc nhở: Đơn {{RequestCode}} chưa được xử lý",
-                            TenantId = 1
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.SystemModels.KpiSnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MetricCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("MetricName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<decimal>("MetricValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("SnapshotDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("KpiSnapshots");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.SystemModels.Notification", b =>
@@ -3511,44 +2656,50 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("Notifications");
+                    b.HasIndex("TenantId", "UserId", "IsRead");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ActionUrl = "/Approvals",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8301),
-                            IsRead = false,
-                            Message = "Phạm Thị Employee đã tạo đơn xin nghỉ phép",
-                            TenantId = 1,
-                            Title = "Đơn mới cần duyệt",
-                            Type = "Approval",
-                            UserId = 3
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8304),
-                            IsRead = false,
-                            Message = "Chào mừng bạn đến với hệ thống quản lý đơn từ DANGCAPNE",
-                            TenantId = 1,
-                            Title = "Chào mừng!",
-                            Type = "Info",
-                            UserId = 4
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ActionUrl = "/HR",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8305),
-                            IsRead = false,
-                            Message = "Có 5 đơn mới cần HR xử lý trong tuần này",
-                            TenantId = 1,
-                            Title = "Báo cáo tuần",
-                            Type = "Info",
-                            UserId = 2
-                        });
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.SystemModels.RequestCategoryReportSnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApprovedRequests")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("GeneratedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PendingRequests")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RejectedRequests")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SnapshotDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalRequests")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GeneratedByUserId");
+
+                    b.ToTable("RequestCategoryReportSnapshots");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.SystemModels.Subscription", b =>
@@ -3693,21 +2844,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Tenants");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CompanyName = "DANGCAPNE Corporation",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(3403),
-                            IsActive = true,
-                            LogoUrl = "",
-                            MaxUsers = 500,
-                            Plan = "Enterprise",
-                            PrimaryColor = "#6366f1",
-                            SecondaryColor = "#8b5cf6",
-                            SubDomain = "dangcapne"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.SystemModels.TenantConfig", b =>
@@ -3740,6 +2876,75 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("TenantConfigs");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AttendanceAdjustmentRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("AttendanceDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RequestedCheckIn")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("RequestedCheckOut")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("SourceRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimesheetId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("SourceRequestId")
+                        .IsUnique();
+
+                    b.HasIndex("TimesheetId");
+
+                    b.HasIndex("UserId", "AttendanceDate");
+
+                    b.ToTable("AttendanceAdjustmentRequests");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AttendanceLocationConfig", b =>
@@ -3788,6 +2993,102 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("BranchId");
 
                     b.ToTable("AttendanceLocationConfigs");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AutoShiftPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FromDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("GeneratedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Strategy")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ToDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("GeneratedByUserId");
+
+                    b.ToTable("AutoShiftPlans");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AutoShiftPlanItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("ConfidenceScore")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("WorkDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("UserId", "WorkDate");
+
+                    b.ToTable("AutoShiftPlanItems");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.DailyAttendance", b =>
@@ -3850,6 +3151,54 @@ namespace DANGCAPNE.Data.Migrations
                     b.ToTable("DailyAttendances");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.EmployeeOnlineSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DeviceName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("LastIpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("LoginAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("LogoutAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("SessionToken")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("EmployeeOnlineSessions");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.Holiday", b =>
                 {
                     b.Property<int>("Id")
@@ -3880,53 +3229,75 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Holidays");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Country = "VN",
-                            Date = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsRecurring = true,
-                            Name = "Tết Dương lịch",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Country = "VN",
-                            Date = new DateTime(2026, 4, 26, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsRecurring = true,
-                            Name = "Giỗ Tổ Hùng Vương",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Country = "VN",
-                            Date = new DateTime(2026, 4, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsRecurring = true,
-                            Name = "Ngày Thống nhất",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Country = "VN",
-                            Date = new DateTime(2026, 5, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsRecurring = true,
-                            Name = "Quốc tế Lao động",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Country = "VN",
-                            Date = new DateTime(2026, 9, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsRecurring = true,
-                            Name = "Quốc khánh",
-                            TenantId = 1
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.LateEarlyRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ActualTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("AttendanceDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("ExpectedTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RequestType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int?>("SourceRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("SourceRequestId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "AttendanceDate");
+
+                    b.ToTable("LateEarlyRequests");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.LeaveAccrual", b =>
@@ -4014,92 +3385,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId", "Year");
 
                     b.ToTable("LeaveBalances");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CarriedOver = 0.0,
-                            CompensatoryDays = 0.0,
-                            LeaveTypeId = 1,
-                            SeniorityBonus = 0.0,
-                            TenantId = 1,
-                            TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8253),
-                            Used = 3.0,
-                            UserId = 4,
-                            Year = 2026
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CarriedOver = 0.0,
-                            CompensatoryDays = 0.0,
-                            LeaveTypeId = 2,
-                            SeniorityBonus = 0.0,
-                            TenantId = 1,
-                            TotalEntitled = 30.0,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8256),
-                            Used = 1.0,
-                            UserId = 4,
-                            Year = 2026
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CarriedOver = 0.0,
-                            CompensatoryDays = 0.0,
-                            LeaveTypeId = 1,
-                            SeniorityBonus = 0.0,
-                            TenantId = 1,
-                            TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8258),
-                            Used = 2.0,
-                            UserId = 5,
-                            Year = 2026
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CarriedOver = 0.0,
-                            CompensatoryDays = 0.0,
-                            LeaveTypeId = 2,
-                            SeniorityBonus = 0.0,
-                            TenantId = 1,
-                            TotalEntitled = 30.0,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8259),
-                            Used = 0.0,
-                            UserId = 5,
-                            Year = 2026
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CarriedOver = 0.0,
-                            CompensatoryDays = 0.0,
-                            LeaveTypeId = 1,
-                            SeniorityBonus = 0.0,
-                            TenantId = 1,
-                            TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8260),
-                            Used = 5.0,
-                            UserId = 7,
-                            Year = 2026
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CarriedOver = 0.0,
-                            CompensatoryDays = 0.0,
-                            LeaveTypeId = 1,
-                            SeniorityBonus = 0.0,
-                            TenantId = 1,
-                            TotalEntitled = 12.0,
-                            UpdatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8261),
-                            Used = 1.0,
-                            UserId = 8,
-                            Year = 2026
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.LeaveType", b =>
@@ -4152,83 +3437,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("LeaveTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AllowCarryOver = true,
-                            AllowNegativeBalance = false,
-                            CarryOverExpiryMonth = 3,
-                            CarryOverMaxDays = 5,
-                            Code = "AL",
-                            DefaultDaysPerYear = 12.0,
-                            IconColor = "#10b981",
-                            IsActive = true,
-                            IsPaid = true,
-                            Name = "Phép năm",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AllowCarryOver = false,
-                            AllowNegativeBalance = false,
-                            CarryOverExpiryMonth = 3,
-                            CarryOverMaxDays = 0,
-                            Code = "SL",
-                            DefaultDaysPerYear = 30.0,
-                            IconColor = "#f59e0b",
-                            IsActive = true,
-                            IsPaid = true,
-                            Name = "Nghỉ ốm",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AllowCarryOver = false,
-                            AllowNegativeBalance = false,
-                            CarryOverExpiryMonth = 3,
-                            CarryOverMaxDays = 0,
-                            Code = "ML",
-                            DefaultDaysPerYear = 180.0,
-                            IconColor = "#ec4899",
-                            IsActive = true,
-                            IsPaid = true,
-                            Name = "Nghỉ thai sản",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AllowCarryOver = false,
-                            AllowNegativeBalance = true,
-                            CarryOverExpiryMonth = 3,
-                            CarryOverMaxDays = 0,
-                            Code = "UL",
-                            DefaultDaysPerYear = 365.0,
-                            IconColor = "#6b7280",
-                            IsActive = true,
-                            IsPaid = false,
-                            Name = "Nghỉ không lương",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            AllowCarryOver = false,
-                            AllowNegativeBalance = false,
-                            CarryOverExpiryMonth = 3,
-                            CarryOverMaxDays = 0,
-                            Code = "CO",
-                            DefaultDaysPerYear = 0.0,
-                            IconColor = "#3b82f6",
-                            IsActive = true,
-                            IsPaid = true,
-                            Name = "Nghỉ bù (Comp Off)",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.OvertimeRate", b =>
@@ -4261,35 +3469,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OvertimeRates");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "OT ngày thường x1.5",
-                            IsActive = true,
-                            Multiplier = 1.5,
-                            Name = "Ngày thường",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "OT cuối tuần x2.0",
-                            IsActive = true,
-                            Multiplier = 2.0,
-                            Name = "Cuối tuần",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "OT ngày lễ x3.0",
-                            IsActive = true,
-                            Multiplier = 3.0,
-                            Name = "Ngày lễ",
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.Shift", b =>
@@ -4334,54 +3513,53 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Shifts");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BreakEndTime = new TimeSpan(0, 13, 0, 0, 0),
-                            BreakStartTime = new TimeSpan(0, 12, 0, 0, 0),
-                            Code = "HC",
-                            EndTime = new TimeSpan(0, 17, 0, 0, 0),
-                            GracePeriodMinutes = 15,
-                            IsActive = true,
-                            Name = "Ca hành chính",
-                            StartTime = new TimeSpan(0, 8, 0, 0, 0),
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Code = "S",
-                            EndTime = new TimeSpan(0, 14, 0, 0, 0),
-                            GracePeriodMinutes = 10,
-                            IsActive = true,
-                            Name = "Ca sáng",
-                            StartTime = new TimeSpan(0, 6, 0, 0, 0),
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Code = "C",
-                            EndTime = new TimeSpan(0, 22, 0, 0, 0),
-                            GracePeriodMinutes = 10,
-                            IsActive = true,
-                            Name = "Ca chiều",
-                            StartTime = new TimeSpan(0, 14, 0, 0, 0),
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Code = "D",
-                            EndTime = new TimeSpan(0, 6, 0, 0, 0),
-                            GracePeriodMinutes = 10,
-                            IsActive = true,
-                            Name = "Ca đêm",
-                            StartTime = new TimeSpan(0, 22, 0, 0, 0),
-                            TenantId = 1
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.ShiftImportBatch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FailedRows")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("ImportedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("SuccessRows")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalRows")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportedByUserId");
+
+                    b.ToTable("ShiftImportBatches");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.ShiftSwapRequest", b =>
@@ -4435,6 +3613,68 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("TargetUserId");
 
                     b.ToTable("ShiftSwapRequests");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.ShiftTaskAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssignedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AssignedToUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("DueAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("WorkDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedByUserId");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("ShiftId");
+
+                    b.ToTable("ShiftTaskAssignments");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.Timesheet", b =>
@@ -4513,7 +3753,11 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "Date");
+
                     b.HasIndex("UserId", "Date");
+
+                    b.HasIndex("TenantId", "UserId", "Date");
 
                     b.ToTable("Timesheets");
                 });
@@ -4582,18 +3826,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Certifications");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ExpiryDate = new DateTime(2027, 6, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IssuedDate = new DateTime(2025, 6, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Safety Basics",
-                            Status = "Active",
-                            TenantId = 1,
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Training.CertificationRenewal", b =>
@@ -4628,16 +3860,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("CertificationId");
 
                     b.ToTable("CertificationRenewals");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ApprovedByUserId = 2,
-                            CertificationId = 1,
-                            RequestedAt = new DateTime(2026, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Pending"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Training.TrainingCourse", b =>
@@ -4676,19 +3898,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TrainingCourses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Cost = 500000m,
-                            EndDate = new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            Name = "Advanced Excel",
-                            Provider = "Internal",
-                            StartDate = new DateTime(2026, 3, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Training.TrainingEnrollment", b =>
@@ -4723,16 +3932,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("TrainingEnrollments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CourseId = 1,
-                            EnrolledAt = new DateTime(2026, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Enrolled",
-                            UserId = 4
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.Delegation", b =>
@@ -4773,7 +3972,7 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasIndex("DelegateId");
 
-                    b.HasIndex("DelegatorId");
+                    b.HasIndex("DelegatorId", "IsActive");
 
                     b.ToTable("Delegations");
                 });
@@ -4864,241 +4063,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("FormTemplateId");
 
                     b.ToTable("FormFields");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DisplayOrder = 1,
-                            FieldName = "leave_type",
-                            FieldType = "Dropdown",
-                            FormTemplateId = 1,
-                            IsRequired = true,
-                            Label = "Loại nghỉ phép",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 2,
-                            DisplayOrder = 2,
-                            FieldName = "start_date",
-                            FieldType = "Date",
-                            FormTemplateId = 1,
-                            IsRequired = true,
-                            Label = "Từ ngày",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 3,
-                            DisplayOrder = 3,
-                            FieldName = "end_date",
-                            FieldType = "Date",
-                            FormTemplateId = 1,
-                            IsRequired = true,
-                            Label = "Đến ngày",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 4,
-                            DisplayOrder = 4,
-                            FieldName = "total_days",
-                            FieldType = "Number",
-                            FormTemplateId = 1,
-                            IsRequired = true,
-                            Label = "Số ngày nghỉ",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 5,
-                            DisplayOrder = 5,
-                            FieldName = "reason",
-                            FieldType = "Textarea",
-                            FormTemplateId = 1,
-                            IsRequired = true,
-                            Label = "Lý do",
-                            Width = 12
-                        },
-                        new
-                        {
-                            Id = 6,
-                            DisplayOrder = 6,
-                            FieldName = "attachment",
-                            FieldType = "FileUpload",
-                            FormTemplateId = 1,
-                            IsRequired = false,
-                            Label = "File đính kèm",
-                            Width = 12
-                        },
-                        new
-                        {
-                            Id = 7,
-                            DisplayOrder = 1,
-                            FieldName = "ot_date",
-                            FieldType = "Date",
-                            FormTemplateId = 2,
-                            IsRequired = true,
-                            Label = "Ngày làm thêm",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 8,
-                            DisplayOrder = 2,
-                            FieldName = "start_time",
-                            FieldType = "Text",
-                            FormTemplateId = 2,
-                            IsRequired = true,
-                            Label = "Giờ bắt đầu",
-                            Placeholder = "HH:mm",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 9,
-                            DisplayOrder = 3,
-                            FieldName = "end_time",
-                            FieldType = "Text",
-                            FormTemplateId = 2,
-                            IsRequired = true,
-                            Label = "Giờ kết thúc",
-                            Placeholder = "HH:mm",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 10,
-                            DisplayOrder = 4,
-                            FieldName = "project",
-                            FieldType = "Dropdown",
-                            FormTemplateId = 2,
-                            IsRequired = true,
-                            Label = "Dự án",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 11,
-                            DisplayOrder = 5,
-                            FieldName = "reason",
-                            FieldType = "Textarea",
-                            FormTemplateId = 2,
-                            IsRequired = true,
-                            Label = "Lý do làm thêm",
-                            Width = 12
-                        },
-                        new
-                        {
-                            Id = 12,
-                            DisplayOrder = 1,
-                            FieldName = "destination",
-                            FieldType = "Text",
-                            FormTemplateId = 3,
-                            IsRequired = true,
-                            Label = "Điểm đến",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 13,
-                            DisplayOrder = 2,
-                            FieldName = "start_date",
-                            FieldType = "Date",
-                            FormTemplateId = 3,
-                            IsRequired = true,
-                            Label = "Từ ngày",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 14,
-                            DisplayOrder = 3,
-                            FieldName = "end_date",
-                            FieldType = "Date",
-                            FormTemplateId = 3,
-                            IsRequired = true,
-                            Label = "Đến ngày",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 15,
-                            DisplayOrder = 4,
-                            FieldName = "purpose",
-                            FieldType = "Textarea",
-                            FormTemplateId = 3,
-                            IsRequired = true,
-                            Label = "Mục đích",
-                            Width = 12
-                        },
-                        new
-                        {
-                            Id = 16,
-                            DisplayOrder = 1,
-                            FieldName = "amount",
-                            FieldType = "Number",
-                            FormTemplateId = 4,
-                            IsRequired = true,
-                            Label = "Số tiền tạm ứng",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 17,
-                            DisplayOrder = 2,
-                            FieldName = "currency",
-                            FieldType = "Dropdown",
-                            FormTemplateId = 4,
-                            IsRequired = true,
-                            Label = "Loại tiền",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 18,
-                            DisplayOrder = 3,
-                            FieldName = "purpose",
-                            FieldType = "Textarea",
-                            FormTemplateId = 4,
-                            IsRequired = true,
-                            Label = "Mục đích",
-                            Width = 12
-                        },
-                        new
-                        {
-                            Id = 19,
-                            DisplayOrder = 4,
-                            FieldName = "receipt",
-                            FieldType = "FileUpload",
-                            FormTemplateId = 4,
-                            IsRequired = false,
-                            Label = "Hóa đơn đính kèm",
-                            Width = 12
-                        },
-                        new
-                        {
-                            Id = 20,
-                            DisplayOrder = 1,
-                            FieldName = "equipment_type",
-                            FieldType = "Dropdown",
-                            FormTemplateId = 5,
-                            IsRequired = true,
-                            Label = "Loại thiết bị",
-                            Width = 6
-                        },
-                        new
-                        {
-                            Id = 21,
-                            DisplayOrder = 2,
-                            FieldName = "reason",
-                            FieldType = "Textarea",
-                            FormTemplateId = 5,
-                            IsRequired = true,
-                            Label = "Lý do cần cấp phát",
-                            Width = 12
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.FormFieldOption", b =>
@@ -5130,112 +4094,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("FormFieldId");
 
                     b.ToTable("FormFieldOptions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DisplayOrder = 1,
-                            FormFieldId = 1,
-                            Label = "Phép năm",
-                            Value = "AL"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            DisplayOrder = 2,
-                            FormFieldId = 1,
-                            Label = "Nghỉ ốm",
-                            Value = "SL"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            DisplayOrder = 3,
-                            FormFieldId = 1,
-                            Label = "Nghỉ thai sản",
-                            Value = "ML"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            DisplayOrder = 4,
-                            FormFieldId = 1,
-                            Label = "Nghỉ không lương",
-                            Value = "UL"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            DisplayOrder = 5,
-                            FormFieldId = 1,
-                            Label = "Nghỉ bù",
-                            Value = "CO"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            DisplayOrder = 1,
-                            FormFieldId = 10,
-                            Label = "Dự án ERP",
-                            Value = "PRJ-001"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            DisplayOrder = 2,
-                            FormFieldId = 10,
-                            Label = "Dự án Website",
-                            Value = "PRJ-002"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            DisplayOrder = 1,
-                            FormFieldId = 17,
-                            Label = "VNĐ",
-                            Value = "VND"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            DisplayOrder = 2,
-                            FormFieldId = 17,
-                            Label = "USD",
-                            Value = "USD"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            DisplayOrder = 1,
-                            FormFieldId = 20,
-                            Label = "Laptop",
-                            Value = "LAPTOP"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            DisplayOrder = 2,
-                            FormFieldId = 20,
-                            Label = "Màn hình",
-                            Value = "MONITOR"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            DisplayOrder = 3,
-                            FormFieldId = 20,
-                            Label = "Điện thoại",
-                            Value = "PHONE"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            DisplayOrder = 4,
-                            FormFieldId = 20,
-                            Label = "Khác",
-                            Value = "OTHER"
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.FormTemplate", b =>
@@ -5294,93 +4152,9 @@ namespace DANGCAPNE.Data.Migrations
 
                     b.HasIndex("WorkflowId");
 
-                    b.ToTable("FormTemplates");
+                    b.HasIndex("TenantId", "IsActive");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Category = "Leave",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8119),
-                            Description = "",
-                            Icon = "bi-calendar-x",
-                            IconColor = "#10b981",
-                            IsActive = true,
-                            Name = "Đơn xin nghỉ phép",
-                            RequiresFinancialApproval = false,
-                            TenantId = 1,
-                            WorkflowId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Category = "OT",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8122),
-                            Description = "",
-                            Icon = "bi-clock-history",
-                            IconColor = "#f59e0b",
-                            IsActive = true,
-                            Name = "Đơn làm thêm giờ (OT)",
-                            RequiresFinancialApproval = false,
-                            TenantId = 1,
-                            WorkflowId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Category = "Travel",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8124),
-                            Description = "",
-                            Icon = "bi-airplane",
-                            IconColor = "#3b82f6",
-                            IsActive = true,
-                            Name = "Đơn đi công tác",
-                            RequiresFinancialApproval = false,
-                            TenantId = 1,
-                            WorkflowId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Category = "Expense",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8125),
-                            Description = "",
-                            Icon = "bi-cash-stack",
-                            IconColor = "#ef4444",
-                            IsActive = true,
-                            Name = "Đơn tạm ứng chi phí",
-                            RequiresFinancialApproval = true,
-                            TenantId = 1,
-                            WorkflowId = 2
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Category = "Equipment",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8127),
-                            Description = "",
-                            Icon = "bi-laptop",
-                            IconColor = "#8b5cf6",
-                            IsActive = true,
-                            Name = "Đơn yêu cầu cấp phát thiết bị",
-                            RequiresFinancialApproval = false,
-                            TenantId = 1,
-                            WorkflowId = 1
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Category = "Leave",
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8128),
-                            Description = "",
-                            Icon = "bi-box-arrow-right",
-                            IconColor = "#dc2626",
-                            IsActive = true,
-                            Name = "Đơn xin nghỉ việc",
-                            RequiresFinancialApproval = false,
-                            TenantId = 1,
-                            WorkflowId = 3
-                        });
+                    b.ToTable("FormTemplates");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.SlaConfig", b =>
@@ -5414,28 +4188,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("FormTemplateId");
 
                     b.ToTable("SlaConfigs");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AutoEscalate = true,
-                            AutoRemind = true,
-                            EscalationHours = 48,
-                            FormTemplateId = 1,
-                            ReminderHours = 24,
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AutoEscalate = true,
-                            AutoRemind = true,
-                            EscalationHours = 24,
-                            FormTemplateId = 4,
-                            ReminderHours = 12,
-                            TenantId = 1
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.WorkflowCondition", b =>
@@ -5504,35 +4256,50 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Workflows");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8068),
-                            Description = "Quản lý trực tiếp -> HR",
-                            IsActive = true,
-                            Name = "Luồng duyệt cơ bản",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8070),
-                            Description = "Quản lý -> Kế toán -> Giám đốc",
-                            IsActive = true,
-                            Name = "Luồng duyệt tài chính",
-                            TenantId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 3, 24, 15, 24, 16, 618, DateTimeKind.Local).AddTicks(8071),
-                            Description = "Quản lý -> Trưởng phòng -> HR -> Giám đốc",
-                            IsActive = true,
-                            Name = "Luồng duyệt vượt cấp",
-                            TenantId = 1
-                        });
+            modelBuilder.Entity("DANGCAPNE.Models.Workflow.WorkflowRoutingRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MinApprovalsRequired")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ParallelGroupCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RouteType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("StepId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StepId");
+
+                    b.HasIndex("WorkflowId");
+
+                    b.ToTable("WorkflowRoutingRules");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.WorkflowStep", b =>
@@ -5576,104 +4343,6 @@ namespace DANGCAPNE.Data.Migrations
                     b.HasIndex("WorkflowId");
 
                     b.ToTable("WorkflowSteps");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ApproverType = "DirectManager",
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            WorkflowId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ApproverRoleId = 2,
-                            ApproverType = "Role",
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "HR duyệt",
-                            StepOrder = 2,
-                            WorkflowId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ApproverType = "DirectManager",
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            WorkflowId = 2
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ApproverType = "SpecificUser",
-                            ApproverUserId = 6,
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "Kế toán trưởng duyệt",
-                            StepOrder = 2,
-                            WorkflowId = 2
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ApproverType = "SpecificUser",
-                            ApproverUserId = 1,
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "Giám đốc duyệt",
-                            StepOrder = 3,
-                            WorkflowId = 2
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ApproverType = "DirectManager",
-                            CanSkipIfApplicant = true,
-                            IsActive = true,
-                            Name = "Quản lý trực tiếp duyệt",
-                            StepOrder = 1,
-                            WorkflowId = 3
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ApproverRoleId = 3,
-                            ApproverType = "Role",
-                            CanSkipIfApplicant = true,
-                            IsActive = true,
-                            Name = "Trưởng phòng duyệt",
-                            StepOrder = 2,
-                            WorkflowId = 3
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ApproverRoleId = 2,
-                            ApproverType = "Role",
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "HR duyệt",
-                            StepOrder = 3,
-                            WorkflowId = 3
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ApproverType = "SpecificUser",
-                            ApproverUserId = 1,
-                            CanSkipIfApplicant = false,
-                            IsActive = true,
-                            Name = "Giám đốc duyệt",
-                            StepOrder = 4,
-                            WorkflowId = 3
-                        });
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.WorkflowStepApprover", b =>
@@ -5825,6 +4494,36 @@ namespace DANGCAPNE.Data.Migrations
                     b.Navigation("ToCurrency");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.Finance.PayrollClosure", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ClosedByUser")
+                        .WithMany()
+                        .HasForeignKey("ClosedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ClosedByUser");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Finance.PayrollSlip", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Finance.PayrollClosure", "PayrollClosure")
+                        .WithMany()
+                        .HasForeignKey("PayrollClosureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PayrollClosure");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.Finance.Project", b =>
                 {
                     b.HasOne("DANGCAPNE.Models.Organization.User", "Manager")
@@ -5880,6 +4579,17 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.HR.InsuranceImportBatch", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ImportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ImportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ImportedByUser");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.HR.InterviewSchedule", b =>
@@ -6090,6 +4800,24 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("RequestedBy");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.HR.SalaryAdvanceRequest", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedByUser");
 
                     b.Navigation("User");
                 });
@@ -6371,6 +5099,34 @@ namespace DANGCAPNE.Data.Migrations
                     b.Navigation("Request");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.Security.AuthAuditLog", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Security.PasswordHistory", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.Security.RolePermission", b =>
                 {
                     b.HasOne("DANGCAPNE.Models.Security.Permission", "Permission")
@@ -6415,6 +5171,34 @@ namespace DANGCAPNE.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.SystemModels.DigitalSignatureProfile", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.SystemModels.KpiSnapshot", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.SystemModels.Notification", b =>
                 {
                     b.HasOne("DANGCAPNE.Models.Organization.User", "User")
@@ -6424,6 +5208,16 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.SystemModels.RequestCategoryReportSnapshot", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "GeneratedByUser")
+                        .WithMany()
+                        .HasForeignKey("GeneratedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("GeneratedByUser");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.SystemModels.Subscription", b =>
@@ -6448,6 +5242,31 @@ namespace DANGCAPNE.Data.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AttendanceAdjustmentRequest", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Timekeeping.Timesheet", "Timesheet")
+                        .WithMany()
+                        .HasForeignKey("TimesheetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("Timesheet");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AttendanceLocationConfig", b =>
                 {
                     b.HasOne("DANGCAPNE.Models.Organization.Branch", "Branch")
@@ -6457,6 +5276,80 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AutoShiftPlan", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "GeneratedByUser")
+                        .WithMany()
+                        .HasForeignKey("GeneratedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("GeneratedByUser");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.AutoShiftPlanItem", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Timekeeping.AutoShiftPlan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DANGCAPNE.Models.Timekeeping.Shift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Shift");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.EmployeeOnlineSession", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.LateEarlyRequest", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.LeaveBalance", b =>
@@ -6478,6 +5371,17 @@ namespace DANGCAPNE.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.ShiftImportBatch", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "ImportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ImportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ImportedByUser");
+                });
+
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.ShiftSwapRequest", b =>
                 {
                     b.HasOne("DANGCAPNE.Models.Organization.User", "Requester")
@@ -6495,6 +5399,33 @@ namespace DANGCAPNE.Data.Migrations
                     b.Navigation("Requester");
 
                     b.Navigation("TargetUser");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.ShiftTaskAssignment", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "AssignedByUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DANGCAPNE.Models.Organization.User", "AssignedToUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DANGCAPNE.Models.Timekeeping.Shift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedByUser");
+
+                    b.Navigation("AssignedToUser");
+
+                    b.Navigation("Shift");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Timekeeping.Timesheet", b =>
@@ -6661,6 +5592,24 @@ namespace DANGCAPNE.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("WorkflowStep");
+                });
+
+            modelBuilder.Entity("DANGCAPNE.Models.Workflow.WorkflowRoutingRule", b =>
+                {
+                    b.HasOne("DANGCAPNE.Models.Workflow.WorkflowStep", "Step")
+                        .WithMany()
+                        .HasForeignKey("StepId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DANGCAPNE.Models.Workflow.WorkflowDef", "Workflow")
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Step");
+
+                    b.Navigation("Workflow");
                 });
 
             modelBuilder.Entity("DANGCAPNE.Models.Workflow.WorkflowStep", b =>

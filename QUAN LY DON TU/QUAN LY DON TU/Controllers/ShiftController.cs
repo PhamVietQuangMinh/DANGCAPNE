@@ -50,7 +50,7 @@ namespace DANGCAPNE.Controllers
                 TargetDate = targetDate,
                 Reason = reason,
                 Status = "Pending",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.ShiftSwapRequests.Add(request);

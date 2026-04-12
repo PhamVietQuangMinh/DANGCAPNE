@@ -25,7 +25,7 @@ namespace DANGCAPNE.Models.HR
         public string Status { get; set; } = "Pending";
 
         public int? CreatedByUserId { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("DepartmentId")]
         public virtual Organization.Department? Department { get; set; }
@@ -66,7 +66,7 @@ namespace DANGCAPNE.Models.HR
         public string Phone { get; set; } = string.Empty;
         [MaxLength(50)]
         public string Source { get; set; } = "Referral";
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class CandidateApplication
@@ -75,7 +75,7 @@ namespace DANGCAPNE.Models.HR
         public int Id { get; set; }
         public int CandidateId { get; set; }
         public int JobRequisitionId { get; set; }
-        public DateTime AppliedAt { get; set; } = DateTime.Now;
+        public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
         [MaxLength(20)]
         public string Status { get; set; } = "Applied";
 

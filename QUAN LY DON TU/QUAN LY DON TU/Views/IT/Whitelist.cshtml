@@ -1,0 +1,24 @@
+@model DANGCAPNE.ViewModels.WhitelistViewModel
+@{
+    ViewData["Title"] = "Whitelist";
+}
+<h1>Duyệt tài khoản mới</h1>
+<div class="row">
+    <div class="col-md-6">
+        <h3>Chờ duyệt</h3>
+        @foreach (var user in Model.PendingUsers)
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h5>@user.FullName</h5>
+                    <p>@user.Email - @user.Department?.Name</p>
+                    <form method="post" asp-action="ApproveUser">
+                        <input type="hidden" name="id" value="@user.Id" />
+                        <button type="submit" class="btn btn-success">Duyệt</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+

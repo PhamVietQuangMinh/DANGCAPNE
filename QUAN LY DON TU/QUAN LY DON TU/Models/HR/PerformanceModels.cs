@@ -14,7 +14,7 @@ namespace DANGCAPNE.Models.HR
         public DateTime EndDate { get; set; }
         [MaxLength(20)]
         public string Status { get; set; } = "Open";
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class PerformanceGoal

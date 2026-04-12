@@ -37,7 +37,7 @@ namespace DANGCAPNE.Models.Timekeeping
         public double SeniorityBonus { get; set; } = 0;
         public double CompensatoryDays { get; set; } = 0;
         public double Remaining => TotalEntitled + CarriedOver + SeniorityBonus + CompensatoryDays - Used;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
         [ForeignKey("LeaveTypeId")]
@@ -56,7 +56,7 @@ namespace DANGCAPNE.Models.Timekeeping
         public string AccrualType { get; set; } = "Monthly"; // Monthly, Annual, Seniority, CompOff, CarryOver
         [MaxLength(500)]
         public string? Description { get; set; }
-        public DateTime AccrualDate { get; set; } = DateTime.Now;
+        public DateTime AccrualDate { get; set; } = DateTime.UtcNow;
         public int? RelatedRequestId { get; set; } // Link to OT request for comp-off
     }
 
@@ -133,7 +133,7 @@ namespace DANGCAPNE.Models.Timekeeping
         public string? Notes { get; set; }
         public bool IsValidGps { get; set; } = true;
         public bool IsValidWifi { get; set; } = true;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
     }
@@ -157,7 +157,7 @@ namespace DANGCAPNE.Models.Timekeeping
         public string Status { get; set; } = "Normal"; // Normal, Late, EarlyLeave, Absent, OnLeave, Holiday, BusinessTrip
         public bool HasApprovedLeave { get; set; } = false;
         public bool HasApprovedOutside { get; set; } = false;
-        public DateTime CalculatedAt { get; set; } = DateTime.Now;
+        public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class OvertimeRate
@@ -215,7 +215,7 @@ namespace DANGCAPNE.Models.Timekeeping
         [MaxLength(20)]
         public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected, Completed
         
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public int? ApprovedByManagerId { get; set; }
 
         [ForeignKey("RequesterId")]

@@ -17,7 +17,7 @@ using DANGCAPNE.Models.SystemModels;
 
 namespace DANGCAPNE.Controllers
 {
-    [RoleAuthorize("Admin", "HR", "Manager")]
+    [RoleAuthorize("Admin", "HR", "Manager", "IT", "ITManager")]
     public class ModulesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -351,8 +351,8 @@ namespace DANGCAPNE.Controllers
             ["requestapprovals"] = new ModuleConfig("requestapprovals", "Request Approvals", "Hàng đợi phê duyệt đơn", typeof(RequestApproval), "Admin", "HR", "Manager"),
             ["requestauditlogs"] = new ModuleConfig("requestauditlogs", "Request Audit Logs", "Lịch sử phê duyệt và thao tác đơn", typeof(RequestAuditLog), "Admin", "HR", "Manager"),
             ["notifications"] = new ModuleConfig("notifications", "Notifications", "Hệ thống thông báo đơn", typeof(Notification), "Admin", "HR", "Manager"),
-            ["authauditlogs"] = new ModuleConfig("authauditlogs", "Auth Audit Logs", "Nhật ký đăng nhập/đăng xuất", typeof(AuthAuditLog), "Admin", "HR"),
-            ["passwordhistories"] = new ModuleConfig("passwordhistories", "Password History", "Lịch sử đổi mật khẩu", typeof(PasswordHistory), "Admin"),
+            ["authauditlogs"] = new ModuleConfig("authauditlogs", "Auth Audit Logs", "Nhật ký đăng nhập/đăng xuất", typeof(AuthAuditLog), "Admin", "HR", "IT", "ITManager"),
+            ["passwordhistories"] = new ModuleConfig("passwordhistories", "Password History", "Lịch sử đổi mật khẩu", typeof(PasswordHistory), "Admin", "IT", "ITManager"),
             ["salaryadvancerequests"] = new ModuleConfig("salaryadvancerequests", "Salary Advance Requests", "Tạm ứng lương", typeof(SalaryAdvanceRequest), "Admin", "HR", "Manager"),
             ["insuranceimportbatches"] = new ModuleConfig("insuranceimportbatches", "Insurance Import Batches", "Nhập BHXH từ Excel", typeof(InsuranceImportBatch), "Admin", "HR"),
             ["timesheets"] = new ModuleConfig("timesheets", "Timesheets", "Báo cáo chấm công chi tiết", typeof(Timesheet), "Admin", "HR", "Manager"),
@@ -363,7 +363,7 @@ namespace DANGCAPNE.Controllers
             ["autoshiftplans"] = new ModuleConfig("autoshiftplans", "Auto Shift Plans", "Xếp ca tự động", typeof(AutoShiftPlan), "Admin", "HR"),
             ["autoshiftplanitems"] = new ModuleConfig("autoshiftplanitems", "Auto Shift Plan Items", "Chi tiết xếp ca tự động", typeof(AutoShiftPlanItem), "Admin", "HR"),
             ["shifttaskassignments"] = new ModuleConfig("shifttaskassignments", "Shift Task Assignments", "Giao việc trong ca", typeof(ShiftTaskAssignment), "Admin", "HR", "Manager"),
-            ["employeeonlinesessions"] = new ModuleConfig("employeeonlinesessions", "Employee Online Sessions", "Giám sát nhân sự trực tuyến", typeof(EmployeeOnlineSession), "Admin", "HR", "Manager"),
+            ["employeeonlinesessions"] = new ModuleConfig("employeeonlinesessions", "Employee Online Sessions", "Giám sát nhân sự trực tuyến", typeof(EmployeeOnlineSession), "Admin", "HR", "Manager", "IT", "ITManager"),
             ["workflowroutingrules"] = new ModuleConfig("workflowroutingrules", "Workflow Routing Rules", "Routing tuần tự/song song", typeof(WorkflowRoutingRule), "Admin", "HR"),
             ["digitalsignatureprofiles"] = new ModuleConfig("digitalsignatureprofiles", "Digital Signature Profiles", "Ký điện tử", typeof(DigitalSignatureProfile), "Admin", "HR"),
             ["kpisnapshots"] = new ModuleConfig("kpisnapshots", "KPI Snapshots", "Dashboard KPI", typeof(KpiSnapshot), "Admin", "HR", "Manager"),
@@ -585,10 +585,15 @@ namespace DANGCAPNE.Controllers
             var sections = new List<ModuleSectionViewModel>
             {
                 CreateSection(
-                    "Bảo mật & truy cập",
-                    "Dành cho Admin/HR theo dõi đăng nhập, đăng xuất, thay đổi mật khẩu và phân quyền.",
-                    "Admin, HR",
-                    "authauditlogs", "passwordhistories", "permissions", "rolepermissions", "userpermissions"),
+                    "Bảo mật & phân quyền",
+                    "Dành cho Admin cấu hình quyền hệ thống và giám sát phân quyền cốt lõi.",
+                    "Admin",
+                    "permissions", "rolepermissions", "userpermissions"),
+                CreateSection(
+                    "IT vận hành",
+                    "Dành cho IT/Admin theo dõi truy cập, thiết bị tin cậy, cấu hình chấm công và tài sản kỹ thuật.",
+                    "IT, IT Manager, Admin",
+                    "authauditlogs", "passwordhistories", "employeeonlinesessions", "attendancelocationconfigs", "assetassignments", "assetincidents"),
                 CreateSection(
                     "Phê duyệt & đơn nội bộ",
                     "Dành cho Trưởng phòng, HR, Admin xử lý điều chỉnh công, đi muộn/về sớm, tạm ứng lương và lịch sử phê duyệt.",
@@ -709,8 +714,8 @@ namespace DANGCAPNE.Controllers
             ["certificationrenewals"] = new ModuleConfig("certificationrenewals", "Certification Renewals", "Gia hạn chứng chỉ", typeof(CertificationRenewal), "Admin", "HR"),
 
             // Admin Ops
-            ["assetassignments"] = new ModuleConfig("assetassignments", "Asset Assignments", "Cấp phát tài sản", typeof(AssetAssignment), "Admin", "HR"),
-            ["assetincidents"] = new ModuleConfig("assetincidents", "Asset Incidents", "Báo hỏng/mất", typeof(AssetIncident), "Admin", "HR"),
+            ["assetassignments"] = new ModuleConfig("assetassignments", "Asset Assignments", "Cấp phát tài sản", typeof(AssetAssignment), "Admin", "HR", "IT"),
+            ["assetincidents"] = new ModuleConfig("assetincidents", "Asset Incidents", "Báo hỏng/mất", typeof(AssetIncident), "Admin", "HR", "IT"),
             ["carbookings"] = new ModuleConfig("carbookings", "Car Bookings", "Đăng ký xe", typeof(CarBooking), "Admin", "HR"),
             ["mealregistrations"] = new ModuleConfig("mealregistrations", "Meal Registrations", "Đăng ký suất ăn", typeof(MealRegistration), "Admin", "HR"),
             ["uniformrequests"] = new ModuleConfig("uniformrequests", "Uniform Requests", "Đăng ký đồng phục", typeof(UniformRequest), "Admin", "HR"),
@@ -722,7 +727,7 @@ namespace DANGCAPNE.Controllers
             // New Modules Extensions
             ["socialinsurances"] = new ModuleConfig("socialinsurances", "Social Insurance", "Quản lý BHXH", typeof(SocialInsurance), "Admin", "HR"),
             ["employeedocuments"] = new ModuleConfig("employeedocuments", "Employee Documents", "Hồ sơ đính kèm", typeof(EmployeeDocument), "Admin", "HR"),
-            ["attendancelocationconfigs"] = new ModuleConfig("attendancelocationconfigs", "Attendance Configs", "Cấu hình chấm công QR/Wifi", typeof(AttendanceLocationConfig), "Admin", "HR"),
+            ["attendancelocationconfigs"] = new ModuleConfig("attendancelocationconfigs", "Attendance Configs", "Cấu hình chấm công QR/Wifi", typeof(AttendanceLocationConfig), "Admin", "HR", "IT", "ITManager"),
             ["shiftswaprequests"] = new ModuleConfig("shiftswaprequests", "Shift Swap Requests", "Đơn đổi ca", typeof(ShiftSwapRequest), "Admin", "HR", "Manager")
         };
 

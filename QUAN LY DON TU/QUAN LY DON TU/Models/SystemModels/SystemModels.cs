@@ -21,7 +21,7 @@ namespace DANGCAPNE.Models.SystemModels
         public string Plan { get; set; } = "Basic"; // Basic, Pro, Enterprise
         public int MaxUsers { get; set; } = 50;
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ExpiresAt { get; set; }
     }
 
@@ -75,7 +75,7 @@ namespace DANGCAPNE.Models.SystemModels
         public string? ActionUrl { get; set; }
         public int? RelatedRequestId { get; set; }
         public bool IsRead { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ReadAt { get; set; }
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -106,7 +106,7 @@ namespace DANGCAPNE.Models.SystemModels
         [MaxLength(30)]
         public string Status { get; set; } = "Sent"; // Sent, Failed, Queued
         public string? ErrorMessage { get; set; }
-        public DateTime SentAt { get; set; } = DateTime.Now;
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
         public int? RelatedRequestId { get; set; }
     }
 
@@ -122,7 +122,7 @@ namespace DANGCAPNE.Models.SystemModels
         public string? StackTrace { get; set; }
         [MaxLength(30)]
         public string Severity { get; set; } = "Error"; // Info, Warning, Error, Critical
-        public DateTime OccurredAt { get; set; } = DateTime.Now;
+        public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
         [MaxLength(50)]
         public string? IpAddress { get; set; }
         public int? UserId { get; set; }

@@ -167,7 +167,7 @@ namespace DANGCAPNE.Controllers
                 .Include(r => r.Requester).ThenInclude(u => u!.Department)
                 .Where(r => r.TenantId == tenantId &&
                     r.FormTemplate!.Category == "OT" &&
-                    r.CreatedAt >= DateTime.Now.AddMonths(-1))
+                    r.CreatedAt >= DateTime.UtcNow.AddMonths(-1))
                 .AsNoTracking()
                 .ToListAsync();
 

@@ -11,7 +11,7 @@ namespace DANGCAPNE.Models.Organization
         public string Name { get; set; } = string.Empty; // Admin, Manager, HR, Employee
         [MaxLength(200)]
         public string Description { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 
@@ -21,7 +21,7 @@ namespace DANGCAPNE.Models.Organization
         public int Id { get; set; }
         public int UserId { get; set; }
         public int RoleId { get; set; }
-        public DateTime AssignedAt { get; set; } = DateTime.Now;
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
         public virtual User? User { get; set; }
         public virtual Role? Role { get; set; }
     }
@@ -40,7 +40,7 @@ namespace DANGCAPNE.Models.Organization
         public int? ParentDepartmentId { get; set; }
         public int? ManagerId { get; set; }
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual Department? ParentDepartment { get; set; }
         public virtual User? Manager { get; set; }
         public virtual ICollection<User> Users { get; set; } = new List<User>();
@@ -93,7 +93,7 @@ namespace DANGCAPNE.Models.Organization
         public int UserId { get; set; }
         public int ManagerId { get; set; }
         public bool IsPrimary { get; set; } = true;
-        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateTime StartDate { get; set; } = DateTime.UtcNow;
         public DateTime? EndDate { get; set; }
         public virtual User? User { get; set; }
         public virtual User? Manager { get; set; }
@@ -110,7 +110,7 @@ namespace DANGCAPNE.Models.Organization
         public string Description { get; set; } = string.Empty;
         public int? LeaderId { get; set; }
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual User? Leader { get; set; }
         public virtual ICollection<TeamMember> Members { get; set; } = new List<TeamMember>();
     }
@@ -123,7 +123,7 @@ namespace DANGCAPNE.Models.Organization
         public int UserId { get; set; }
         [MaxLength(50)]
         public string Role { get; set; } = "Member"; // Leader, Member
-        public DateTime JoinedAt { get; set; } = DateTime.Now;
+        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
         public virtual Team? Team { get; set; }
         public virtual User? User { get; set; }
     }

@@ -91,7 +91,7 @@ namespace DANGCAPNE.Controllers
             if (model.Action == "Approve")
             {
                 approval.Status = "Approved";
-                approval.ActionDate = DateTime.Now;
+                approval.ActionDate = DateTime.UtcNow;
                 approval.Comments = model.Comments;
                 approval.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -150,7 +150,7 @@ namespace DANGCAPNE.Controllers
                 else
                 {
                     request.Status = "Approved";
-                    request.CompletedAt = DateTime.Now;
+                    request.CompletedAt = DateTime.UtcNow;
                     finalApproved = true;
                 }
 
@@ -200,12 +200,12 @@ namespace DANGCAPNE.Controllers
             else if (model.Action == "Reject")
             {
                 approval.Status = "Rejected";
-                approval.ActionDate = DateTime.Now;
+                approval.ActionDate = DateTime.UtcNow;
                 approval.Comments = model.Comments;
                 approval.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
                 request.Status = "Rejected";
-                request.CompletedAt = DateTime.Now;
+                request.CompletedAt = DateTime.UtcNow;
 
                 _context.Notifications.Add(new Models.SystemModels.Notification
                 {
@@ -242,7 +242,7 @@ namespace DANGCAPNE.Controllers
                 });
             }
 
-            request.UpdatedAt = DateTime.Now;
+            request.UpdatedAt = DateTime.UtcNow;
 
             _context.RequestAuditLogs.Add(new RequestAuditLog
             {
@@ -326,7 +326,7 @@ namespace DANGCAPNE.Controllers
                 if (approval == null) continue;
 
                 approval.Status = model.Action == "Approve" ? "Approved" : "Rejected";
-                approval.ActionDate = DateTime.Now;
+                approval.ActionDate = DateTime.UtcNow;
                 approval.Comments = model.Comments;
                 approval.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -338,12 +338,12 @@ namespace DANGCAPNE.Controllers
                         .AnyAsync(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending");
 
                     request.Status = hasMoreSteps ? "InProgress" : "Approved";
-                    if (!hasMoreSteps) request.CompletedAt = DateTime.Now;
+                    if (!hasMoreSteps) request.CompletedAt = DateTime.UtcNow;
                 }
                 else
                 {
                     request.Status = "Rejected";
-                    request.CompletedAt = DateTime.Now;
+                    request.CompletedAt = DateTime.UtcNow;
 
                     // Notify requester
                     _context.Notifications.Add(new Models.SystemModels.Notification
@@ -406,7 +406,7 @@ namespace DANGCAPNE.Controllers
                     });
                 }
 
-                request.UpdatedAt = DateTime.Now;
+                request.UpdatedAt = DateTime.UtcNow;
 
                 _context.RequestAuditLogs.Add(new RequestAuditLog
                 {
@@ -475,11 +475,11 @@ namespace DANGCAPNE.Controllers
             {
                 adjustment.Status = MapStructuredStatus(status);
                 adjustment.Notes = comments;
-                adjustment.UpdatedAt = DateTime.Now;
+                adjustment.UpdatedAt = DateTime.UtcNow;
                 if (status == "Approved" || status == "Rejected")
                 {
                     adjustment.ApprovedByUserId = actionUserId;
-                    adjustment.ProcessedAt = DateTime.Now;
+                    adjustment.ProcessedAt = DateTime.UtcNow;
                 }
             }
 
@@ -489,11 +489,11 @@ namespace DANGCAPNE.Controllers
             {
                 lateEarly.Status = MapStructuredStatus(status);
                 lateEarly.Notes = comments;
-                lateEarly.UpdatedAt = DateTime.Now;
+                lateEarly.UpdatedAt = DateTime.UtcNow;
                 if (status == "Approved" || status == "Rejected")
                 {
                     lateEarly.ApprovedByUserId = actionUserId;
-                    lateEarly.ProcessedAt = DateTime.Now;
+                    lateEarly.ProcessedAt = DateTime.UtcNow;
                 }
             }
 
@@ -503,11 +503,11 @@ namespace DANGCAPNE.Controllers
             {
                 advance.Status = status == "Approved" ? "Approved" : status == "Rejected" ? "Rejected" : "Pending";
                 advance.Notes = comments;
-                advance.UpdatedAt = DateTime.Now;
+                advance.UpdatedAt = DateTime.UtcNow;
                 if (status == "Approved" || status == "Rejected")
                 {
                     advance.ApprovedByUserId = actionUserId;
-                    advance.ApprovedAt = DateTime.Now;
+                    advance.ApprovedAt = DateTime.UtcNow;
                 }
             }
         }

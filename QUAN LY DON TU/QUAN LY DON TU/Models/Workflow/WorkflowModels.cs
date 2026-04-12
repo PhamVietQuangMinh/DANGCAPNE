@@ -23,7 +23,7 @@ namespace DANGCAPNE.Models.Workflow
         public int? WorkflowId { get; set; }
         public bool IsActive { get; set; } = true;
         public bool RequiresFinancialApproval { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual WorkflowDef? Workflow { get; set; }
         public virtual ICollection<FormField> Fields { get; set; } = new List<FormField>();
     }
@@ -75,7 +75,7 @@ namespace DANGCAPNE.Models.Workflow
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual ICollection<WorkflowStep> Steps { get; set; } = new List<WorkflowStep>();
     }
 
@@ -135,7 +135,7 @@ namespace DANGCAPNE.Models.Workflow
         [MaxLength(500)]
         public string Reason { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         [ForeignKey("DelegatorId")]
         public virtual Organization.User? Delegator { get; set; }
         [ForeignKey("DelegateId")]

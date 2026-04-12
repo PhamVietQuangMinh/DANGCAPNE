@@ -9,7 +9,7 @@ namespace DANGCAPNE.Models.AdminOps
         public int Id { get; set; }
         public int AssetId { get; set; }
         public int UserId { get; set; }
-        public DateTime AssignedAt { get; set; } = DateTime.Now;
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ReturnedAt { get; set; }
         [MaxLength(20)]
         public string Status { get; set; } = "Assigned";
@@ -30,7 +30,7 @@ namespace DANGCAPNE.Models.AdminOps
         public string Type { get; set; } = "Damage";
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;
-        public DateTime ReportedAt { get; set; } = DateTime.Now;
+        public DateTime ReportedAt { get; set; } = DateTime.UtcNow;
         [MaxLength(20)]
         public string Status { get; set; } = "Open";
 
@@ -88,7 +88,7 @@ namespace DANGCAPNE.Models.AdminOps
         public int Quantity { get; set; } = 1;
         [MaxLength(20)]
         public string Status { get; set; } = "Pending";
-        public DateTime RequestedAt { get; set; } = DateTime.Now;
+        public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }

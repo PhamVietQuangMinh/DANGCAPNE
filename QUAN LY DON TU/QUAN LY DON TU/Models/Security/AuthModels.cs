@@ -20,7 +20,7 @@ namespace DANGCAPNE.Models.Security
         public string? IpAddress { get; set; }
         [MaxLength(500)]
         public string? UserAgent { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -37,7 +37,7 @@ namespace DANGCAPNE.Models.Security
         public int? ChangedByUserId { get; set; }
         [MaxLength(50)]
         public string ChangeSource { get; set; } = "SelfService"; // SelfService, AdminReset, Enrollment
-        public DateTime ChangedAt { get; set; } = DateTime.Now;
+        public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }

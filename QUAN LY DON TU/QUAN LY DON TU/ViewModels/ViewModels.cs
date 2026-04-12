@@ -11,7 +11,7 @@ namespace DANGCAPNE.ViewModels
     public class LoginViewModel
     {
         public string EmployeeCodeOrEmail { get; set; } = string.Empty;
-        public string? LoginIp { get; set; }
+
         public bool RememberMe { get; set; }
     }
 
@@ -259,6 +259,9 @@ namespace DANGCAPNE.ViewModels
         public User Employee { get; set; } = new();
         public List<Timesheet> RecentTimesheets { get; set; } = new();
         public List<ShiftSwapRequest> RecentShiftRequests { get; set; } = new();
+        public bool CanEditEmployee { get; set; }
+        public bool CanManageTechnicalAccess { get; set; }
+        public string RolesSummary { get; set; } = string.Empty;
     }
 
     public class AdminShiftRequestEditViewModel
@@ -279,6 +282,8 @@ namespace DANGCAPNE.ViewModels
         public List<Position> Positions { get; set; } = new();
         public int? ManagerId { get; set; }
         public List<User> PotentialManagers { get; set; } = new();
+        public bool CanManageRoles { get; set; }
+        public bool CanAutoGenerateEmployeeCode { get; set; }
     }
 
     public class FormBuilderViewModel

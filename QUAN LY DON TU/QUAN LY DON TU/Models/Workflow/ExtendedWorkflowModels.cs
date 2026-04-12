@@ -16,7 +16,7 @@ namespace DANGCAPNE.Models.Workflow
         public string? ParallelGroupCode { get; set; }
         public int MinApprovalsRequired { get; set; } = 1;
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("WorkflowId")]
         public virtual WorkflowDef? Workflow { get; set; }

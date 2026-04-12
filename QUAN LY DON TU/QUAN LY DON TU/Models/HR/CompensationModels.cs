@@ -17,7 +17,7 @@ namespace DANGCAPNE.Models.HR
         public string Reason { get; set; } = string.Empty;
         [MaxLength(20)]
         public string Status { get; set; } = "Pending";
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -40,7 +40,7 @@ namespace DANGCAPNE.Models.HR
         public string Reason { get; set; } = string.Empty;
         [MaxLength(20)]
         public string Status { get; set; } = "Pending";
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }

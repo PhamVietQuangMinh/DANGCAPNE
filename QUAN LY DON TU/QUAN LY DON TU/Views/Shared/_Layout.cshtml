@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -27,10 +27,14 @@
                     var isAdmin = roles.Contains("Admin");
                     var isHR = roles.Contains("HR");
                     var isManager = roles.Contains("Manager");
+                    var isIT = roles.Contains("IT") || roles.Contains("ITManager");
+                    var isPrimaryItManagement = string.Equals(Context.Session.GetString("PrimaryRole"), "ITManager", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(Context.Session.GetString("PrimaryRole"), "IT", StringComparison.OrdinalIgnoreCase);
                     var isAccountant = string.Equals(Context.Session.GetString("PrimaryRole"), "Accountant", StringComparison.OrdinalIgnoreCase)
                         || roles.Contains("Accountant")
                         || string.Equals(Context.Session.GetString("Department"), "Phòng Kế toán", StringComparison.OrdinalIgnoreCase);
-                    var isEmployeeOnly = !isAdmin && !isHR && !isManager && !isAccountant;
+                    var isEmployeeOnly = !isAdmin && !isHR && !isManager && !isAccountant && !isIT;
+                    var canSeeEmployeeExtras = isEmployeeOnly || isIT;
                     var currentAdminTab = Context.Request.Query["tab"].ToString();
                 }
                 <div class="nav-section">
@@ -50,7 +54,7 @@
                         <a href="@Url.Action("EmployeeRequests", "Home")" class="nav-link @(currentAction == "EmployeeRequests" ? "active" : "")" data-i18n="NavEmpRequests">
                             <i class="bi bi-clipboard-check"></i> Quản lý đơn từ
                         </a>
-                        @if (isEmployeeOnly)
+                        @if (canSeeEmployeeExtras)
                         {
                             <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
                                 <i class="bi bi-clock-history"></i> Timeline chấm công
@@ -128,7 +132,7 @@
                         </a>
                     </div>
                 }
-                @if (isAdmin || isHR || isManager)
+                @if (isAdmin || isHR || isManager || isIT)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title" data-i18n="NavModules">Phân hệ</div>
@@ -150,19 +154,35 @@
                     </div>
                 }
                 
-                @if (isAdmin || isHR || isManager)
+                @if (isAdmin || isHR || isManager || isIT)
                 {
                     <div class="nav-section">
-                        @if (isHR || isManager)
+                        @if (isPrimaryItManagement)
+                        {
+                            <div class="nav-section-title">IT vận hành</div>
+                        }
+                        else if (isHR || isManager)
                         {
                             <div class="nav-section-title">Phê duyệt</div>
                         }
                         <a href="@Url.Action("Whitelist", "Admin")" class="nav-link @(currentAction == "Whitelist" ? "active" : "")">
-                            <i class="bi bi-shield-check"></i> Phê duyệt Email
+                            <i class="bi bi-shield-check"></i> @(isIT ? "Cấp mã nhân viên" : "Phê duyệt Email")
                         </a>
-                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab != "timekeeping" && currentAdminTab != "requeststats" ? "active" : "")" data-i18n="NavUsers">
-                            <i class="bi bi-people-fill"></i> Quản lý nhân viên
-                        </a>
+                        @if (isIT)
+                        {
+                            <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab != "timekeeping" && currentAdminTab != "requeststats" ? "active" : "")">
+                                <i class="bi bi-people-fill"></i> Hồ sơ truy cập nhân viên
+                            </a>
+                            <a href="@Url.Action("AllowedIPs", "IT")" class="nav-link @(currentController == "IT" && currentAction == "AllowedIPs" ? "active" : "")">
+                                <i class="bi bi-hdd-network-fill"></i> Quản lý Wifi công ty
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab != "timekeeping" && currentAdminTab != "requeststats" ? "active" : "")" data-i18n="NavUsers">
+                                <i class="bi bi-people-fill"></i> Quản lý nhân viên
+                            </a>
+                        }
                         @if (isAdmin || isHR)
                         {
                             <a href="@Url.Action("Index", "Admin", new { tab = "timekeeping" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab == "timekeeping" ? "active" : "")">

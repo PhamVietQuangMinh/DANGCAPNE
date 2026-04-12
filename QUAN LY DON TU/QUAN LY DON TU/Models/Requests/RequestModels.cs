@@ -19,8 +19,8 @@ namespace DANGCAPNE.Models.Requests
         public int CurrentStepOrder { get; set; } = 0;
         [MaxLength(30)]
         public string Priority { get; set; } = "Normal"; // Low, Normal, High, Urgent
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; set; }
 
         [ForeignKey("FormTemplateId")]
@@ -49,7 +49,7 @@ namespace DANGCAPNE.Models.Requests
         [MaxLength(50)]
         public string? FieldType { get; set; }
         
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public virtual Request? Request { get; set; }
     }
@@ -66,7 +66,7 @@ namespace DANGCAPNE.Models.Requests
         [MaxLength(100)]
         public string ContentType { get; set; } = string.Empty;
         public long FileSize { get; set; }
-        public DateTime UploadedAt { get; set; } = DateTime.Now;
+        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
         public int UploadedById { get; set; }
         public virtual Request? Request { get; set; }
     }
@@ -85,7 +85,7 @@ namespace DANGCAPNE.Models.Requests
         [MaxLength(1000)]
         public string? Comments { get; set; }
         public DateTime? ActionDate { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool VerifiedByPin { get; set; } = false;
         [MaxLength(50)]
         public string? IpAddress { get; set; }
@@ -102,7 +102,7 @@ namespace DANGCAPNE.Models.Requests
         public int UserId { get; set; }
         public string Content { get; set; } = string.Empty;
         public int? ParentCommentId { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? EditedAt { get; set; }
         public virtual Request? Request { get; set; }
         [ForeignKey("UserId")]
@@ -116,7 +116,7 @@ namespace DANGCAPNE.Models.Requests
         public int Id { get; set; }
         public int RequestId { get; set; }
         public int UserId { get; set; }
-        public DateTime FollowedAt { get; set; } = DateTime.Now;
+        public DateTime FollowedAt { get; set; } = DateTime.UtcNow;
         public virtual Request? Request { get; set; }
     }
 
@@ -137,7 +137,7 @@ namespace DANGCAPNE.Models.Requests
         public string? IpAddress { get; set; }
         [MaxLength(500)]
         public string? UserAgent { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual Request? Request { get; set; }
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
@@ -151,7 +151,7 @@ namespace DANGCAPNE.Models.Requests
         public int UserId { get; set; }
         public int FormTemplateId { get; set; }
         public string FormDataJson { get; set; } = "{}"; // Auto-saved JSON
-        public DateTime LastSavedAt { get; set; } = DateTime.Now;
+        public DateTime LastSavedAt { get; set; } = DateTime.UtcNow;
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
         [ForeignKey("FormTemplateId")]

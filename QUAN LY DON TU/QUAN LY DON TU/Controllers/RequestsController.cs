@@ -179,8 +179,8 @@ namespace DANGCAPNE.Controllers
                 Status = "Pending",
                 CurrentStepOrder = 1,
                 Priority = form["Priority"].ToString() ?? "Normal",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Requests.Add(request);
@@ -265,7 +265,7 @@ namespace DANGCAPNE.Controllers
                     StepName = step.StepName,
                     ApproverId = step.ApproverId,
                     Status = step.ApproverId == userId.Value ? "Skipped" : "Pending",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
@@ -279,7 +279,7 @@ namespace DANGCAPNE.Controllers
             if (firstPendingStep == null)
             {
                 request.Status = "Approved";
-                request.CompletedAt = DateTime.Now;
+                request.CompletedAt = DateTime.UtcNow;
             }
             else
             {
@@ -294,7 +294,7 @@ namespace DANGCAPNE.Controllers
                 NewStatus = request.Status,
                 Details = $"Tạo {template.Name}",
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             if (firstPendingStep?.ApproverId != null)
@@ -350,7 +350,7 @@ namespace DANGCAPNE.Controllers
                             RequestId = request.Id,
                             UserId = userId.Value,
                             Content = res,
-                            CreatedAt = DateTime.Now
+                            CreatedAt = DateTime.UtcNow
                         });
                     }
                 }
@@ -530,7 +530,7 @@ namespace DANGCAPNE.Controllers
                     StepName = step.StepName,
                     ApproverId = step.ApproverId,
                     Status = "Pending",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
@@ -650,7 +650,7 @@ namespace DANGCAPNE.Controllers
                 RequestId = requestId,
                 UserId = userId.Value,
                 Content = content,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             _context.RequestAuditLogs.Add(new RequestAuditLog
@@ -676,7 +676,7 @@ namespace DANGCAPNE.Controllers
             if (request == null || request.RequesterId != userId) return NotFound();
 
             request.Status = "Cancelled";
-            request.UpdatedAt = DateTime.Now;
+            request.UpdatedAt = DateTime.UtcNow;
 
             _context.RequestAuditLogs.Add(new RequestAuditLog
             {
@@ -708,7 +708,7 @@ namespace DANGCAPNE.Controllers
             if (existing != null)
             {
                 existing.FormDataJson = formDataJson;
-                existing.LastSavedAt = DateTime.Now;
+                existing.LastSavedAt = DateTime.UtcNow;
             }
             else
             {
@@ -925,7 +925,7 @@ namespace DANGCAPNE.Controllers
                     TenantId = tenantId,
                     SourceRequestId = request.Id,
                     UserId = userId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 _context.AttendanceAdjustmentRequests.Add(entity);
             }
@@ -936,7 +936,7 @@ namespace DANGCAPNE.Controllers
             entity.RequestedCheckOut = requestedCheckOut;
             entity.Reason = form["reason"].ToString();
             entity.Status = "Pending";
-            entity.UpdatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTime.UtcNow;
         }
 
         private async Task UpsertLateEarlyRequestAsync(Request request, IFormCollection form, int tenantId, int userId)
@@ -952,7 +952,7 @@ namespace DANGCAPNE.Controllers
                     TenantId = tenantId,
                     SourceRequestId = request.Id,
                     UserId = userId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 _context.LateEarlyRequests.Add(entity);
             }
@@ -963,7 +963,7 @@ namespace DANGCAPNE.Controllers
             entity.ActualTime = CombineDateAndTime(attendanceDate, form["actual_time"]) ?? attendanceDate;
             entity.Reason = form["reason"].ToString();
             entity.Status = "Pending";
-            entity.UpdatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTime.UtcNow;
         }
 
         private async Task UpsertSalaryAdvanceRequestAsync(Request request, IFormCollection form, int tenantId, int userId)
@@ -978,7 +978,7 @@ namespace DANGCAPNE.Controllers
                     TenantId = tenantId,
                     SourceRequestId = request.Id,
                     UserId = userId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
                 _context.SalaryAdvanceRequests.Add(entity);
             }
@@ -988,7 +988,7 @@ namespace DANGCAPNE.Controllers
             entity.NeededByDate = ParseDateOrNull(form["needed_by_date"]) ?? DateTime.Today;
             entity.Reason = form["reason"].ToString();
             entity.Status = "Pending";
-            entity.UpdatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTime.UtcNow;
         }
 
         private static DateTime? ParseDateOrNull(string? raw)

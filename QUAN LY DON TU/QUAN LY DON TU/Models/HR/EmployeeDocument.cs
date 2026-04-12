@@ -20,7 +20,7 @@ namespace DANGCAPNE.Models.HR
         public string FileUrl { get; set; } = string.Empty;
         
         public DateTime? ExpiryDate { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }

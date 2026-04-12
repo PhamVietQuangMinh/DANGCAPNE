@@ -38,7 +38,7 @@ namespace DANGCAPNE.Controllers
                 DocumentType = docType,
                 FileUrl = fileUrl,
                 ExpiryDate = expiryDate,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.EmployeeDocuments.Add(document);

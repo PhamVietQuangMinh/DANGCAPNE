@@ -1,6 +1,6 @@
 @model DANGCAPNE.ViewModels.WhitelistViewModel
 @{
-    ViewData["Title"] = "Phê duyệt Email";
+    ViewData["Title"] = "Phê duyệt & cấp mã nhân viên";
 }
 
 <div class="page-content">
@@ -8,11 +8,14 @@
         <div class="card-header d-flex justify-between align-center">
             <div>
                 <h3 class="card-title">Yêu cầu đăng ký mới</h3>
-                <p class="card-subtitle">Các nhân viên đang chờ được cấp quyền truy cập hệ thống</p>
+                <p class="card-subtitle">IT/Admin có thể duyệt tài khoản và cấp mã nhân viên tự động theo phòng ban ngay tại đây</p>
             </div>
             <span class="badge @(Model.PendingUsers.Any() ? "badge-warning" : "badge-secondary")">
                 @Model.PendingUsers.Count yêu cầu
             </span>
+        </div>
+        <div class="px-16 py-12 text-muted" style="font-size:13px; border-bottom:1px solid #eef2f7;">
+            Khi duyệt, hệ thống sẽ tự sinh mã như <strong>IT001</strong>, <strong>HR001</strong>, <strong>KT001</strong> theo phòng ban của nhân viên.
         </div>
         <div class="table-responsive">
             <table class="table">
@@ -59,7 +62,7 @@
                                         <form asp-action="ApproveUser" method="post" style="display:inline">
                                             <input type="hidden" name="id" value="@user.Id" />
                                             <button type="submit" class="btn btn-primary btn-sm">
-                                                <i class="bi bi-check-lg"></i> Duyệt
+                                                <i class="bi bi-check-lg"></i> Duyệt & cấp mã
                                             </button>
                                         </form>
                                         <form asp-action="RejectUser" method="post" style="display:inline">
@@ -88,6 +91,7 @@
                 <thead>
                     <tr>
                         <th>Họ tên</th>
+                        <th>Mã NV</th>
                         <th>Email</th>
                         <th>Phòng ban</th>
                         <th>Trạng thái</th>
@@ -99,6 +103,7 @@
                     {
                         <tr>
                             <td>@user.FullName</td>
+                            <td><strong>@(string.IsNullOrWhiteSpace(user.EmployeeCode) ? "--" : user.EmployeeCode)</strong></td>
                             <td>@user.Email</td>
                             <td>@(user.Department?.Name ?? "N/A")</td>
                             <td>

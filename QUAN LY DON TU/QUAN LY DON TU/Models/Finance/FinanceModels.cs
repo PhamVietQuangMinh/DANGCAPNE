@@ -116,7 +116,7 @@ namespace DANGCAPNE.Models.Finance
         [Required, MaxLength(20)]
         public string PayrollMonth { get; set; } = string.Empty; // yyyy-MM
         public int ClosedByUserId { get; set; }
-        public DateTime ClosedAt { get; set; } = DateTime.Now;
+        public DateTime ClosedAt { get; set; } = DateTime.UtcNow;
         public int EmployeeCount { get; set; }
         public int TimesheetCount { get; set; }
         [Column(TypeName = "decimal(18,2)")]
@@ -171,7 +171,7 @@ namespace DANGCAPNE.Models.Finance
         public decimal NetSalary { get; set; }
         [MaxLength(500)]
         public string? PdfPath { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("PayrollClosureId")]
         public virtual PayrollClosure? PayrollClosure { get; set; }

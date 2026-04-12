@@ -347,10 +347,8 @@ namespace DANGCAPNE.Data
                 """
             };
 
-            foreach (var command in commands)
-            {
-                await db.Database.ExecuteSqlRawAsync(command);
-            }
+            var combinedCommands = string.Join("\n\n", commands);
+            await db.Database.ExecuteSqlRawAsync(combinedCommands);
 
             var alterCommands = new[]
             {
@@ -380,6 +378,7 @@ namespace DANGCAPNE.Data
                 SET "EmployeeCode" = CASE
                     WHEN "Email" = 'admin@company.com' THEN 'AD001'
                     WHEN "Email" = 'hr@company.com' THEN 'HR001'
+                    WHEN "Email" = 'itmanager@company.com' THEN 'ITM001'
                     WHEN "Email" = 'manager@company.com' THEN 'MNG001'
                     WHEN "Email" = 'employee@company.com' THEN 'NV001'
                     WHEN "Email" = 'accountant@company.com' THEN 'KT001'
@@ -388,13 +387,421 @@ namespace DANGCAPNE.Data
                     WHEN "Email" = 'marketing@company.com' THEN 'NV004'
                     ELSE "EmployeeCode"
                 END;
+                INSERT INTO "Departments" ("TenantId", "Name", "Code", "IsActive", "CreatedAt")
+                SELECT 1, 'Phòng Công nghệ Thông tin', 'IT', TRUE, NOW()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "Departments" WHERE "TenantId" = 1 AND "Code" = 'IT'
+                );
+
+                INSERT INTO "Roles" ("TenantId", "Name", "Description", "CreatedAt")
+                SELECT 1, 'IT', 'Vận hành kỹ thuật, cấp mã nhân viên và hỗ trợ truy cập', NOW()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "Roles" WHERE "TenantId" = 1 AND "Name" = 'IT'
+                );
+
+                INSERT INTO "Roles" ("TenantId", "Name", "Description", "CreatedAt")
+                SELECT 1, 'ITManager', 'Quản lý phòng IT, tách biệt với Manager chung', NOW()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "Roles" WHERE "TenantId" = 1 AND "Name" = 'ITManager'
+                );
+
+                INSERT INTO "Permissions" ("TenantId", "Name", "Code", "Description", "IsActive", "CreatedAt")
+                SELECT 1, 'Issue Employee Code', 'EMPLOYEE_CODE_ISSUE', 'Issue employee code by department', TRUE, NOW()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "Permissions" WHERE "TenantId" = 1 AND "Code" = 'EMPLOYEE_CODE_ISSUE'
+                );
+
+                INSERT INTO "Permissions" ("TenantId", "Name", "Code", "Description", "IsActive", "CreatedAt")
+                SELECT 1, 'Support Account Access', 'ACCOUNT_SUPPORT', 'Reset login IP, password and access states', TRUE, NOW()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "Permissions" WHERE "TenantId" = 1 AND "Code" = 'ACCOUNT_SUPPORT'
+                );
+
+                INSERT INTO "Permissions" ("TenantId", "Name", "Code", "Description", "IsActive", "CreatedAt")
+                SELECT 1, 'Reset Trusted Device', 'DEVICE_RESET', 'Clear trusted device and biometric bindings', TRUE, NOW()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "Permissions" WHERE "TenantId" = 1 AND "Code" = 'DEVICE_RESET'
+                );
+
+                INSERT INTO "RolePermissions" ("RoleId", "PermissionId", "AssignedAt")
+                SELECT r."Id", p."Id", NOW()
+                FROM "Roles" r
+                INNER JOIN "Permissions" p ON p."TenantId" = r."TenantId"
+                WHERE r."TenantId" = 1
+                  AND r."Name" = 'IT'
+                  AND p."Code" = 'EMPLOYEE_CODE_ISSUE'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM "RolePermissions" rp
+                      WHERE rp."RoleId" = r."Id" AND rp."PermissionId" = p."Id"
+                  );
+
+                INSERT INTO "RolePermissions" ("RoleId", "PermissionId", "AssignedAt")
+                SELECT r."Id", p."Id", NOW()
+                FROM "Roles" r
+                INNER JOIN "Permissions" p ON p."TenantId" = r."TenantId"
+                WHERE r."TenantId" = 1
+                  AND r."Name" = 'IT'
+                  AND p."Code" = 'ACCOUNT_SUPPORT'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM "RolePermissions" rp
+                      WHERE rp."RoleId" = r."Id" AND rp."PermissionId" = p."Id"
+                  );
+
+                INSERT INTO "RolePermissions" ("RoleId", "PermissionId", "AssignedAt")
+                SELECT r."Id", p."Id", NOW()
+                FROM "Roles" r
+                INNER JOIN "Permissions" p ON p."TenantId" = r."TenantId"
+                WHERE r."TenantId" = 1
+                  AND r."Name" = 'IT'
+                  AND p."Code" = 'DEVICE_RESET'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM "RolePermissions" rp
+                      WHERE rp."RoleId" = r."Id" AND rp."PermissionId" = p."Id"
+                  );
+
+                INSERT INTO "RolePermissions" ("RoleId", "PermissionId", "AssignedAt")
+                SELECT r."Id", p."Id", NOW()
+                FROM "Roles" r
+                INNER JOIN "Permissions" p ON p."TenantId" = r."TenantId"
+                WHERE r."TenantId" = 1
+                  AND r."Name" = 'Admin'
+                  AND p."Code" IN ('EMPLOYEE_CODE_ISSUE', 'ACCOUNT_SUPPORT', 'DEVICE_RESET')
+                  AND NOT EXISTS (
+                      SELECT 1 FROM "RolePermissions" rp
+                      WHERE rp."RoleId" = r."Id" AND rp."PermissionId" = p."Id"
+                  );
+
+                INSERT INTO "UserRoles" ("UserId", "RoleId", "AssignedAt")
+                SELECT u."Id", r."Id", NOW()
+                FROM "Users" u
+                CROSS JOIN "Roles" r
+                WHERE lower(u."Email") = 'dev@company.com'
+                  AND r."TenantId" = u."TenantId"
+                  AND r."Name" = 'IT'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM "UserRoles" ur
+                      WHERE ur."UserId" = u."Id" AND ur."RoleId" = r."Id"
+                  );
+                """,
+                """
+                CREATE TABLE IF NOT EXISTS "AllowedIps" (
+                    "Id" integer GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+                    "TenantId" integer NOT NULL DEFAULT 1,
+                    "IpAddress" character varying(64) NOT NULL,
+                    "Label" character varying(200) NOT NULL DEFAULT '',
+                    "AddedByUserId" integer NULL,
+                    "IsActive" boolean NOT NULL DEFAULT TRUE,
+                    "CreatedAt" timestamp without time zone NOT NULL DEFAULT NOW(),
+                    "UpdatedAt" timestamp without time zone NOT NULL DEFAULT NOW(),
+                    CONSTRAINT "FK_AllowedIps_Users_AddedByUserId" FOREIGN KEY ("AddedByUserId") REFERENCES "Users" ("Id") ON DELETE SET NULL
+                );
+                CREATE INDEX IF NOT EXISTS "IX_AllowedIps_TenantId_IsActive" ON "AllowedIps" ("TenantId", "IsActive");
+                CREATE INDEX IF NOT EXISTS "IX_AllowedIps_TenantId_IpAddress" ON "AllowedIps" ("TenantId", "IpAddress");
                 """
             };
 
-            foreach (var command in alterCommands)
+            var combinedAlterCommands = string.Join("\n\n", alterCommands);
+            await db.Database.ExecuteSqlRawAsync(combinedAlterCommands);
+
+            await EnsureDedicatedItAndManagerAccountsAsync(db);
+        }
+
+        private static async Task EnsureDedicatedItAndManagerAccountsAsync(ApplicationDbContext db)
+        {
+            const int tenantId = 1;
+            var now = DateTime.UtcNow;
+            var defaultPasswordHash = HashSeedPassword("Admin@123");
+
+            var itDepartment = await db.Departments.FirstOrDefaultAsync(d => d.TenantId == tenantId && d.Code == "IT");
+            var salesDepartment = await db.Departments.FirstOrDefaultAsync(d => d.TenantId == tenantId && d.Code == "SALES");
+            var headJobTitle = await db.JobTitles.FirstOrDefaultAsync(j => j.TenantId == tenantId && j.Name == "Trưởng phòng");
+            var itManagerPosition = await db.Positions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Name == "Trưởng phòng IT");
+            var generalManagerPosition = await db.Positions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Name == "Trưởng phòng KD");
+            var defaultBranch = await db.Branches.Where(b => b.TenantId == tenantId).OrderBy(b => b.Id).FirstOrDefaultAsync();
+
+            if (defaultBranch == null)
             {
-                await db.Database.ExecuteSqlRawAsync(command);
+                defaultBranch = new Models.Organization.Branch { TenantId = tenantId, Name = "Trụ sở chính", Address = "N/A", TimeZone = "SE Asia Standard Time" };
+                db.Branches.Add(defaultBranch);
+                await db.SaveChangesAsync();
             }
+
+            if (salesDepartment == null)
+            {
+                salesDepartment = new Models.Organization.Department { TenantId = tenantId, Name = "Phòng Kinh doanh", Code = "SALES", IsActive = true, CreatedAt = now };
+                db.Departments.Add(salesDepartment);
+                await db.SaveChangesAsync();
+            }
+
+            if (itDepartment == null)
+            {
+                itDepartment = new Models.Organization.Department { TenantId = tenantId, Name = "Phòng Công nghệ Thông tin", Code = "IT", IsActive = true, CreatedAt = now };
+                db.Departments.Add(itDepartment);
+                await db.SaveChangesAsync();
+            }
+
+            if (headJobTitle == null)
+            {
+                headJobTitle = new Models.Organization.JobTitle { TenantId = tenantId, Name = "Trưởng phòng", Level = 3 };
+                db.JobTitles.Add(headJobTitle);
+                await db.SaveChangesAsync();
+            }
+
+            if (itManagerPosition == null)
+            {
+                itManagerPosition = new Models.Organization.Position { TenantId = tenantId, Name = "Trưởng phòng IT", DepartmentId = itDepartment.Id };
+                db.Positions.Add(itManagerPosition);
+                await db.SaveChangesAsync();
+            }
+
+            if (generalManagerPosition == null)
+            {
+                generalManagerPosition = new Models.Organization.Position { TenantId = tenantId, Name = "Trưởng phòng KD", DepartmentId = salesDepartment.Id };
+                db.Positions.Add(generalManagerPosition);
+                await db.SaveChangesAsync();
+            }
+
+            var managerRoleId = await EnsureRoleAsync(db, tenantId, "Manager", "Quản lý");
+            var itRoleId = await EnsureRoleAsync(db, tenantId, "IT", "Vận hành kỹ thuật, cấp mã nhân viên và hỗ trợ truy cập");
+            var itManagerRoleId = await EnsureRoleAsync(db, tenantId, "ITManager", "Quản lý phòng IT, tách biệt với Manager chung");
+
+            var employeeCodePermissionId = await EnsurePermissionAsync(db, tenantId, "Issue Employee Code", "EMPLOYEE_CODE_ISSUE", "Issue employee code by department");
+            var accountSupportPermissionId = await EnsurePermissionAsync(db, tenantId, "Support Account Access", "ACCOUNT_SUPPORT", "Reset login IP, password and access states");
+            var deviceResetPermissionId = await EnsurePermissionAsync(db, tenantId, "Reset Trusted Device", "DEVICE_RESET", "Clear trusted device and biometric bindings");
+
+            await EnsureRolePermissionAsync(db, itRoleId, employeeCodePermissionId);
+            await EnsureRolePermissionAsync(db, itRoleId, accountSupportPermissionId);
+            await EnsureRolePermissionAsync(db, itRoleId, deviceResetPermissionId);
+            await EnsureRolePermissionAsync(db, itManagerRoleId, employeeCodePermissionId);
+            await EnsureRolePermissionAsync(db, itManagerRoleId, accountSupportPermissionId);
+            await EnsureRolePermissionAsync(db, itManagerRoleId, deviceResetPermissionId);
+            await EnsureRolePermissionAsync(db, 1, employeeCodePermissionId);
+            await EnsureRolePermissionAsync(db, 1, accountSupportPermissionId);
+            await EnsureRolePermissionAsync(db, 1, deviceResetPermissionId);
+
+            var itManagerUser = await db.Users
+                .FirstOrDefaultAsync(u => u.TenantId == tenantId &&
+                    (u.Email == "itmanager@company.com" ||
+                     (u.Email == "manager@company.com" && u.DepartmentId == itDepartment.Id && u.PositionId == itManagerPosition.Id) ||
+                     (u.DepartmentId == itDepartment.Id && u.PositionId == itManagerPosition.Id)));
+
+            if (itManagerUser == null)
+            {
+                itManagerUser = new Models.Organization.User
+                {
+                    TenantId = tenantId,
+                    FullName = "Lê Văn IT Manager",
+                    Email = "itmanager@company.com",
+                    PasswordHash = defaultPasswordHash,
+                    EmployeeCode = "ITM001",
+                    DepartmentId = itDepartment.Id,
+                    BranchId = defaultBranch.Id,
+                    JobTitleId = headJobTitle.Id,
+                    PositionId = itManagerPosition.Id,
+                    Phone = "0901234569",
+                    Status = "Active",
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+                db.Users.Add(itManagerUser);
+                await db.SaveChangesAsync();
+            }
+            else
+            {
+                itManagerUser.FullName = "Lê Văn IT Manager";
+                itManagerUser.Email = "itmanager@company.com";
+                itManagerUser.EmployeeCode = "ITM001";
+                itManagerUser.DepartmentId = itDepartment.Id;
+                itManagerUser.BranchId ??= defaultBranch.Id;
+                itManagerUser.JobTitleId ??= headJobTitle.Id;
+                itManagerUser.PositionId = itManagerPosition.Id;
+                itManagerUser.Status = "Active";
+                itManagerUser.UpdatedAt = now;
+                if (string.IsNullOrWhiteSpace(itManagerUser.PasswordHash))
+                {
+                    itManagerUser.PasswordHash = defaultPasswordHash;
+                }
+                await db.SaveChangesAsync();
+            }
+
+            var generalManagerUser = await db.Users
+                .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Email == "manager@company.com" && u.Id != itManagerUser.Id);
+
+            if (generalManagerUser == null)
+            {
+                generalManagerUser = new Models.Organization.User
+                {
+                    TenantId = tenantId,
+                    FullName = "Nguyễn Văn Manager",
+                    Email = "manager@company.com",
+                    PasswordHash = defaultPasswordHash,
+                    EmployeeCode = "MNG001",
+                    DepartmentId = salesDepartment.Id,
+                    BranchId = defaultBranch.Id,
+                    JobTitleId = headJobTitle.Id,
+                    PositionId = generalManagerPosition.Id,
+                    Phone = "0901234575",
+                    Status = "Active",
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+                db.Users.Add(generalManagerUser);
+                await db.SaveChangesAsync();
+            }
+            else
+            {
+                generalManagerUser.FullName = "Nguyễn Văn Manager";
+                generalManagerUser.EmployeeCode = "MNG001";
+                generalManagerUser.DepartmentId = salesDepartment.Id;
+                generalManagerUser.BranchId ??= defaultBranch.Id;
+                generalManagerUser.JobTitleId ??= headJobTitle.Id;
+                generalManagerUser.PositionId = generalManagerPosition.Id;
+                generalManagerUser.Status = "Active";
+                generalManagerUser.UpdatedAt = now;
+                if (string.IsNullOrWhiteSpace(generalManagerUser.PasswordHash))
+                {
+                    generalManagerUser.PasswordHash = defaultPasswordHash;
+                }
+                await db.SaveChangesAsync();
+            }
+
+            // IT Manager is separate from Manager
+            var mistakeRole = await db.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == itManagerUser.Id && ur.RoleId == managerRoleId);
+            if (mistakeRole != null) {
+                db.UserRoles.Remove(mistakeRole);
+                await db.SaveChangesAsync();
+            }
+
+            await EnsureUserRoleAsync(db, itManagerUser.Id, itManagerRoleId);
+            await EnsureUserRoleAsync(db, generalManagerUser.Id, managerRoleId);
+
+            var devUser = await db.Users.FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Email == "dev@company.com");
+            if (devUser != null)
+            {
+                await EnsureUserRoleAsync(db, devUser.Id, itRoleId);
+            }
+
+            await UpsertPrimaryManagerAsync(db, 4, itManagerUser.Id);
+            await UpsertPrimaryManagerAsync(db, 5, itManagerUser.Id);
+            await UpsertPrimaryManagerAsync(db, itManagerUser.Id, 1);
+            await UpsertPrimaryManagerAsync(db, 7, generalManagerUser.Id);
+            await UpsertPrimaryManagerAsync(db, generalManagerUser.Id, 1);
+
+            await db.SaveChangesAsync();
+        }
+
+        private static async Task<int> EnsureRoleAsync(ApplicationDbContext db, int tenantId, string name, string description)
+        {
+            var role = await db.Roles.FirstOrDefaultAsync(r => r.TenantId == tenantId && r.Name == name);
+            if (role == null)
+            {
+                role = new Models.Organization.Role
+                {
+                    TenantId = tenantId,
+                    Name = name,
+                    Description = description,
+                    CreatedAt = DateTime.UtcNow
+                };
+                db.Roles.Add(role);
+                await db.SaveChangesAsync();
+            }
+            else if (!string.Equals(role.Description, description, StringComparison.Ordinal))
+            {
+                role.Description = description;
+                await db.SaveChangesAsync();
+            }
+
+            return role.Id;
+        }
+
+        private static async Task<int> EnsurePermissionAsync(ApplicationDbContext db, int tenantId, string name, string code, string description)
+        {
+            var permission = await db.Permissions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Code == code);
+            if (permission == null)
+            {
+                permission = new Models.Security.Permission
+                {
+                    TenantId = tenantId,
+                    Name = name,
+                    Code = code,
+                    Description = description,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                db.Permissions.Add(permission);
+                await db.SaveChangesAsync();
+            }
+
+            return permission.Id;
+        }
+
+        private static async Task EnsureRolePermissionAsync(ApplicationDbContext db, int roleId, int permissionId)
+        {
+            var exists = await db.RolePermissions.AnyAsync(rp => rp.RoleId == roleId && rp.PermissionId == permissionId);
+            if (!exists)
+            {
+                db.RolePermissions.Add(new Models.Security.RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionId = permissionId,
+                    AssignedAt = DateTime.UtcNow
+                });
+                await db.SaveChangesAsync();
+            }
+        }
+
+        private static async Task EnsureUserRoleAsync(ApplicationDbContext db, int userId, int roleId)
+        {
+            var exists = await db.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+            if (!exists)
+            {
+                db.UserRoles.Add(new Models.Organization.UserRole
+                {
+                    UserId = userId,
+                    RoleId = roleId,
+                    AssignedAt = DateTime.UtcNow
+                });
+                await db.SaveChangesAsync();
+            }
+        }
+
+        private static async Task UpsertPrimaryManagerAsync(ApplicationDbContext db, int userId, int managerId)
+        {
+            var userExists = await db.Users.AnyAsync(u => u.Id == userId);
+            var managerExists = await db.Users.AnyAsync(u => u.Id == managerId);
+            if (!userExists || !managerExists) return;
+
+            var relation = await db.UserManagers
+                .Where(um => um.UserId == userId && um.IsPrimary)
+                .OrderBy(um => um.Id)
+                .FirstOrDefaultAsync();
+
+            if (relation == null)
+            {
+                db.UserManagers.Add(new Models.Organization.UserManager
+                {
+                    UserId = userId,
+                    ManagerId = managerId,
+                    IsPrimary = true,
+                    StartDate = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                relation.ManagerId = managerId;
+                relation.IsPrimary = true;
+                if (relation.StartDate == default)
+                {
+                    relation.StartDate = DateTime.UtcNow;
+                }
+            }
+        }
+
+        private static string HashSeedPassword(string password)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password + "DANGCAPNE_SALT"));
+            return Convert.ToBase64String(bytes);
         }
     }
 }

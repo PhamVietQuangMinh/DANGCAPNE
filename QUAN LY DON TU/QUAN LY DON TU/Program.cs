@@ -1,19 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Hubs;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// SQL Server connection
-// PostgreSQL (Supabase) connection
+// PostgreSQL Supabase connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null)));
 
 // Session for authentication
 builder.Services.AddHttpClient<DANGCAPNE.Services.GeminiAIService>();
@@ -21,6 +24,7 @@ builder.Services.AddScoped<DANGCAPNE.Services.IFileService, DANGCAPNE.Services.F
 builder.Services.AddScoped<DANGCAPNE.Services.IApprovalSlaService, DANGCAPNE.Services.ApprovalSlaService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IApprovedRequestPdfService, DANGCAPNE.Services.ApprovedRequestPdfService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IPayrollPdfService, DANGCAPNE.Services.PayrollPdfService>();
+builder.Services.AddScoped<DANGCAPNE.Services.IFaceDescriptorMigrationService, DANGCAPNE.Services.FaceDescriptorMigrationService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -52,13 +56,18 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"[Startup] Migration skipped: {ex.Message}");
     }
 
-    try
+    // Skip extended schema patch for SQLite (PostgreSQL syntax not compatible)
+    if (db.Database.ProviderName?.Contains("Npgsql") == true)
     {
-        await SchemaPatchRunner.EnsureExtendedSchemaAsync(db);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[Startup] Extended schema patch skipped: {ex.Message}");
+        try
+        {
+            await SchemaPatchRunner.EnsureExtendedSchemaAsync(db);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Startup] Extended schema patch skipped: {ex.Message}");
+            System.IO.File.WriteAllText("patch_error.txt", ex.ToString());
+        }
     }
 }
 

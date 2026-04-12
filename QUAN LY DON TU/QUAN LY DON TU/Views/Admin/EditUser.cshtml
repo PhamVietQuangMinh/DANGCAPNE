@@ -21,8 +21,14 @@
                         </div>
                         <div class="col-6">
                             <div class="form-group">
-                                <label class="form-label"><span data-i18n="ColCode">Mã nhân viên</span> *</label>
-                                <input type="text" name="User.EmployeeCode" class="form-control" value="@Model.User?.EmployeeCode" required />
+                                <label class="form-label"><span data-i18n="ColCode">Mã nhân viên</span></label>
+                                <input type="text" name="User.EmployeeCode" class="form-control" value="@Model.User?.EmployeeCode" />
+                                @if (Model.CanAutoGenerateEmployeeCode)
+                                {
+                                    <div class="text-muted" style="font-size:12px; margin-top:6px;">
+                                        Để trống nếu muốn hệ thống tự cấp mã theo phòng ban khi lưu. Ví dụ: <strong>IT001</strong>, <strong>HR001</strong>, <strong>KT001</strong>.
+                                    </div>
+                                }
                             </div>
                         </div>
                         <div class="col-6">
@@ -85,6 +91,29 @@
                                 <input type="date" name="User.HireDate" class="form-control" value="@(Model.User?.HireDate.ToString("yyyy-MM-dd"))" />
                             </div>
                         </div>
+                        @if (Model.CanManageRoles)
+                        {
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Vai trò hệ thống</label>
+                                    <div class="role-check-grid">
+                                        @foreach (var role in Model.AllRoles)
+                                        {
+                                            <label class="role-check-item">
+                                                <input type="checkbox" name="roleIds" value="@role.Id" checked="@(Model.SelectedRoleIds.Contains(role.Id))" />
+                                                <span>
+                                                    <strong>@role.Name</strong>
+                                                    <small>@role.Description</small>
+                                                </span>
+                                            </label>
+                                        }
+                                    </div>
+                                    <div class="text-muted" style="font-size:12px; margin-top:8px;">
+                                        Có thể gán nhiều vai trò cho cùng một tài khoản. Role <strong>IT</strong> dùng cho cấp mã nhân viên và hỗ trợ kỹ thuật truy cập.
+                                    </div>
+                                </div>
+                            </div>
+                        }
                         <div class="col-12">
                             <div class="form-group">
                                 <label class="form-label">Thiết lập lương</label>
@@ -134,3 +163,37 @@
         </div>
     </div>
 </div>
+
+<style>
+    .role-check-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+    }
+
+    .role-check-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border: 1px solid var(--border-glass);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+    }
+
+    .role-check-item input {
+        margin-top: 4px;
+    }
+
+    .role-check-item span {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .role-check-item small {
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+</style>

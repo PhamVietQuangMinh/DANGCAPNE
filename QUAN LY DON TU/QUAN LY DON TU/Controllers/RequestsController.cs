@@ -725,6 +725,52 @@ namespace DANGCAPNE.Controllers
             return Json(new { success = true, message = "Đã lưu nháp" });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> AnalyzeMedicalCert(IFormFile file)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return Unauthorized();
+
+            if (file == null || file.Length == 0)
+                return Json(new { success = false, message = "Không có file được tải lên." });
+
+            // Chỉ chấp nhận ảnh
+            var allowedTypes = new[] { "image/jpeg", "image/png", "image/jpg", "image/webp", "image/gif" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                return Json(new { success = false, message = "Chỉ chấp nhận file ảnh (JPG, PNG, WEBP)." });
+
+            // Giới hạn 10MB
+            if (file.Length > 10 * 1024 * 1024)
+                return Json(new { success = false, message = "File quá lớn (tối đa 10MB)." });
+
+            // Lưu file tạm
+            var tempDir = Path.Combine(_env.WebRootPath, "uploads", "temp");
+            Directory.CreateDirectory(tempDir);
+            var tempFileName = $"medcert_temp_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var tempFilePath = Path.Combine(tempDir, tempFileName);
+
+            try
+            {
+                using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var result = await _aiService.AnalyzeMedicalCertificateAsync(tempFilePath, file.ContentType);
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Lỗi phân tích: {ex.Message}" });
+            }
+            finally
+            {
+                // Xóa file tạm
+                if (System.IO.File.Exists(tempFilePath))
+                    System.IO.File.Delete(tempFilePath);
+            }
+        }
+
         public async Task<IActionResult> SelectTemplate()
         {
             var userId = HttpContext.Session.GetInt32("UserId");

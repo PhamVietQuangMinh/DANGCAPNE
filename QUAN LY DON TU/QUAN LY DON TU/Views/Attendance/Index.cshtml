@@ -33,15 +33,15 @@
                             <div style="color: #94a3b8; font-size: 15px; font-weight: 600; margin-bottom: 32px;">Camera đang ở chế độ chờ</div>
                             <button id="btnStartCamera" class="btn-start-mockup" @(ViewBag.IsIntranet == true ? "" : "disabled")>
                                 @if (ViewBag.IsCheckInDone) {
-                                    <i class="bi bi-door-open me-10"></i> <span>Bắt đầu Chấm công RA</span>
+                                    <i class="bi bi-door-open me-10"></i> <span>Bắt đầu Check out</span>
                                 } else {
-                                    <i class="bi bi-power me-10"></i> <span>Bắt đầu chấm công</span>
+                                    <i class="bi bi-power me-10"></i> <span>Bắt đầu Check out</span>
                                 }
                             </button>
                             @if (ViewBag.IsIntranet != true)
                             {
                                 <div style="margin-top: 16px; color: #ef4444; font-weight: 700; font-size: 14px; text-align: center;">
-                                    Ngoai mang noi bo. Vui long ket noi wifi cong ty de cham cong.
+                                    Ngoai mang noi bo. Vui long ket noi wifi cong ty de Check out.
                                 </div>
                             }
                         </div>
@@ -105,8 +105,11 @@
         const frameRing = document.getElementById('frameRing');
 
         let faceMatcher;
-        const faceDescriptorModel = '@Html.Raw(ViewBag.FaceDescriptorFront)';
-        const avatarUrl = '@ViewBag.AvatarUrl';
+        let lastDescriptor = null;
+        const FACE_MATCH_THRESHOLD = 0.38;
+        const faceDescriptorFrontModel = '@Html.Raw(ViewBag.FaceDescriptorFront ?? "")';
+        const faceDescriptorLeftModel = '@Html.Raw(ViewBag.FaceDescriptorLeft ?? "")';
+        const faceDescriptorRightModel = '@Html.Raw(ViewBag.FaceDescriptorRight ?? "")';
         const MODEL_URL = '/lib/face-api/models';
         const isIntranet = @((ViewBag.IsIntranet == true).ToString().ToLower());
 
@@ -119,22 +122,36 @@
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
 
-                if (faceDescriptorModel) {
-                    const desc = new Float32Array(JSON.parse(faceDescriptorModel));
-                    faceMatcher = new faceapi.FaceMatcher(new faceapi.LabeledFaceDescriptors("Nhân viên", [desc]), 0.6);
-                } else if (avatarUrl) {
-                    const img = await faceapi.fetchImage(avatarUrl);
-                    const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                    if (detection) faceMatcher = new faceapi.FaceMatcher(new faceapi.LabeledFaceDescriptors("Nhân viên", [detection.descriptor]), 0.6);
+                const storedDescriptors = [];
+
+                const addDescriptor = (raw) => {
+                    if (!raw) return;
+                    try {
+                        const desc = new Float32Array(JSON.parse(raw));
+                        if (desc.length > 0) storedDescriptors.push(desc);
+                    } catch (e) {
+                        console.warn('Invalid stored face descriptor', e);
+                    }
+                };
+
+                addDescriptor(faceDescriptorFrontModel);
+                addDescriptor(faceDescriptorLeftModel);
+                addDescriptor(faceDescriptorRightModel);
+
+                if (storedDescriptors.length > 0) {
+                    faceMatcher = new faceapi.FaceMatcher(new faceapi.LabeledFaceDescriptors("Nhân viên", storedDescriptors), FACE_MATCH_THRESHOLD);
+                    statusBadge.innerText = "HỆ THỐNG SẴN SÀNG";
+                    statusMessage.innerText = "";
+                } else {
+                    statusBadge.innerText = "CHƯA ĐĂNG KÝ KHUÔN MẶT";
+                    statusMessage.innerText = "Vui lòng đăng ký dữ liệu sinh trắc học trước khi Check out.";
                 }
-                statusBadge.innerText = "HỆ THỐNG SẴN SÀNG";
-                statusMessage.innerText = "";
             } catch (err) { console.error(err); statusBadge.innerText = "LỖI KẾT NỐI"; }
         }
 
         if (!isIntranet) {
             statusBadge.innerText = "KHONG THUOC INTRANET";
-            statusMessage.innerText = "Ket noi vao mang noi bo de mo khoa cham cong.";
+            statusMessage.innerText = "Ket noi vao mang noi bo de mo khoa Check out.";
         }
 
         if (btnStartCamera) {
@@ -159,7 +176,7 @@
             } catch (err) {
                 Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Vui lòng cho phép quyền máy ảnh.' });
                 btnStartCamera.disabled = false;
-                btnStartCamera.innerHTML = '<i class="bi bi-power me-10"></i> Bắt đầu chấm công';
+                btnStartCamera.innerHTML = '<i class="bi bi-power me-10"></i> Bắt đầu Check out';
             }
         }
 
@@ -180,21 +197,26 @@
                 ctx.clearRect(0, 0, overlay.width, overlay.height);
                 
                 if (detections.length > 0) {
-                    if (faceMatcher) {
-                        const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
-                        if (bestMatch.label !== 'unknown') {
-                            scanProgress += 4; if (scanProgress > 100) scanProgress = 100;
-                            updateProgressRing(scanProgress);
-                            statusMessage.innerHTML = `<span style="color: #4f46e5;">Xác minh: ${Math.round(scanProgress)}%</span>`;
-                            if (scanProgress >= 100) {
-                                isProcessing = true;
-                                frameRing.classList.add('success');
-                                await submitAttendance();
-                            }
-                        } else {
-                            statusMessage.innerHTML = `<span style="color: #ef4444;">Không nhận dạng được tài khoản!</span>`;
-                            resetScanVisuals();
+                    if (!faceMatcher) {
+                        statusMessage.innerText = "Không tìm thấy dữ liệu khuôn mặt trên hệ thống.";
+                        return;
+                    }
+
+                    const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
+                    if (bestMatch.label !== 'unknown' && bestMatch.distance <= FACE_MATCH_THRESHOLD) {
+                        lastDescriptor = Array.from(detections[0].descriptor);
+                        scanProgress += 4; if (scanProgress > 100) scanProgress = 100;
+                        updateProgressRing(scanProgress);
+                        statusMessage.innerHTML = `<span style="color: #4f46e5;">Xác minh: ${Math.round(scanProgress)}%</span>`;
+                        if (scanProgress >= 100) {
+                            isProcessing = true;
+                            frameRing.classList.add('success');
+                            await submitAttendance();
                         }
+                    } else {
+                        statusMessage.innerHTML = `<span style="color: #ef4444;">Khuôn mặt không trùng khớp hoặc không đủ chuẩn.</span>`;
+                        resetScanVisuals();
+                        lastDescriptor = null;
                     }
                     faceapi.draw.drawDetections(overlay, resizedDetections);
                 } else {
@@ -217,10 +239,14 @@
 
         async function submitAttendance() {
             try {
+                const body = new URLSearchParams({ lat: 0, lon: 0 });
+                if (lastDescriptor) {
+                    body.append('faceDescriptor', JSON.stringify(lastDescriptor));
+                }
                 const resp = await fetch('@Url.Action("CheckIn")', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ faceMatched: true, lat: 0, lon: 0 })
+                    body
                 });
                 const r = await resp.json();
                 if (r.success) {

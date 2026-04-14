@@ -7,7 +7,7 @@
     <div class="d-flex justify-between align-center mb-24" style="gap:16px; flex-wrap:wrap;">
         <div>
             <h2 style="margin:0; font-size:28px; font-weight:800;">Chi tiết nhân viên</h2>
-            <p class="text-muted" style="margin-top:6px;">Hiển thị thông tin nhân viên và lịch sử chấm công lấy từ cơ sở dữ liệu trên server.</p>
+            <p class="text-muted" style="margin-top:6px;">Hiển thị thông tin nhân viên và lịch sử Check out lấy từ cơ sở dữ liệu trên server.</p>
         </div>
         <div class="d-flex gap-12 flex-wrap">
             @if (Model.CanEditEmployee)
@@ -55,7 +55,7 @@
 
             <div class="glass-card">
                 <div class="card-header">
-                    <h3><i class="bi bi-clock-history"></i> Lịch sử chấm công gần đây</h3>
+                    <h3><i class="bi bi-clock-history"></i> Lịch sử Check out gần đây</h3>
                 </div>
                 <div class="card-body" style="padding:0; overflow-x:auto;">
                     <table class="data-table">
@@ -85,7 +85,7 @@
                             else
                             {
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted" style="padding:24px;">Chưa có dữ liệu chấm công.</td>
+                                    <td colspan="5" class="text-center text-muted" style="padding:24px;">Chưa có dữ liệu Check out.</td>
                                 </tr>
                             }
                         </tbody>

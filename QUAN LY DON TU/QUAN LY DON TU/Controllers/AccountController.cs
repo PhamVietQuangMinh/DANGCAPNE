@@ -464,23 +464,55 @@ namespace DANGCAPNE.Controllers
             // 1:N Duplicate Check - Ensure this face isn't already registered
             var otherUsers = await _context.Users
                 .Where(u => u.IsBiometricEnrolled && u.Id != user.Id && !string.IsNullOrEmpty(u.FaceDescriptorFront))
-                .Select(u => new { u.Id, u.FaceDescriptorFront })
+                .Select(u => new { u.Id, u.FullName, u.Email, u.FaceDescriptorFront, u.FaceDescriptorLeft, u.FaceDescriptorRight })
                 .ToListAsync();
 
             var newFront = System.Text.Json.JsonSerializer.Deserialize<float[]>(req.Front ?? "[]");
-            if (newFront != null && newFront.Length > 0)
+            var newLeft = System.Text.Json.JsonSerializer.Deserialize<float[]>(req.Left ?? "[]");
+            var newRight = System.Text.Json.JsonSerializer.Deserialize<float[]>(req.Right ?? "[]");
+
+            var newDescriptors = new List<float[]>();
+            if (newFront != null && newFront.Length > 0) newDescriptors.Add(newFront);
+            if (newLeft != null && newLeft.Length > 0) newDescriptors.Add(newLeft);
+            if (newRight != null && newRight.Length > 0) newDescriptors.Add(newRight);
+
+            if (newDescriptors.Count > 0)
             {
                 foreach (var other in otherUsers)
                 {
-                    var otherFront = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorFront ?? "[]");
-                    if (otherFront == null || otherFront.Length == 0) continue;
+                    var otherDescriptors = new List<float[]>();
 
-                    float dist = CalculateEuclideanDistance(newFront, otherFront);
-                    Console.WriteLine($"[FaceMatch] New vs ID {other.Id}. Distance: {dist}");
-                    if (dist < 0.48) // even stricter threshold
+                    var otherFront = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorFront ?? "[]");
+                    if (otherFront != null && otherFront.Length > 0) otherDescriptors.Add(otherFront);
+
+                    var otherLeft = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorLeft ?? "[]");
+                    if (otherLeft != null && otherLeft.Length > 0) otherDescriptors.Add(otherLeft);
+
+                    var otherRight = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorRight ?? "[]");
+                    if (otherRight != null && otherRight.Length > 0) otherDescriptors.Add(otherRight);
+
+                    if (otherDescriptors.Count == 0) continue;
+
+                    float best = 99f;
+                    foreach (var nd in newDescriptors)
                     {
-                        var matchUser = await _context.Users.FindAsync(other.Id);
-                        return BadRequest(new { success = false, message = $"Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi tài khoản: {matchUser?.FullName} ({matchUser?.Email})!" });
+                        foreach (var od in otherDescriptors)
+                        {
+                            float dist = CalculateEuclideanDistance(nd, od);
+                            if (dist < best) best = dist;
+                        }
+                    }
+
+                    Console.WriteLine($"[FaceEnroll] New vs ID {other.Id} ({other.FullName}) bestDistance: {best:F4}");
+
+                    // Enrollment duplicate threshold: intentionally strict to prevent cross-account confusion later.
+                    if (best < 0.45f)
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message = $"Lỗi bảo mật: Khuôn mặt này đã được đăng ký bởi tài khoản: {other.FullName} ({other.Email})!"
+                        });
                     }
                 }
             }
@@ -608,79 +640,93 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("PendingUserId");
             if (userId == null) return Unauthorized();
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
             if (user == null || !user.IsBiometricEnrolled) return NotFound();
 
             try {
                 var live = System.Text.Json.JsonSerializer.Deserialize<float[]>(req.LiveDescriptor ?? "[]");
-                var front = System.Text.Json.JsonSerializer.Deserialize<float[]>(user.FaceDescriptorFront ?? "[]");
-                var left = System.Text.Json.JsonSerializer.Deserialize<float[]>(user.FaceDescriptorLeft ?? "[]");
-                var right = System.Text.Json.JsonSerializer.Deserialize<float[]>(user.FaceDescriptorRight ?? "[]");
-
-                if (live == null || live.Length == 0 || front == null || front.Length == 0)
+                if (live == null || live.Length == 0)
                     return BadRequest(new { success = false, message = "Dữ liệu sinh trắc không hợp lệ." });
 
-                float distFront = CalculateEuclideanDistance(live!, front!);
-                float distLeft = left != null ? CalculateEuclideanDistance(live!, left!) : 99f;
-                float distRight = right != null ? CalculateEuclideanDistance(live!, right!) : 99f;
-                float minDistance = Math.Min(distFront, Math.Min(distLeft, distRight));
+                List<float[]> GetDescriptors(string? raw)
+                {
+                    var list = new List<float[]>();
+                    if (string.IsNullOrWhiteSpace(raw)) return list;
+                    try
+                    {
+                        var parsed = System.Text.Json.JsonSerializer.Deserialize<float[]>(raw);
+                        if (parsed != null && parsed.Length == live.Length)
+                            list.Add(parsed);
+                    }
+                    catch { }
+                    return list;
+                }
 
-                // Practical thresholds: keep user-friendly acceptance, but still block cross-account takeover.
-                const float acceptThreshold = 0.52f;
-                const float betterMatchMargin = 0.03f;
-                const float suspiciousOtherThreshold = 0.47f;
+                var userDescriptors = new List<float[]>();
+                userDescriptors.AddRange(GetDescriptors(user.FaceDescriptorFront));
+                userDescriptors.AddRange(GetDescriptors(user.FaceDescriptorLeft));
+                userDescriptors.AddRange(GetDescriptors(user.FaceDescriptorRight));
+
+                if (userDescriptors.Count == 0)
+                    return BadRequest(new { success = false, message = "Tài khoản chưa có dữ liệu sinh trắc học hợp lệ." });
+
+                float bestClaimedDistance = 99f;
+                foreach (var descriptor in userDescriptors)
+                {
+                    var dist = CalculateEuclideanDistance(live, descriptor);
+                    if (dist < bestClaimedDistance) bestClaimedDistance = dist;
+                }
+
+                var isStaffOnly = !user.UserRoles.Any(ur => ur.Role != null && 
+                    (ur.Role.Name == "Admin" || ur.Role.Name == "Manager" || ur.Role.Name == "HR" || ur.Role.Name == "Accountant"));
+
+                float acceptThreshold = isStaffOnly ? 0.55f : 0.42f;
+                const float strongMatchThreshold = 0.38f;
+                const float otherStrongThreshold = 0.38f;
+                const float betterMatchMargin = 0.06f;
 
                 float bestOtherDistance = 99f;
                 int? bestOtherUserId = null;
                 string? bestOtherUserName = null;
 
                 var otherUsers = await _context.Users
-                    .Where(u => u.IsBiometricEnrolled && u.Id != user.Id && !string.IsNullOrEmpty(u.FaceDescriptorFront))
+                    .Where(u => u.IsBiometricEnrolled && u.Id != user.Id)
                     .Select(u => new { u.Id, u.FullName, u.FaceDescriptorFront, u.FaceDescriptorLeft, u.FaceDescriptorRight })
                     .ToListAsync();
 
                 foreach (var other in otherUsers)
                 {
-                    var otherFront = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorFront ?? "[]");
-                    if (otherFront == null || otherFront.Length == 0) continue;
+                    var otherDescriptors = new List<float[]>();
+                    otherDescriptors.AddRange(GetDescriptors(other.FaceDescriptorFront));
+                    otherDescriptors.AddRange(GetDescriptors(other.FaceDescriptorLeft));
+                    otherDescriptors.AddRange(GetDescriptors(other.FaceDescriptorRight));
+                    if (otherDescriptors.Count == 0) continue;
 
-                    float otherDistFront = CalculateEuclideanDistance(live!, otherFront);
-
-                    float otherDistLeft = 99f;
-                    if (!string.IsNullOrWhiteSpace(other.FaceDescriptorLeft))
+                    foreach (var descriptor in otherDescriptors)
                     {
-                        var otherLeft = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorLeft ?? "[]");
-                        if (otherLeft != null && otherLeft.Length == live!.Length)
-                            otherDistLeft = CalculateEuclideanDistance(live!, otherLeft);
-                    }
-
-                    float otherDistRight = 99f;
-                    if (!string.IsNullOrWhiteSpace(other.FaceDescriptorRight))
-                    {
-                        var otherRight = System.Text.Json.JsonSerializer.Deserialize<float[]>(other.FaceDescriptorRight ?? "[]");
-                        if (otherRight != null && otherRight.Length == live!.Length)
-                            otherDistRight = CalculateEuclideanDistance(live!, otherRight);
-                    }
-
-                    float otherMin = Math.Min(otherDistFront, Math.Min(otherDistLeft, otherDistRight));
-                    if (otherMin < bestOtherDistance)
-                    {
-                        bestOtherDistance = otherMin;
-                        bestOtherUserId = other.Id;
-                        bestOtherUserName = other.FullName;
+                        var dist = CalculateEuclideanDistance(live, descriptor);
+                        if (dist < bestOtherDistance)
+                        {
+                            bestOtherDistance = dist;
+                            bestOtherUserId = other.Id;
+                            bestOtherUserName = other.FullName;
+                        }
                     }
                 }
 
-                Console.WriteLine($"[FaceVerify] User {user.Id} ({user.FullName}) - distFront: {distFront:F4}, distLeft: {distLeft:F4}, distRight: {distRight:F4}, minDist: {minDistance:F4}, bestOther: {bestOtherDistance:F4} (uid={bestOtherUserId})");
+                Console.WriteLine($"[FaceVerify] User {user.Id} ({user.FullName}) - bestClaimed: {bestClaimedDistance:F4}, bestOther: {bestOtherDistance:F4} (uid={bestOtherUserId})");
 
-                if (minDistance > acceptThreshold)
-                    return BadRequest(new { success = false, message = $"Khuon mat khong khop! (Do lech: {minDistance:F2}). Vui long thu lai." });
+                if (bestClaimedDistance > acceptThreshold)
+                    return BadRequest(new { success = false, message = $"Khuôn mặt không khớp! (Độ lệch: {bestClaimedDistance:F2}). Vui lòng thử lại." });
 
-                // Only reject when another enrolled user is both:
-                // 1) suspiciously close in absolute distance, and
-                // 2) clearly better than the target account by a margin.
-                if (bestOtherDistance < suspiciousOtherThreshold && (bestOtherDistance + betterMatchMargin) < minDistance)
-                    return BadRequest(new { success = false, message = $"Xac thuc that bai: khuon mat nay gan voi tai khoan khac ({bestOtherUserName ?? "Unknown"}), he thong tu choi dang nhap nham tai khoan." });
+                var claimedStrong = bestClaimedDistance <= strongMatchThreshold;
+                var otherStrong = bestOtherDistance <= otherStrongThreshold;
+                var otherClearlyBetter = bestOtherDistance + betterMatchMargin < bestClaimedDistance;
+                if (!claimedStrong && otherStrong && otherClearlyBetter)
+                    return BadRequest(new { success = false, message = $"Xác thực thất bại: khuôn mặt này gần với tài khoản khác ({bestOtherUserName ?? "Unknown"})." });
 
                 // AUTO CHECK-IN: If face matches during login, record it as a check-in
                 var today = DateTime.Today;
@@ -705,7 +751,7 @@ namespace DANGCAPNE.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                return Ok(new { success = true, distance = minDistance, checkInDone = (existingTimesheet == null) });
+                return Ok(new { success = true, distance = bestClaimedDistance, checkInDone = (existingTimesheet == null) });
             } catch {
                 return BadRequest(new { success = false, message = "Lỗi xử lý dữ liệu AI." });
             }

@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Bảng Chấm công";
+    ViewData["Title"] = "Bảng Check out";
     var timesheets = ViewBag.Timesheets as List<DANGCAPNE.Models.Timekeeping.Timesheet> ?? new();
     var departments = ViewBag.Departments as List<DANGCAPNE.Models.Organization.Department> ?? new();
     var employees = ViewBag.Employees as List<DANGCAPNE.Models.Organization.User> ?? new();
@@ -33,8 +33,8 @@
 <div class="page-content">
     <div class="d-flex justify-between align-center mb-24">
         <div>
-            <h2 style="font-size:24px; font-weight:800;">📋 Bảng Chấm công Nhân viên</h2>
-            <p class="text-muted" style="margin-top:4px;">Theo dõi và quản lý chấm công toàn bộ nhân viên</p>
+            <h2 style="font-size:24px; font-weight:800;">📋 Bảng Check out Nhân viên</h2>
+            <p class="text-muted" style="margin-top:4px;">Theo dõi và quản lý Check out toàn bộ nhân viên</p>
         </div>
         <button onclick="exportToExcel()" class="btn btn-primary">
             <i class="bi bi-file-earmark-excel-fill"></i> Xuất Excel
@@ -132,7 +132,7 @@
     <!-- Table -->
     <div class="glass-card">
         <div class="card-header d-flex justify-between align-center">
-            <h3><i class="bi bi-table text-primary"></i> Dữ liệu chấm công</h3>
+            <h3><i class="bi bi-table text-primary"></i> Dữ liệu Check out</h3>
             <span class="text-muted" style="font-size:13px; font-weight:600;">@totalPresent bản ghi</span>
         </div>
         <div class="card-body" style="padding:0; overflow-x:auto;">
@@ -216,7 +216,7 @@
                         <tr>
                             <td colspan="8" style="text-align:center; padding:48px; color:#94a3b8;">
                                 <i class="bi bi-inbox" style="font-size:48px; display:block; margin-bottom:12px;"></i>
-                                Không có dữ liệu chấm công trong khoảng thời gian này.
+                                Không có dữ liệu Check out trong khoảng thời gian này.
                             </td>
                         </tr>
                     }

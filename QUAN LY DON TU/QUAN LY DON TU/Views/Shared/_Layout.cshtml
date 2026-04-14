@@ -57,14 +57,14 @@
                         @if (canSeeEmployeeExtras)
                         {
                             <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
-                                <i class="bi bi-clock-history"></i> Timeline chấm công
+                                <i class="bi bi-clock-history"></i> Timeline check out
                             </a>
                             <a href="@Url.Action("Index", "Shift")" class="nav-link @(currentController == "Shift" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpSchedule">
                                 <i class="bi bi-calendar3"></i> Lịch biểu & ca làm
                             </a>
                         }
                         <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpAttendance">
-                            <i class="bi bi-clock-fill"></i> Chấm công
+                            <i class="bi bi-clock-fill"></i> Check out
                         </a>
                     </div>
                 }
@@ -125,10 +125,10 @@
                             <i class="bi bi-calendar2-week-fill"></i> Quản lý phép
                         </a>
                         <a href="@Url.Action("Index", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Index" ? "active" : "")" data-i18n="NavTime">
-                            <i class="bi bi-clock-fill"></i> Chấm công
+                            <i class="bi bi-clock-fill"></i> Check out
                         </a>
                         <a href="@Url.Action("AdminReport", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "AdminReport" ? "active" : "")">
-                            <i class="bi bi-table"></i> Bảng chấm công
+                            <i class="bi bi-table"></i> Bảng check out
                         </a>
                     </div>
                 }
@@ -186,7 +186,7 @@
                         @if (isAdmin || isHR)
                         {
                             <a href="@Url.Action("Index", "Admin", new { tab = "timekeeping" })" class="nav-link @(currentController == "Admin" && currentAction == "Index" && currentAdminTab == "timekeeping" ? "active" : "")">
-                                <i class="bi bi-calendar-check"></i> Quản lý chấm công
+                                <i class="bi bi-calendar-check"></i> Quản lý check out
                             </a>
                         }
                     </div>
@@ -344,8 +344,8 @@
         const dict = {
             "vi": {
                 // Sidebar
-                "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ hệ thống", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Chấm công", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý nhân viên", "NavBuilder": "Trình tạo biểu mẫu",
-                "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline chấm công", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpAttendance": "Chấm công",
+                "TitleDashboard": "Tổng quan", "NavOverview": "Tổng quan", "NavNotif": "Thông báo", "NavRequests": "Đơn từ", "NavCreate": "Tạo đơn mới", "NavMyReq": "Đơn từ hệ thống", "NavApproval": "Duyệt đơn", "NavHR": "Nhân sự", "NavLeave": "Quản lý phép", "NavTime": "Check out", "NavModules": "Phân hệ mở rộng", "NavAdmin": "Quản trị", "NavUsers": "Quản lý nhân viên", "NavBuilder": "Trình tạo biểu mẫu",
+                "NavEmp": "Nhân viên", "NavEmpRequests": "Quản lý đơn từ", "NavEmpTimeline": "Timeline Check out", "NavEmpSchedule": "Lịch biểu & ca làm", "NavEmpAttendance": "Check out",
                 // Dashboard & Shared
                 "DashPending": "Đang chờ xử lý", "DashApproved": "Đã duyệt", "DashRejected": "Bị từ chối", "DashLeave": "Ngày phép còn lại",
                 "DashWelcome": "Xin chào, ", "DashDatePfx": "", "DashNoReq": "Chưa có đơn nào", "BtnCreateReq": "Tạo đơn",
@@ -370,7 +370,7 @@
                 // Select Template
                 "TitleSelectCategory": "Chọn loại đơn", "SubtitleSelectCategory": "Tạo đơn mới nhanh chóng theo đúng quy trình", "PlaceholderSearchCat": "Tìm loại đơn...",
                 "TitleAIPrompt": "Tạo đơn thông minh bằng A.I", "DescAIPrompt": "Nhập yêu cầu của bạn bằng ngôn ngữ tự nhiên, trợ lý ảo sẽ tự động chọn biểu mẫu và điền sẵn thông tin. Ví dụ: \"Cho tôi xin nghỉ phép chiều mai vì đi khám bệnh\".", "PlaceholderAIPrompt": "Bạn muốn tạo đơn gì hôm nay?", "BtnAIPrompt": "Phân tích",
-                "Cat_Leave": "Nghỉ phép", "Cat_OT": "Làm thêm giờ", "Cat_Travel": "Công tác", "Cat_Expense": "Chi phí", "Cat_Equipment": "Thiết bị", "Cat_Attendance": "Chấm công",
+                "Cat_Leave": "Nghỉ phép", "Cat_OT": "Làm thêm giờ", "Cat_Travel": "Công tác", "Cat_Expense": "Chi phí", "Cat_Equipment": "Thiết bị", "Cat_Attendance": "Check out",
                 "FilterAllCat": "Tất cả", "BadgeFinance": "Tài chính", "BadgeSuspended": "Tạm ngưng", "ActionCreateReq": "Tạo đơn", "DescStdForm": "Biểu mẫu tiêu chuẩn, điền nhanh và gửi duyệt.", "BtnAIAnalyzing": "Đang phân tích...",
                 // Create
                 "LabelReqTitle": "Tiêu đề đơn", "PlaceholderReqTitle": "Nhập tiêu đề cho đơn này", "LabelPriority": "Mức độ ưu tiên", "PriNormal": "Bình thường", "PriLow": "Thấp", "PriHigh": "Cao", "PriUrgent": "Khẩn cấp", "BtnBack": "Quay lại", "BtnSaveDraft": "Lưu nháp", "BtnSubmitReq": "Gửi đơn",
@@ -385,7 +385,7 @@
                 // HR & Advanced Admin Additions
                 "HRKanbanTitle": "Bảng Kanban nhân sự", "HRTotalReqPfx": "Tổng cộng", "HRTotalReqSfx": "đơn từ · Nhân viên", "HRAnomalyWarn": "Cảnh báo bất thường", "HRColWait": "Chờ xử lý", "HRColInProg": "Đang xử lý", "HRColDone": "Hoàn tất", "HRColRej": "Từ chối / Hủy", "HRDeptStats": "Thống kê phòng ban",
                 "LeaveTitleYearPrefix": "Quản lý Quỹ phép năm", "LeaveTotalRecordsPfx": "Tổng cộng", "LeaveTotalRecordsSfx": "bản ghi phép", "ColType": "Loại phép",
-                "TkTitle": "Quản lý chấm công", "TkSub": "Theo dõi thời gian làm việc của nhân viên", "FilterAllEmp": "Tất cả nhân viên", "BtnFilter": "Lọc", "TkTimeIn": "Giờ vào", "TkTimeOut": "Giờ ra", "TkWorkHours": "Giờ làm", "TkPresent": "Có mặt", "TkAbsent": "Vắng", "TkHoliday": "Nghỉ lễ",
+                "TkTitle": "Quản lý check out", "TkSub": "Theo dõi thời gian làm việc của nhân viên", "FilterAllEmp": "Tất cả nhân viên", "BtnFilter": "Lọc", "TkTimeIn": "Giờ vào", "TkTimeOut": "Giờ ra", "TkWorkHours": "Giờ làm", "TkPresent": "Có mặt", "TkAbsent": "Vắng", "TkHoliday": "Nghỉ lễ",
                 "NotifUnreadSfx": "chưa đọc", "TitleManageUsers": "Quản lý nhân viên", "PlaceholderDeptName": "Tên phòng ban", "PlaceholderDeptCode": "Mã phòng ban", "BtnAdd": "Thêm", "LabelEmp": "nhân viên", "TitleDynamicForms": "Biểu mẫu động", "TitleCreateForm": "Tạo biểu mẫu", "ColFormName": "Tên", "ColCategory": "Danh mục", "ColWorkflow": "Luồng duyệt", "ColFinance": "Tài chính", "LabelReqPin": "Cần PIN", "LabelAutoSkip": "tự bỏ qua", "NavApprovalFlow": "Luồng phê duyệt", "EditUserTitle": "Chỉnh sửa nhân viên", "AddUserTitle": "Thêm nhân viên", "LabelPhone": "Số điện thoại", "LabelBranch": "Chi nhánh", "LabelJobTitle": "Chức danh", "LabelDirectMgr": "Quản lý trực tiếp", "OptActive": "Hoạt động", "OptInactive": "Vô hiệu hóa", "BtnSaveInfo": "Lưu thông tin",
                 "ModulesExt": "Phân hệ mở rộng", "BtnManage": "Quản lý", "ModulesNoAccess": "Bạn không có quyền truy cập phân hệ nào.",
                 "NavHRKanban": "Bảng Kanban", "NavRbac": "Phân quyền", "NavRecruit": "Tuyển dụng", "NavTraining": "Đào tạo & Tuân thủ", "NavAdminOps": "Hành chính", "NavDelegate": "Ủy quyền", "NavAudit": "Nhật ký hệ thống",

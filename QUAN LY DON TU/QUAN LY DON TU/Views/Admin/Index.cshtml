@@ -3,13 +3,13 @@
     var activeTab = (Model.ActiveTab ?? "users").ToLowerInvariant();
     var pageTitle = activeTab switch
     {
-        "timekeeping" => "Quản lý chấm công",
+        "timekeeping" => "Quản lý Check out",
         "requeststats" => "Thống kê đơn từ",
         _ => "Quản lý nhân viên"
     };
     var pageSubtitle = activeTab switch
     {
-        "timekeeping" => "Theo dõi lịch sử chấm công, bộ lọc phòng ban và chỉnh sửa bản ghi công.",
+        "timekeeping" => "Theo dõi lịch sử Check out, bộ lọc phòng ban và chỉnh sửa bản ghi công.",
         "requeststats" => "Thống kê đơn từ theo khoảng thời gian và biểu đồ dành riêng cho Admin.",
         _ => "Xem danh sách nhân viên và dữ liệu được tải trực tiếp từ cơ sở dữ liệu trên server."
     };
@@ -26,7 +26,7 @@
     {
         <div class="glass-card mb-24">
             <div class="card-header">
-                <h3><i class="bi bi-funnel"></i> Bộ lọc chấm công</h3>
+                <h3><i class="bi bi-funnel"></i> Bộ lọc Check out</h3>
             </div>
             <div class="card-body">
                 <form method="get" asp-action="Index">
@@ -65,7 +65,7 @@
 
         <div class="glass-card">
             <div class="card-header d-flex justify-between align-center">
-                <h3><i class="bi bi-table"></i> Bảng chấm công</h3>
+                <h3><i class="bi bi-table"></i> Bảng Check out</h3>
                 <span class="text-muted">@Model.Timesheets.Count bản ghi</span>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
@@ -107,7 +107,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="8" class="text-center text-muted" style="padding:32px;">Không có dữ liệu chấm công phù hợp bộ lọc hiện tại.</td>
+                                <td colspan="8" class="text-center text-muted" style="padding:32px;">Không có dữ liệu Check out phù hợp bộ lọc hiện tại.</td>
                             </tr>
                         }
                     </tbody>

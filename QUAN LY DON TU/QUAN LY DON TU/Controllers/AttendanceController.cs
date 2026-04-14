@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Models.Timekeeping;
 using System.Net;
+using System.Linq;
+using System.Text.Json;
 
 namespace DANGCAPNE.Controllers
 {
@@ -21,9 +23,13 @@ namespace DANGCAPNE.Controllers
             if (userId == null) return RedirectToAction("Login", "Account");
 
             var user = await _context.Users.FindAsync(userId);
-            ViewBag.HasFaceRegistered = !string.IsNullOrEmpty(user?.FaceDescriptorFront);
+            ViewBag.HasFaceRegistered = user?.IsBiometricEnrolled == true &&
+                (!string.IsNullOrEmpty(user?.FaceDescriptorFront) || !string.IsNullOrEmpty(user?.FaceDescriptorLeft) || !string.IsNullOrEmpty(user?.FaceDescriptorRight));
             ViewBag.FaceDescriptorFront = user?.FaceDescriptorFront;
+            ViewBag.FaceDescriptorLeft = user?.FaceDescriptorLeft;
+            ViewBag.FaceDescriptorRight = user?.FaceDescriptorRight;
             ViewBag.AvatarUrl = user?.AvatarUrl;
+            ViewBag.IsBiometricEnrolled = user?.IsBiometricEnrolled == true;
 
             var today = DateTime.Today;
             var timesheet = await _context.Timesheets
@@ -127,7 +133,7 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CheckIn(double? lat, double? lon, string? wifiName, string? wifiBssid, string? qrCode, string? photoBase64, bool? faceMatched)
+        public async Task<IActionResult> CheckIn(double? lat, double? lon, string? wifiName, string? wifiBssid, string? qrCode, string? photoBase64, bool? faceMatched, string? faceDescriptor)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Json(new { success = false, message = "Phien dang nhap het han" });
@@ -138,8 +144,58 @@ namespace DANGCAPNE.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return Json(new { success = false, message = "Khong tim thay nguoi dung" });
 
-            if (!string.IsNullOrEmpty(user.FaceDescriptorFront) && faceMatched != true)
-                return Json(new { success = false, message = "Xac thuc khuon mat that bai." });
+            var enrolledDescriptors = new List<float[]>();
+            void TryAddDescriptor(string? descriptor)
+            {
+                if (string.IsNullOrWhiteSpace(descriptor)) return;
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<float[]>(descriptor);
+                    if (parsed != null && parsed.Length > 0)
+                    {
+                        enrolledDescriptors.Add(parsed);
+                    }
+                }
+                catch { }
+            }
+
+            TryAddDescriptor(user.FaceDescriptorFront);
+            TryAddDescriptor(user.FaceDescriptorLeft);
+            TryAddDescriptor(user.FaceDescriptorRight);
+
+            if (enrolledDescriptors.Count > 0)
+            {
+                if (string.IsNullOrWhiteSpace(faceDescriptor))
+                    return Json(new { success = false, message = "Xác thực khuôn mặt thất bại." });
+
+                float[] scannedDescriptor;
+                try
+                {
+                    scannedDescriptor = JsonSerializer.Deserialize<float[]>(faceDescriptor) ?? Array.Empty<float>();
+                }
+                catch
+                {
+                    return Json(new { success = false, message = "Xác thực khuôn mặt thất bại." });
+                }
+
+                if (scannedDescriptor.Length == 0)
+                    return Json(new { success = false, message = "Xác thực khuôn mặt thất bại." });
+
+                double bestDistance = double.MaxValue;
+                foreach (var storedDescriptor in enrolledDescriptors)
+                {
+                    if (storedDescriptor.Length != scannedDescriptor.Length) continue;
+                    var distance = Math.Sqrt(storedDescriptor.Zip(scannedDescriptor, (s, c) => Math.Pow(s - c, 2)).Sum());
+                    if (distance < bestDistance) bestDistance = distance;
+                }
+
+                if (bestDistance == double.MaxValue || bestDistance > 0.38)
+                    return Json(new { success = false, message = "Xác thực khuôn mặt thất bại." });
+            }
+            else if (user.IsBiometricEnrolled)
+            {
+                return Json(new { success = false, message = "Tài khoản chưa có dữ liệu sinh trắc học hợp lệ." });
+            }
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 

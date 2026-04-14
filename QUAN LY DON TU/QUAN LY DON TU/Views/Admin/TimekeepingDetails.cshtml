@@ -1,6 +1,6 @@
 @model DANGCAPNE.Models.Timekeeping.Timesheet
 @{
-    ViewData["Title"] = "Chi tiết chấm công";
+    ViewData["Title"] = "Chi tiết Check out";
     var statusMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["Present"] = "Có mặt",
@@ -15,10 +15,10 @@
 <div class="page-content">
     <div class="d-flex justify-between align-center mb-24" style="gap:16px; flex-wrap:wrap;">
         <div>
-            <h2 style="margin:0; font-size:28px; font-weight:800;">Chi tiết chấm công</h2>
-            <p class="text-muted" style="margin-top:6px;">Cập nhật thủ công giờ vào, giờ ra và ghi chú cho bản ghi chấm công.</p>
+            <h2 style="margin:0; font-size:28px; font-weight:800;">Chi tiết Check out</h2>
+            <p class="text-muted" style="margin-top:6px;">Cập nhật thủ công giờ vào, giờ ra và ghi chú cho bản ghi Check out.</p>
         </div>
-        <a href="@Url.Action("Index", new { tab = "timekeeping" })" class="btn btn-outline">Quay lại bảng chấm công</a>
+        <a href="@Url.Action("Index", new { tab = "timekeeping" })" class="btn btn-outline">Quay lại bảng Check out</a>
     </div>
 
     <div class="form-row">
@@ -54,7 +54,7 @@
         <div class="col-7">
             <div class="glass-card">
                 <div class="card-header">
-                    <h3><i class="bi bi-pencil-square"></i> Chỉnh sửa chấm công</h3>
+                    <h3><i class="bi bi-pencil-square"></i> Chỉnh sửa Check out</h3>
                 </div>
                 <div class="card-body">
                     <form method="post" asp-action="ManualUpdateTimekeeping">

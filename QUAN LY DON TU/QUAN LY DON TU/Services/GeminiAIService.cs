@@ -12,7 +12,7 @@ namespace DANGCAPNE.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string? _apiKey;
-        private const string _geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
+        private const string _geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=";
         public GeminiAIService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
@@ -201,6 +201,177 @@ Nhiệm vụ của bạn là giải đáp thắc mắc, hướng dẫn sử dụ
                  return "Xin lỗi, hiện tại tôi không thể xử lý, vui lòng thử lại sau.";
              }
         }
+
+        public async Task<MedicalCertAnalysisResult> AnalyzeMedicalCertificateAsync(string filePath, string contentType)
+        {
+            var failResult = new MedicalCertAnalysisResult
+            {
+                Verdict = "FAIL",
+                Score = 0,
+                Summary = "Không thể phân tích tài liệu.",
+                Checks = new List<MedicalCertCheck>()
+            };
+
+            if (string.IsNullOrEmpty(_apiKey))
+            {
+                failResult.Summary = "Chưa cấu hình Gemini API Key.";
+                return failResult;
+            }
+
+            try
+            {
+                var fileBytes = await File.ReadAllBytesAsync(filePath);
+                var base64File = Convert.ToBase64String(fileBytes);
+
+                var prompt = @"Bạn là chuyên gia kiểm tra chứng từ y tế của Việt Nam. Hãy phân tích hình ảnh được cung cấp và xác định đây có phải là chứng từ y tế hợp lệ dùng để xin nghỉ phép hay không (bao gồm các loại hợp lệ: GIẤY RA VIỆN, GIẤY CHỨNG NHẬN NGHỈ VIỆC HƯỞNG BHXH, GIẤY KHÁM BỆNH có chỉ định cho nghỉ).
+
+Hãy kiểm tra các tiêu chí sau và trả về KẾT QUẢ DUY NHẤT LÀ JSON (không có markdown, không có text thêm):
+
+{
+  ""verdict"": ""PASS"" hoặc ""FAIL"" hoặc ""SUSPICIOUS"",
+  ""score"": <số từ 0-100 đánh giá độ tin cậy>,
+  ""summary"": ""<tóm tắt ngắn gọn kết quả bằng tiếng Việt>"",
+  ""missing_fields"": [""<trường thiếu>"", ...],
+  ""checks"": [
+    {
+      ""id"": ""template"",
+      ""label"": ""Loại biểu mẫu hợp pháp"",
+      ""status"": ""PASS"" hoặc ""FAIL"" hoặc ""WARN"",
+      ""detail"": ""<giải thích ngắn>""
+    },
+    {
+      ""id"": ""seal_signature"",
+      ""label"": ""Dấu và chữ ký"",
+      ""status"": ""PASS"" hoặc ""FAIL"" hoặc ""WARN"",
+      ""detail"": ""<giải thích ngắn>""
+    },
+    {
+      ""id"": ""image_integrity"",
+      ""label"": ""Tính toàn vẹn ảnh (cắt ghép/chỉnh sửa)"",
+      ""status"": ""PASS"" hoặc ""FAIL"" hoặc ""WARN"",
+      ""detail"": ""<giải thích ngắn>""
+    },
+    {
+      ""id"": ""required_fields"",
+      ""label"": ""Thông tin bắt buộc đầy đủ"",
+      ""status"": ""PASS"" hoặc ""FAIL"" hoặc ""WARN"",
+      ""detail"": ""<giải thích ngắn — liệt kê trường thiếu nếu có>""
+    },
+    {
+      ""id"": ""icd_diagnosis"",
+      ""label"": ""Chẩn đoán & Mã ICD"",
+      ""status"": ""PASS"" hoặc ""FAIL"" hoặc ""WARN"",
+      ""detail"": ""<giải thích ngắn>""
+    },
+    {
+      ""id"": ""date_logic"",
+      ""label"": ""Tính hợp lý ngày tháng & thời gian nghỉ"",
+      ""status"": ""PASS"" hoặc ""FAIL"" hoặc ""WARN"",
+      ""detail"": ""<giải thích ngắn>""
+    }
+  ]
+}
+
+Quy tắc đánh giá:
+- verdict = PASS: Các tiêu chí quan trọng đều ổn. Nếu là 'Giấy ra viện' hợp lệ thì vẫn duyệt PASS dù không ghi rõ số ngày nghỉ ngơi nhưng có lời dặn của bác sĩ.
+- verdict = SUSPICIOUS: Có dấu hiệu mờ, tẩy xóa sơ sài nhưng chưa chắc là giả.
+- verdict = FAIL: Không phải tài liệu y tế, hoặc phát hiện dấu hiệu chỉnh sửa Photoshop/giả mạo chữ ký, làm giả con dấu rõ ràng.
+- Giấy y tế hợp lệ thường có: tên bệnh viện, họ tên bệnh nhân, chẩn đoán, ngày vào/ra viện/khám, chữ ký và con dấu đỏ. Mấu chốt là tính xác thực mộc đỏ và chữ ký.
+- Trả lời NGAY JSON THUẦN TÚY, không thêm bất kỳ text nào khác.";
+
+                var payload = new
+                {
+                    contents = new[]
+                    {
+                        new
+                        {
+                            parts = new object[]
+                            {
+                                new { text = prompt },
+                                new
+                                {
+                                    inline_data = new
+                                    {
+                                        mime_type = contentType,
+                                        data = base64File
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    generationConfig = new
+                    {
+                        temperature = 0.1,
+                        responseMimeType = "application/json"
+                    }
+                };
+
+                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync($"{_geminiEndpoint}{_apiKey}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    dynamic result = JsonConvert.DeserializeObject(responseString)!;
+                    string aiText = result.candidates[0].content.parts[0].text.ToString();
+                    aiText = aiText.Replace("```json", "").Replace("```", "").Trim();
+
+                    try
+                    {
+                        var analysisResult = JsonConvert.DeserializeObject<MedicalCertAnalysisResult>(aiText);
+                        if (analysisResult != null) return analysisResult;
+                    }
+                    catch
+                    {
+                        failResult.Summary = "AI trả về kết quả không đúng định dạng.";
+                        return failResult;
+                    }
+                }
+
+                var errorMsg = await response.Content.ReadAsStringAsync();
+                failResult.Summary = $"Lỗi khi gọi AI ({(int)response.StatusCode}): {errorMsg}";
+                return failResult;
+
+            }
+            catch (Exception ex)
+            {
+                failResult.Summary = $"Lỗi hệ thống: {ex.Message}";
+                return failResult;
+            }
+        }
+    }
+
+    public class MedicalCertAnalysisResult
+    {
+        [JsonProperty("verdict")]
+        public string Verdict { get; set; } = "FAIL"; // PASS, FAIL, SUSPICIOUS
+
+        [JsonProperty("score")]
+        public int Score { get; set; } = 0;
+
+        [JsonProperty("summary")]
+        public string Summary { get; set; } = string.Empty;
+
+        [JsonProperty("missing_fields")]
+        public List<string> MissingFields { get; set; } = new();
+
+        [JsonProperty("checks")]
+        public List<MedicalCertCheck> Checks { get; set; } = new();
+    }
+
+    public class MedicalCertCheck
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonProperty("label")]
+        public string Label { get; set; } = string.Empty;
+
+        [JsonProperty("status")]
+        public string Status { get; set; } = "FAIL"; // PASS, FAIL, WARN
+
+        [JsonProperty("detail")]
+        public string Detail { get; set; } = string.Empty;
     }
 
     public class ChatMessage

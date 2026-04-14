@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>QuestPDF</id>
+    <version>2026.2.4</version>
+    <authors>MarcinZiabek</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="file">PackageLicense.md</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <icon>Logo.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://www.questpdf.com/</projectUrl>
+    <iconUrl>https://www.questpdf.com/logo.webp</iconUrl>
+    <description>QuestPDF is a modern library for PDF document generation. Its fluent C# API lets you design complex layouts with clean, readable code. Create invoices, reports, and documents using a flexible, component-based approach.</description>
+    <releaseNotes>- Fixed a bug where using Page.MinSize() or Page.MaxSize() could produce unexpected results
+- Added more helpful validation messages for minimum and maximum size constraints in the Constrained element
+- Improved the welcome message with a clearer explanation of the library license</releaseNotes>
+    <copyright>Marcin Ziąbek, QuestPDF contributors</copyright>
+    <tags>pdf generation creation export merge edit html</tags>
+    <repository type="git" url="https://github.com/QuestPDF/library.git" commit="1ba54b9e5411e82f9a10696e35e88017acb2adb2" />
+    <dependencies>
+      <group targetFramework="net6.0" />
+      <group targetFramework="net8.0" />
+      <group targetFramework="net10.0" />
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="System.Numerics.Vectors" version="4.6.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

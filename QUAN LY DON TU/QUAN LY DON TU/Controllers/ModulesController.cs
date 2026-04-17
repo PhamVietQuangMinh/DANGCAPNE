@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
@@ -14,6 +14,7 @@ using DANGCAPNE.Models.Organization;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.Models.Requests;
 using DANGCAPNE.Models.SystemModels;
+using Npgsql;
 
 namespace DANGCAPNE.Controllers
 {
@@ -87,11 +88,23 @@ namespace DANGCAPNE.Controllers
         {
             var module = GetModuleOrDeny(key, out var denyResult);
             if (denyResult != null) return denyResult;
+            if (module == null) return NotFound();
 
-            var entityType = module!.EntityType;
-            var query = GetQueryable(entityType);
-            query = ApplyAsNoTracking(entityType, query);
-            var rows = await ToListAsync(entityType, query);
+            var entityType = module.EntityType;
+            List<object> rows;
+            try
+            {
+                var query = GetQueryable(entityType);
+                query = ApplyAsNoTracking(entityType, query);
+                rows = await ToListAsync(entityType, query);
+            }
+            catch (PostgresException ex) when (ex.SqlState == "42703")
+            {
+                await SchemaPatchRunner.EnsureExtendedSchemaAsync(_context);
+                var query = GetQueryable(entityType);
+                query = ApplyAsNoTracking(entityType, query);
+                rows = await ToListAsync(entityType, query);
+            }
 
             var columns = GetScalarProperties(entityType).Select(p => p.Name).ToList();
             var rowData = rows.Select(r => ToRowDict(r, columns)).ToList();
@@ -132,9 +145,10 @@ namespace DANGCAPNE.Controllers
         {
             var module = GetModuleOrDeny(key, out var denyResult);
             if (denyResult != null) return denyResult;
+            if (module == null) return NotFound();
 
-            var model = BuildEditModel(module!, null);
-            ViewData["Title"] = "Create " + module!.Title;
+            var model = BuildEditModel(module, null);
+            ViewData["Title"] = "Create " + module.Title;
             return View("Edit", model);
         }
 
@@ -144,8 +158,9 @@ namespace DANGCAPNE.Controllers
         {
             var module = GetModuleOrDeny(key, out var denyResult);
             if (denyResult != null) return denyResult;
+            if (module == null) return NotFound();
 
-            var entityType = module!.EntityType;
+            var entityType = module.EntityType;
             var entity = Activator.CreateInstance(entityType);
             if (entity == null) return BadRequest("Failed to create entity.");
 
@@ -163,8 +178,9 @@ namespace DANGCAPNE.Controllers
         {
             var module = GetModuleOrDeny(key, out var denyResult);
             if (denyResult != null) return denyResult;
+            if (module == null) return NotFound();
 
-            var entity = await _context.FindAsync(module!.EntityType, id);
+            var entity = await _context.FindAsync(module.EntityType, id);
             if (entity == null) return NotFound();
 
             var model = BuildEditModel(module, entity);
@@ -178,8 +194,9 @@ namespace DANGCAPNE.Controllers
         {
             var module = GetModuleOrDeny(key, out var denyResult);
             if (denyResult != null) return denyResult;
+            if (module == null) return NotFound();
 
-            var entity = await _context.FindAsync(module!.EntityType, id);
+            var entity = await _context.FindAsync(module.EntityType, id);
             if (entity == null) return NotFound();
 
             ApplyPostToEntity(entity, post, skipKey: true);
@@ -196,8 +213,9 @@ namespace DANGCAPNE.Controllers
         {
             var module = GetModuleOrDeny(key, out var denyResult);
             if (denyResult != null) return denyResult;
+            if (module == null) return NotFound();
 
-            var entity = await _context.FindAsync(module!.EntityType, id);
+            var entity = await _context.FindAsync(module.EntityType, id);
             if (entity == null) return NotFound();
 
             _context.Remove(entity);
@@ -348,26 +366,23 @@ namespace DANGCAPNE.Controllers
 
         private static readonly Dictionary<string, ModuleConfig> ExtendedModules = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["requestapprovals"] = new ModuleConfig("requestapprovals", "Request Approvals", "Hàng đợi phê duyệt đơn", typeof(RequestApproval), "Admin", "HR", "Manager"),
-            ["requestauditlogs"] = new ModuleConfig("requestauditlogs", "Request Audit Logs", "Lịch sử phê duyệt và thao tác đơn", typeof(RequestAuditLog), "Admin", "HR", "Manager"),
-            ["notifications"] = new ModuleConfig("notifications", "Notifications", "Hệ thống thông báo đơn", typeof(Notification), "Admin", "HR", "Manager"),
-            ["authauditlogs"] = new ModuleConfig("authauditlogs", "Auth Audit Logs", "Nhật ký đăng nhập/đăng xuất", typeof(AuthAuditLog), "Admin", "HR", "IT", "ITManager"),
-            ["passwordhistories"] = new ModuleConfig("passwordhistories", "Password History", "Lịch sử đổi mật khẩu", typeof(PasswordHistory), "Admin", "IT", "ITManager"),
-            ["salaryadvancerequests"] = new ModuleConfig("salaryadvancerequests", "Salary Advance Requests", "Tạm ứng lương", typeof(SalaryAdvanceRequest), "Admin", "HR", "Manager"),
-            ["insuranceimportbatches"] = new ModuleConfig("insuranceimportbatches", "Insurance Import Batches", "Nhập BHXH từ Excel", typeof(InsuranceImportBatch), "Admin", "HR"),
-            ["timesheets"] = new ModuleConfig("timesheets", "Timesheets", "Báo cáo chấm công chi tiết", typeof(Timesheet), "Admin", "HR", "Manager"),
-            ["dailyattendances"] = new ModuleConfig("dailyattendances", "Daily Attendance", "Lịch sử chấm công đã tổng hợp", typeof(DailyAttendance), "Admin", "HR", "Manager"),
-            ["attendanceadjustmentrequests"] = new ModuleConfig("attendanceadjustmentrequests", "Attendance Adjustment Requests", "Điều chỉnh công", typeof(AttendanceAdjustmentRequest), "Admin", "HR", "Manager"),
-            ["lateearlyrequests"] = new ModuleConfig("lateearlyrequests", "Late/Early Requests", "Đi muộn/về sớm", typeof(LateEarlyRequest), "Admin", "HR", "Manager"),
-            ["shiftimportbatches"] = new ModuleConfig("shiftimportbatches", "Shift Import Batches", "Xếp ca từ Excel", typeof(ShiftImportBatch), "Admin", "HR"),
-            ["autoshiftplans"] = new ModuleConfig("autoshiftplans", "Auto Shift Plans", "Xếp ca tự động", typeof(AutoShiftPlan), "Admin", "HR"),
-            ["autoshiftplanitems"] = new ModuleConfig("autoshiftplanitems", "Auto Shift Plan Items", "Chi tiết xếp ca tự động", typeof(AutoShiftPlanItem), "Admin", "HR"),
-            ["shifttaskassignments"] = new ModuleConfig("shifttaskassignments", "Shift Task Assignments", "Giao việc trong ca", typeof(ShiftTaskAssignment), "Admin", "HR", "Manager"),
-            ["employeeonlinesessions"] = new ModuleConfig("employeeonlinesessions", "Employee Online Sessions", "Giám sát nhân sự trực tuyến", typeof(EmployeeOnlineSession), "Admin", "HR", "Manager", "IT", "ITManager"),
-            ["workflowroutingrules"] = new ModuleConfig("workflowroutingrules", "Workflow Routing Rules", "Routing tuần tự/song song", typeof(WorkflowRoutingRule), "Admin", "HR"),
-            ["digitalsignatureprofiles"] = new ModuleConfig("digitalsignatureprofiles", "Digital Signature Profiles", "Ký điện tử", typeof(DigitalSignatureProfile), "Admin", "HR"),
-            ["kpisnapshots"] = new ModuleConfig("kpisnapshots", "KPI Snapshots", "Dashboard KPI", typeof(KpiSnapshot), "Admin", "HR", "Manager"),
-            ["requestcategoryreportsnapshots"] = new ModuleConfig("requestcategoryreportsnapshots", "Request Category Reports", "Báo cáo theo loại đơn", typeof(RequestCategoryReportSnapshot), "Admin", "HR", "Manager")
+            ["requestapprovals"] = new ModuleConfig("requestapprovals", "Request Approvals", "HÃ ng Ä‘á»£i phÃª duyá»‡t Ä‘Æ¡n", typeof(RequestApproval), "Admin", "HR", "Manager"),
+            ["requestauditlogs"] = new ModuleConfig("requestauditlogs", "Request Audit Logs", "Lá»‹ch sá»­ phÃª duyá»‡t vÃ  thao tÃ¡c Ä‘Æ¡n", typeof(RequestAuditLog), "Admin", "HR", "Manager"),
+            ["notifications"] = new ModuleConfig("notifications", "Notifications", "Há»‡ thá»‘ng thÃ´ng bÃ¡o Ä‘Æ¡n", typeof(Notification), "Admin", "HR", "Manager"),
+            ["authauditlogs"] = new ModuleConfig("authauditlogs", "Auth Audit Logs", "Nháº­t kÃ½ Ä‘Äƒng nháº­p/Ä‘Äƒng xuáº¥t", typeof(AuthAuditLog), "Admin", "HR", "IT", "ITManager"),
+            ["passwordhistories"] = new ModuleConfig("passwordhistories", "Password History", "Lá»‹ch sá»­ Ä‘á»•i máº­t kháº©u", typeof(PasswordHistory), "Admin", "IT", "ITManager"),
+            ["salaryadvancerequests"] = new ModuleConfig("salaryadvancerequests", "Salary Advance Requests", "Táº¡m á»©ng lÆ°Æ¡ng", typeof(SalaryAdvanceRequest), "Admin", "HR", "Manager"),
+            ["insuranceimportbatches"] = new ModuleConfig("insuranceimportbatches", "Insurance Import Batches", "Nháº­p BHXH tá»« Excel", typeof(InsuranceImportBatch), "Admin", "HR"),
+            ["timesheets"] = new ModuleConfig("timesheets", "Timesheets", "BÃ¡o cÃ¡o cháº¥m cÃ´ng chi tiáº¿t", typeof(Timesheet), "Admin", "HR", "Manager"),
+            ["dailyattendances"] = new ModuleConfig("dailyattendances", "Daily Attendance", "Lá»‹ch sá»­ cháº¥m cÃ´ng Ä‘Ã£ tá»•ng há»£p", typeof(DailyAttendance), "Admin", "HR", "Manager"),
+            ["attendanceadjustmentrequests"] = new ModuleConfig("attendanceadjustmentrequests", "Attendance Adjustment Requests", "Äiá»u chá»‰nh cÃ´ng", typeof(AttendanceAdjustmentRequest), "Admin", "HR", "Manager"),
+            ["lateearlyrequests"] = new ModuleConfig("lateearlyrequests", "Late/Early Requests", "Äi muá»™n/vá» sá»›m", typeof(LateEarlyRequest), "Admin", "HR", "Manager"),
+            ["shiftimportbatches"] = new ModuleConfig("shiftimportbatches", "Shift Import Batches", "Xáº¿p ca tá»« Excel", typeof(ShiftImportBatch), "Admin", "HR"),
+            ["autoshiftplans"] = new ModuleConfig("autoshiftplans", "Auto Shift Plans", "Xáº¿p ca tá»± Ä‘á»™ng", typeof(AutoShiftPlan), "Admin", "HR"),
+            ["autoshiftplanitems"] = new ModuleConfig("autoshiftplanitems", "Auto Shift Plan Items", "Chi tiáº¿t xáº¿p ca tá»± Ä‘á»™ng", typeof(AutoShiftPlanItem), "Admin", "HR"),
+            ["shifttaskassignments"] = new ModuleConfig("shifttaskassignments", "Shift Task Assignments", "Giao viá»‡c trong ca", typeof(ShiftTaskAssignment), "Admin", "HR", "Manager"),
+            ["employeeonlinesessions"] = new ModuleConfig("employeeonlinesessions", "Employee Online Sessions", "GiÃ¡m sÃ¡t nhÃ¢n sá»± trá»±c tuyáº¿n", typeof(EmployeeOnlineSession), "Admin", "HR", "Manager", "IT", "ITManager"),
+            ["digitalsignatureprofiles"] = new ModuleConfig("digitalsignatureprofiles", "Digital Signature Profiles", "KÃ½ Ä‘iá»‡n tá»­", typeof(DigitalSignatureProfile), "Admin", "HR"),
         };
 
         private void ApplyPostToEntity(object entity, DynamicCrudEditPostModel post, bool skipKey = false)
@@ -527,8 +542,9 @@ namespace DANGCAPNE.Controllers
                 .Concat(ExtendedModules)
                 .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
 
-            if (!allModules.TryGetValue(NormalizeKey(key), out var module))
+            if (string.IsNullOrWhiteSpace(key) || !allModules.TryGetValue(NormalizeKey(key), out var module))
             {
+                denyResult = NotFound();
                 return null;
             }
 
@@ -585,35 +601,35 @@ namespace DANGCAPNE.Controllers
             var sections = new List<ModuleSectionViewModel>
             {
                 CreateSection(
-                    "Bảo mật & phân quyền",
-                    "Dành cho Admin cấu hình quyền hệ thống và giám sát phân quyền cốt lõi.",
+                    "Báº£o máº­t & phÃ¢n quyá»n",
+                    "DÃ nh cho Admin cáº¥u hÃ¬nh quyá»n há»‡ thá»‘ng vÃ  giÃ¡m sÃ¡t phÃ¢n quyá»n cá»‘t lÃµi.",
                     "Admin",
                     "permissions", "rolepermissions", "userpermissions"),
                 CreateSection(
-                    "IT vận hành",
-                    "Dành cho IT/Admin theo dõi truy cập, thiết bị tin cậy, cấu hình chấm công và tài sản kỹ thuật.",
+                    "IT váº­n hÃ nh",
+                    "DÃ nh cho IT/Admin theo dÃµi truy cáº­p, thiáº¿t bá»‹ tin cáº­y, cáº¥u hÃ¬nh cháº¥m cÃ´ng vÃ  tÃ i sáº£n ká»¹ thuáº­t.",
                     "IT, IT Manager, Admin",
                     "authauditlogs", "passwordhistories", "employeeonlinesessions", "attendancelocationconfigs", "assetassignments", "assetincidents"),
                 CreateSection(
-                    "Phê duyệt & đơn nội bộ",
-                    "Dành cho Trưởng phòng, HR, Admin xử lý điều chỉnh công, đi muộn/về sớm, tạm ứng lương và lịch sử phê duyệt.",
+                    "PhÃª duyá»‡t & Ä‘Æ¡n ná»™i bá»™",
+                    "DÃ nh cho TrÆ°á»Ÿng phÃ²ng, HR, Admin xá»­ lÃ½ Ä‘iá»u chá»‰nh cÃ´ng, Ä‘i muá»™n/vá» sá»›m, táº¡m á»©ng lÆ°Æ¡ng vÃ  lá»‹ch sá»­ phÃª duyá»‡t.",
                     "Manager, HR, Admin",
                     "requestapprovals", "requestauditlogs", "attendanceadjustmentrequests", "lateearlyrequests", "salaryadvancerequests", "shiftswaprequests", "notifications"),
                 CreateSection(
-                    "Chấm công & vận hành ca",
-                    "Dành cho HR/Admin quản trị chấm công chi tiết, import ca, giao việc trong ca và giám sát nhân sự trực tuyến.",
+                    "Cháº¥m cÃ´ng & váº­n hÃ nh ca",
+                    "DÃ nh cho HR/Admin quáº£n trá»‹ cháº¥m cÃ´ng chi tiáº¿t, import ca, giao viá»‡c trong ca vÃ  giÃ¡m sÃ¡t nhÃ¢n sá»± trá»±c tuyáº¿n.",
                     "Manager, HR, Admin",
                     "timesheets", "dailyattendances", "shiftimportbatches", "autoshiftplans", "autoshiftplanitems", "shifttaskassignments", "employeeonlinesessions"),
                 CreateSection(
-                    "Workflow & ký số",
-                    "Dành cho HR/Admin cấu hình routing tuần tự hoặc song song và hồ sơ ký điện tử.",
+                    "Workflow & kÃ½ sá»‘",
+                    "DÃ nh cho HR/Admin cáº¥u hÃ¬nh routing tuáº§n tá»± hoáº·c song song vÃ  há»“ sÆ¡ kÃ½ Ä‘iá»‡n tá»­.",
                     "HR, Admin",
-                    "workflowroutingrules", "digitalsignatureprofiles"),
+                    "digitalsignatureprofiles"),
                 CreateSection(
-                    "Bảo hiểm, KPI & báo cáo",
-                    "Dành cho HR/Admin tổng hợp bảo hiểm, KPI và báo cáo theo loại đơn.",
+                    "Báº£o hiá»ƒm, KPI & bÃ¡o cÃ¡o",
+                    "DÃ nh cho HR/Admin tá»•ng há»£p báº£o hiá»ƒm, KPI vÃ  bÃ¡o cÃ¡o theo loáº¡i Ä‘Æ¡n.",
                     "Manager, HR, Admin",
-                    "insuranceimportbatches", "socialinsurances", "kpisnapshots", "requestcategoryreportsnapshots")
+                    "insuranceimportbatches", "socialinsurances")
             };
 
             return sections.Where(s => s.Modules.Count > 0).ToList();
@@ -679,56 +695,58 @@ namespace DANGCAPNE.Controllers
         private static readonly Dictionary<string, ModuleConfig> Modules = new(StringComparer.OrdinalIgnoreCase)
         {
             // RBAC
-            ["permissions"] = new ModuleConfig("permissions", "Permissions", "Danh sách quyền hệ thống", typeof(Permission), "Admin"),
-            ["rolepermissions"] = new ModuleConfig("rolepermissions", "Role Permissions", "Gán quyền cho vai trò", typeof(RolePermission), "Admin"),
-            ["userpermissions"] = new ModuleConfig("userpermissions", "User Permissions", "Gán quyền cho người dùng", typeof(UserPermission), "Admin"),
+            ["permissions"] = new ModuleConfig("permissions", "Permissions", "Danh sÃ¡ch quyá»n há»‡ thá»‘ng", typeof(Permission), "Admin"),
+            ["rolepermissions"] = new ModuleConfig("rolepermissions", "Role Permissions", "GÃ¡n quyá»n cho vai trÃ²", typeof(RolePermission), "Admin"),
+            ["userpermissions"] = new ModuleConfig("userpermissions", "User Permissions", "GÃ¡n quyá»n cho ngÆ°á»i dÃ¹ng", typeof(UserPermission), "Admin"),
 
             // Recruitment
-            ["jobrequisitions"] = new ModuleConfig("jobrequisitions", "Job Requisitions", "Đơn yêu cầu tuyển dụng", typeof(JobRequisition), "Admin", "HR", "Manager"),
-            ["jobrequisitionapprovals"] = new ModuleConfig("jobrequisitionapprovals", "Job Requisition Approvals", "Duyệt yêu cầu tuyển dụng", typeof(JobRequisitionApproval), "Admin", "HR", "Manager"),
-            ["candidates"] = new ModuleConfig("candidates", "Candidates", "Ứng viên", typeof(Candidate), "Admin", "HR"),
-            ["candidateapplications"] = new ModuleConfig("candidateapplications", "Candidate Applications", "Hồ sơ ứng tuyển", typeof(CandidateApplication), "Admin", "HR"),
-            ["interviewschedules"] = new ModuleConfig("interviewschedules", "Interview Schedules", "Lịch phỏng vấn", typeof(InterviewSchedule), "Admin", "HR"),
-            ["offerletters"] = new ModuleConfig("offerletters", "Offer Letters", "Thư mời nhận việc", typeof(OfferLetter), "Admin", "HR"),
+            ["jobrequisitions"] = new ModuleConfig("jobrequisitions", "Job Requisitions", "ÄÆ¡n yÃªu cáº§u tuyá»ƒn dá»¥ng", typeof(JobRequisition), "Admin", "HR", "Manager"),
+            ["jobrequisitionapprovals"] = new ModuleConfig("jobrequisitionapprovals", "Job Requisition Approvals", "Duyá»‡t yÃªu cáº§u tuyá»ƒn dá»¥ng", typeof(JobRequisitionApproval), "Admin", "HR", "Manager"),
+            ["candidates"] = new ModuleConfig("candidates", "Candidates", "á»¨ng viÃªn", typeof(Candidate), "Admin", "HR"),
+            ["candidateapplications"] = new ModuleConfig("candidateapplications", "Candidate Applications", "Há»“ sÆ¡ á»©ng tuyá»ƒn", typeof(CandidateApplication), "Admin", "HR"),
+            ["interviewschedules"] = new ModuleConfig("interviewschedules", "Interview Schedules", "Lá»‹ch phá»ng váº¥n", typeof(InterviewSchedule), "Admin", "HR"),
+            ["offerletters"] = new ModuleConfig("offerletters", "Offer Letters", "ThÆ° má»i nháº­n viá»‡c", typeof(OfferLetter), "Admin", "HR"),
 
             // Onboarding & Offboarding
-            ["onboardingtasktemplates"] = new ModuleConfig("onboardingtasktemplates", "Onboarding Task Templates", "Mẫu công việc onboarding", typeof(OnboardingTaskTemplate), "Admin", "HR"),
-            ["onboardingtasks"] = new ModuleConfig("onboardingtasks", "Onboarding Tasks", "Công việc onboarding", typeof(OnboardingTask), "Admin", "HR"),
-            ["offboardingtasktemplates"] = new ModuleConfig("offboardingtasktemplates", "Offboarding Task Templates", "Mẫu công việc offboarding", typeof(OffboardingTaskTemplate), "Admin", "HR"),
-            ["offboardingtasks"] = new ModuleConfig("offboardingtasks", "Offboarding Tasks", "Công việc offboarding", typeof(OffboardingTask), "Admin", "HR"),
+            ["onboardingtasktemplates"] = new ModuleConfig("onboardingtasktemplates", "Onboarding Task Templates", "Máº«u cÃ´ng viá»‡c onboarding", typeof(OnboardingTaskTemplate), "Admin", "HR"),
+            ["onboardingtasks"] = new ModuleConfig("onboardingtasks", "Onboarding Tasks", "CÃ´ng viá»‡c onboarding", typeof(OnboardingTask), "Admin", "HR"),
+            ["offboardingtasktemplates"] = new ModuleConfig("offboardingtasktemplates", "Offboarding Task Templates", "Máº«u cÃ´ng viá»‡c offboarding", typeof(OffboardingTaskTemplate), "Admin", "HR"),
+            ["offboardingtasks"] = new ModuleConfig("offboardingtasks", "Offboarding Tasks", "CÃ´ng viá»‡c offboarding", typeof(OffboardingTask), "Admin", "HR"),
 
             // Performance
-            ["performancecycles"] = new ModuleConfig("performancecycles", "Performance Cycles", "Chu kỳ đánh giá", typeof(PerformanceCycle), "Admin", "HR"),
-            ["performancegoals"] = new ModuleConfig("performancegoals", "Performance Goals", "Mục tiêu KPI", typeof(PerformanceGoal), "Admin", "HR", "Manager"),
-            ["performancereviews"] = new ModuleConfig("performancereviews", "Performance Reviews", "Đánh giá hiệu suất", typeof(PerformanceReview), "Admin", "HR", "Manager"),
-            ["performancereviewitems"] = new ModuleConfig("performancereviewitems", "Performance Review Items", "Chi tiết đánh giá", typeof(PerformanceReviewItem), "Admin", "HR", "Manager"),
+            ["performancecycles"] = new ModuleConfig("performancecycles", "Performance Cycles", "Chu ká»³ Ä‘Ã¡nh giÃ¡", typeof(PerformanceCycle), "Admin", "HR"),
+            ["performancegoals"] = new ModuleConfig("performancegoals", "Performance Goals", "Má»¥c tiÃªu KPI", typeof(PerformanceGoal), "Admin", "HR", "Manager"),
+            ["performancereviews"] = new ModuleConfig("performancereviews", "Performance Reviews", "ÄÃ¡nh giÃ¡ hiá»‡u suáº¥t", typeof(PerformanceReview), "Admin", "HR", "Manager"),
+            ["performancereviewitems"] = new ModuleConfig("performancereviewitems", "Performance Review Items", "Chi tiáº¿t Ä‘Ã¡nh giÃ¡", typeof(PerformanceReviewItem), "Admin", "HR", "Manager"),
 
             // Compensation
-            ["salaryadjustmentrequests"] = new ModuleConfig("salaryadjustmentrequests", "Salary Adjustment Requests", "Đề xuất tăng lương", typeof(SalaryAdjustmentRequest), "Admin", "HR", "Manager"),
-            ["bonusrequests"] = new ModuleConfig("bonusrequests", "Bonus Requests", "Đề xuất thưởng", typeof(BonusRequest), "Admin", "HR", "Manager"),
+            ["salaryadjustmentrequests"] = new ModuleConfig("salaryadjustmentrequests", "Salary Adjustment Requests", "Äá» xuáº¥t tÄƒng lÆ°Æ¡ng", typeof(SalaryAdjustmentRequest), "Admin", "HR", "Manager"),
+            ["bonusrequests"] = new ModuleConfig("bonusrequests", "Bonus Requests", "Äá» xuáº¥t thÆ°á»Ÿng", typeof(BonusRequest), "Admin", "HR", "Manager"),
 
             // Training
-            ["trainingcourses"] = new ModuleConfig("trainingcourses", "Training Courses", "Khóa đào tạo", typeof(TrainingCourse), "Admin", "HR"),
-            ["trainingenrollments"] = new ModuleConfig("trainingenrollments", "Training Enrollments", "Ghi danh đào tạo", typeof(TrainingEnrollment), "Admin", "HR"),
-            ["certifications"] = new ModuleConfig("certifications", "Certifications", "Chứng chỉ", typeof(Certification), "Admin", "HR"),
-            ["certificationrenewals"] = new ModuleConfig("certificationrenewals", "Certification Renewals", "Gia hạn chứng chỉ", typeof(CertificationRenewal), "Admin", "HR"),
+            ["trainingcourses"] = new ModuleConfig("trainingcourses", "Training Courses", "KhÃ³a Ä‘Ã o táº¡o", typeof(TrainingCourse), "Admin", "HR"),
+            ["trainingenrollments"] = new ModuleConfig("trainingenrollments", "Training Enrollments", "Ghi danh Ä‘Ã o táº¡o", typeof(TrainingEnrollment), "Admin", "HR"),
+            ["certifications"] = new ModuleConfig("certifications", "Certifications", "Chá»©ng chá»‰", typeof(Certification), "Admin", "HR"),
+            ["certificationrenewals"] = new ModuleConfig("certificationrenewals", "Certification Renewals", "Gia háº¡n chá»©ng chá»‰", typeof(CertificationRenewal), "Admin", "HR"),
 
             // Admin Ops
-            ["assetassignments"] = new ModuleConfig("assetassignments", "Asset Assignments", "Cấp phát tài sản", typeof(AssetAssignment), "Admin", "HR", "IT"),
-            ["assetincidents"] = new ModuleConfig("assetincidents", "Asset Incidents", "Báo hỏng/mất", typeof(AssetIncident), "Admin", "HR", "IT"),
-            ["carbookings"] = new ModuleConfig("carbookings", "Car Bookings", "Đăng ký xe", typeof(CarBooking), "Admin", "HR"),
-            ["mealregistrations"] = new ModuleConfig("mealregistrations", "Meal Registrations", "Đăng ký suất ăn", typeof(MealRegistration), "Admin", "HR"),
-            ["uniformrequests"] = new ModuleConfig("uniformrequests", "Uniform Requests", "Đăng ký đồng phục", typeof(UniformRequest), "Admin", "HR"),
+            ["assetassignments"] = new ModuleConfig("assetassignments", "Asset Assignments", "Cáº¥p phÃ¡t tÃ i sáº£n", typeof(AssetAssignment), "Admin", "HR", "IT"),
+            ["assetincidents"] = new ModuleConfig("assetincidents", "Asset Incidents", "BÃ¡o há»ng/máº¥t", typeof(AssetIncident), "Admin", "HR", "IT"),
+            ["carbookings"] = new ModuleConfig("carbookings", "Car Bookings", "ÄÄƒng kÃ½ xe", typeof(CarBooking), "Admin", "HR"),
+            ["mealregistrations"] = new ModuleConfig("mealregistrations", "Meal Registrations", "ÄÄƒng kÃ½ suáº¥t Äƒn", typeof(MealRegistration), "Admin", "HR"),
+            ["uniformrequests"] = new ModuleConfig("uniformrequests", "Uniform Requests", "ÄÄƒng kÃ½ Ä‘á»“ng phá»¥c", typeof(UniformRequest), "Admin", "HR"),
 
             // Compliance
-            ["policydocuments"] = new ModuleConfig("policydocuments", "Policy Documents", "Văn bản chính sách", typeof(PolicyDocument), "Admin", "HR"),
-            ["policyacknowledgements"] = new ModuleConfig("policyacknowledgements", "Policy Acknowledgements", "Xác nhận chính sách", typeof(PolicyAcknowledgement), "Admin", "HR"),
+            ["policydocuments"] = new ModuleConfig("policydocuments", "Policy Documents", "VÄƒn báº£n chÃ­nh sÃ¡ch", typeof(PolicyDocument), "Admin", "HR"),
+            ["policyacknowledgements"] = new ModuleConfig("policyacknowledgements", "Policy Acknowledgements", "XÃ¡c nháº­n chÃ­nh sÃ¡ch", typeof(PolicyAcknowledgement), "Admin", "HR"),
 
             // New Modules Extensions
-            ["socialinsurances"] = new ModuleConfig("socialinsurances", "Social Insurance", "Quản lý BHXH", typeof(SocialInsurance), "Admin", "HR"),
-            ["employeedocuments"] = new ModuleConfig("employeedocuments", "Employee Documents", "Hồ sơ đính kèm", typeof(EmployeeDocument), "Admin", "HR"),
-            ["attendancelocationconfigs"] = new ModuleConfig("attendancelocationconfigs", "Attendance Configs", "Cấu hình chấm công QR/Wifi", typeof(AttendanceLocationConfig), "Admin", "HR", "IT", "ITManager"),
-            ["shiftswaprequests"] = new ModuleConfig("shiftswaprequests", "Shift Swap Requests", "Đơn đổi ca", typeof(ShiftSwapRequest), "Admin", "HR", "Manager")
+            ["workflows"] = new ModuleConfig("workflows", "Workflows", "Cau hinh luong duyet", typeof(WorkflowDef), "Admin", "HR"),
+            ["workflowsteps"] = new ModuleConfig("workflowsteps", "Workflow Steps", "Cac buoc duyet theo thu tu", typeof(WorkflowStep), "Admin", "HR"),
+            ["socialinsurances"] = new ModuleConfig("socialinsurances", "Social Insurance", "Quáº£n lÃ½ BHXH", typeof(SocialInsurance), "Admin", "HR"),
+            ["employeedocuments"] = new ModuleConfig("employeedocuments", "Employee Documents", "Há»“ sÆ¡ Ä‘Ã­nh kÃ¨m", typeof(EmployeeDocument), "Admin", "HR"),
+            ["attendancelocationconfigs"] = new ModuleConfig("attendancelocationconfigs", "Attendance Configs", "Cáº¥u hÃ¬nh cháº¥m cÃ´ng QR/Wifi", typeof(AttendanceLocationConfig), "Admin", "HR", "IT", "ITManager"),
+            ["shiftswaprequests"] = new ModuleConfig("shiftswaprequests", "Shift Swap Requests", "ÄÆ¡n Ä‘á»•i ca", typeof(ShiftSwapRequest), "Admin", "HR", "Manager")
         };
 
         private Dictionary<string, Dictionary<string, FieldConfig>> FieldConfigs => new(StringComparer.OrdinalIgnoreCase)
@@ -950,24 +968,17 @@ namespace DANGCAPNE.Controllers
             {
                 ["UserId"] = new FieldConfig { DisplayName = "Employee", Select = SelectUsers() }
             },
-            ["workflowroutingrules"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
+            ["workflowsteps"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
             {
                 ["WorkflowId"] = new FieldConfig { DisplayName = "Workflow", Select = SelectWorkflows() },
-                ["StepId"] = new FieldConfig { DisplayName = "Workflow Step", Select = SelectWorkflowSteps() }
+                ["ApproverUserId"] = new FieldConfig { DisplayName = "Approver User", Select = SelectUsers() },
+                ["ApproverRoleId"] = new FieldConfig { DisplayName = "Approver Role", Select = SelectRoles() }
             },
             ["digitalsignatureprofiles"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
             {
                 ["UserId"] = new FieldConfig { DisplayName = "User", Select = SelectUsers() }
             },
-            ["kpisnapshots"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["UserId"] = new FieldConfig { DisplayName = "User", Select = SelectUsers() },
-                ["DepartmentId"] = new FieldConfig { DisplayName = "Department", Select = SelectDepartments() }
-            },
-            ["requestcategoryreportsnapshots"] = new Dictionary<string, FieldConfig>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["GeneratedByUserId"] = new FieldConfig { DisplayName = "Generated By", Select = SelectUsers() }
-            }
+            
         };
 
         private SelectConfig SelectRoles() => new()
@@ -1113,5 +1124,14 @@ namespace DANGCAPNE.Controllers
             Query = () => _context.WorkflowSteps.AsNoTracking().ToList<object>(),
             LabelField = "Name"
         };
+
+        private SelectConfig SelectFormTemplates() => new()
+        {
+            Query = () => _context.FormTemplates.AsNoTracking().ToList<object>(),
+            LabelField = "Name"
+        };
+
+        
     }
 }
+

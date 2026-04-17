@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
+using DANGCAPNE.Filters;
 using DANGCAPNE.Models.Organization;
 using DANGCAPNE.Models.Workflow;
 using DANGCAPNE.Models.Timekeeping;
@@ -556,6 +557,7 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
+        [PermissionAuthorize("users.manage")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
@@ -732,12 +734,11 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("access.provision")]
         public async Task<IActionResult> Whitelist()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
-            var roles = GetCurrentRoles();
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager") && !roles.Contains("IT") && !roles.Contains("ITManager")) return RedirectToAction("AccessDenied", "Account");
 
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
@@ -760,11 +761,9 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
+        [PermissionAuthorize("access.provision")]
         public async Task<IActionResult> ApproveUser(int id)
         {
-            var roles = GetCurrentRoles();
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager") && !roles.Contains("IT") && !roles.Contains("ITManager")) return RedirectToAction("AccessDenied", "Account");
-
             var user = await _context.Users.FindAsync(id);
             if (user != null && user.Status == "PendingApproval")
             {
@@ -812,11 +811,9 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
+        [PermissionAuthorize("access.provision")]
         public async Task<IActionResult> RejectUser(int id)
         {
-            var roles = GetCurrentRoles();
-            if (!roles.Contains("Admin") && !roles.Contains("HR") && !roles.Contains("Manager") && !roles.Contains("IT") && !roles.Contains("ITManager")) return RedirectToAction("AccessDenied", "Account");
-
             var user = await _context.Users.FindAsync(id);
             if (user != null && user.Status == "PendingApproval")
             {
@@ -913,20 +910,34 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("delegation.manage")]
         public async Task<IActionResult> Delegation()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var today = DateTime.Today;
 
             var model = new DelegationViewModel
             {
                 ActiveDelegations = await _context.Delegations
                     .Include(d => d.Delegator).Include(d => d.Delegate)
-                    .Where(d => d.TenantId == tenantId && d.IsActive)
+                    .Where(d => d.TenantId == tenantId && d.IsActive && d.EndDate >= today)
+                    .OrderBy(d => d.StartDate)
+                    .ToListAsync(),
+                MyDelegations = await _context.Delegations
+                    .Include(d => d.Delegator).Include(d => d.Delegate)
+                    .Where(d => d.TenantId == tenantId && d.DelegatorId == userId.Value)
+                    .OrderByDescending(d => d.CreatedAt)
+                    .ToListAsync(),
+                DelegatedToMe = await _context.Delegations
+                    .Include(d => d.Delegator).Include(d => d.Delegate)
+                    .Where(d => d.TenantId == tenantId && d.DelegateId == userId.Value && d.EndDate >= today)
+                    .OrderBy(d => d.StartDate)
                     .ToListAsync(),
                 PotentialDelegates = await _context.Users
                     .Where(u => u.TenantId == tenantId && u.Id != userId && u.Status == "Active")
+                    .OrderBy(u => u.FullName)
                     .ToListAsync()
             };
 
@@ -934,6 +945,7 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
+        [PermissionAuthorize("delegation.manage")]
         public async Task<IActionResult> CreateDelegation(DelegationViewModel model)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -942,13 +954,38 @@ namespace DANGCAPNE.Controllers
 
             if (model.DelegateId.HasValue && model.StartDate.HasValue && model.EndDate.HasValue)
             {
+                if (model.DelegateId.Value == userId.Value)
+                {
+                    TempData["Error"] = "Bạn không thể tự ủy quyền cho chính mình.";
+                    return RedirectToAction("Delegation");
+                }
+
+                if (model.EndDate.Value.Date < model.StartDate.Value.Date)
+                {
+                    TempData["Error"] = "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.";
+                    return RedirectToAction("Delegation");
+                }
+
+                var hasOverlap = await _context.Delegations.AnyAsync(d =>
+                    d.TenantId == tenantId &&
+                    d.DelegatorId == userId.Value &&
+                    d.IsActive &&
+                    d.EndDate >= model.StartDate.Value.Date &&
+                    d.StartDate <= model.EndDate.Value.Date);
+
+                if (hasOverlap)
+                {
+                    TempData["Error"] = "Bạn đã có một ủy quyền khác bị trùng thời gian.";
+                    return RedirectToAction("Delegation");
+                }
+
                 _context.Delegations.Add(new Delegation
                 {
                     TenantId = tenantId,
                     DelegatorId = userId.Value,
                     DelegateId = model.DelegateId.Value,
-                    StartDate = model.StartDate.Value,
-                    EndDate = model.EndDate.Value,
+                    StartDate = model.StartDate.Value.Date,
+                    EndDate = model.EndDate.Value.Date,
                     Reason = model.Reason ?? "",
                     IsActive = true
                 });
@@ -959,7 +996,29 @@ namespace DANGCAPNE.Controllers
             return RedirectToAction("Delegation");
         }
 
+        [HttpPost]
+        [PermissionAuthorize("delegation.manage")]
+        public async Task<IActionResult> CancelDelegation(int id)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var delegation = await _context.Delegations.FirstOrDefaultAsync(d => d.Id == id && d.DelegatorId == userId.Value);
+            if (delegation == null)
+            {
+                TempData["Error"] = "Không tìm thấy bản ghi ủy quyền cần hủy.";
+                return RedirectToAction("Delegation");
+            }
+
+            delegation.IsActive = false;
+            delegation.EndDate = DateTime.Today;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã hủy ủy quyền.";
+            return RedirectToAction("Delegation");
+        }
+
         [HttpGet]
+        [PermissionAuthorize("audit.view")]
         public async Task<IActionResult> AuditLogs(int? requestId, int page = 1)
         {
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;

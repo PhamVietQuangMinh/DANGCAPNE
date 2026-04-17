@@ -1,0 +1,142 @@
+@model DANGCAPNE.ViewModels.EnterpriseChecklistViewModel
+@{
+    ViewData["Title"] = "Checklist doanh nghiệp";
+    var isOffboarding = Model.Mode == "offboarding";
+    var templates = isOffboarding ? Model.OffboardingTemplates.Cast<dynamic>().ToList() : Model.OnboardingTemplates.Cast<dynamic>().ToList();
+    var tasks = isOffboarding ? Model.OffboardingTasks.Cast<dynamic>().ToList() : Model.OnboardingTasks.Cast<dynamic>().ToList();
+}
+<div class="page-content">
+    <div class="d-flex justify-between align-center mb-24" style="flex-wrap:wrap;gap:16px">
+        <div>
+            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px">Checklist doanh nghiệp</h2>
+            <p class="text-muted">Quản lý checklist onboarding/offboarding theo vai trò và theo nhân viên</p>
+        </div>
+        <div class="d-flex gap-8">
+            <a href="@Url.Action("EnterpriseChecklist", "HR", new { mode = "onboarding", userId = Model.SelectedUserId })" class="btn @(isOffboarding ? "btn-outline" : "btn-primary")">Onboarding</a>
+            <a href="@Url.Action("EnterpriseChecklist", "HR", new { mode = "offboarding", userId = Model.SelectedUserId })" class="btn @(isOffboarding ? "btn-primary" : "btn-outline")">Offboarding</a>
+        </div>
+    </div>
+
+    <div class="content-grid-2">
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-list-task text-primary"></i> Tạo checklist mẫu</h3></div>
+            <div class="card-body">
+                <form method="post" asp-action="CreateChecklistTemplate">
+                    <input type="hidden" name="Mode" value="@Model.Mode" />
+                    <div class="form-group">
+                        <label class="form-label">Tên checklist</label>
+                        <input type="text" name="TemplateName" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mô tả</label>
+                        <textarea name="TemplateDescription" class="form-control"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Số ngày hoàn thành</label>
+                                <input type="number" name="DefaultDueDays" class="form-control" min="1" value="7" />
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Vai trò phụ trách mặc định</label>
+                                <select name="DefaultAssigneeRoleId" class="form-control">
+                                    <option value="">-- Chọn vai trò --</option>
+                                    @foreach (var role in Model.Roles)
+                                    {
+                                        <option value="@role.Id">@role.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Lưu checklist mẫu</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-person-plus text-success"></i> Sinh checklist cho nhân viên</h3></div>
+            <div class="card-body">
+                <form method="post" asp-action="GenerateChecklist">
+                    <input type="hidden" name="mode" value="@Model.Mode" />
+                    <div class="form-group">
+                        <label class="form-label">Nhân viên</label>
+                        <select name="selectedUserId" class="form-control" required>
+                            <option value="">-- Chọn nhân viên --</option>
+                            @foreach (var employee in Model.Employees)
+                            {
+                                <option value="@employee.Id" selected="@(Model.SelectedUserId == employee.Id)">@employee.FullName (@employee.EmployeeCode)</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-magic"></i> Sinh checklist</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card mb-24" style="margin-top:24px">
+        <div class="card-header"><h3><i class="bi bi-card-checklist text-warning"></i> Checklist mẫu hiện có</h3></div>
+        <div class="card-body">
+            @if (templates.Any())
+            {
+                @foreach (var template in templates)
+                {
+                    <div class="meta-box" style="margin-bottom:12px">
+                        <strong>@template.Name</strong>
+                        <div class="text-muted" style="font-size:12px;margin-top:4px">@template.Description</div>
+                        <div class="text-muted" style="font-size:12px;margin-top:4px">Hoàn thành trong @template.DefaultDueDays ngày · Phụ trách: @(template.DefaultAssigneeRole?.Name ?? "Chưa gán")</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state" style="padding:32px"><i class="bi bi-list-task"></i><h3>Chưa có checklist mẫu</h3></div>
+            }
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header"><h3><i class="bi bi-kanban text-primary"></i> Danh sách task</h3></div>
+        <div class="card-body" style="padding:0">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nhân viên</th>
+                        <th>Checklist</th>
+                        <th>Người phụ trách</th>
+                        <th>Hạn xử lý</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var task in tasks)
+                {
+                    var isCompleted = task.Status == "Completed";
+                    <tr>
+                        <td>@task.User?.FullName</td>
+                        <td>@task.Template?.Name</td>
+                        <td>@(task.AssignedTo?.FullName ?? "Chưa gán")</td>
+                        <td>@task.DueDate.ToString("dd/MM/yyyy")</td>
+                        <td><span class="status-badge @(isCompleted ? "approved" : "pending")">@task.Status</span></td>
+                        <td>
+                            <form method="post" asp-action="UpdateChecklistTask" style="display:inline-block">
+                                <input type="hidden" name="mode" value="@Model.Mode" />
+                                <input type="hidden" name="id" value="@task.Id" />
+                                <input type="hidden" name="action" value="@(isCompleted ? "reopen" : "complete")" />
+                                <button type="submit" class="btn @(isCompleted ? "btn-outline" : "btn-success") btn-sm">
+                                    <i class="bi @(isCompleted ? "bi-arrow-counterclockwise" : "bi-check2")"></i>
+                                    @(isCompleted ? "Mở lại" : "Hoàn tất")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

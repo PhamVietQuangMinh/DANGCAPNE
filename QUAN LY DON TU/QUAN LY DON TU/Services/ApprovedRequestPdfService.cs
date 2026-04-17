@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using QRCoder;
 
 namespace DANGCAPNE.Services
 {
@@ -17,11 +18,13 @@ namespace DANGCAPNE.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
-        public ApprovedRequestPdfService(ApplicationDbContext context, IWebHostEnvironment environment)
+        public ApprovedRequestPdfService(ApplicationDbContext context, IWebHostEnvironment environment, IConfiguration configuration)
         {
             _context = context;
             _environment = environment;
+            _configuration = configuration;
         }
 
         public async Task<RequestAttachment> GenerateApprovedPdfAsync(int requestId, int generatedByUserId, CancellationToken cancellationToken = default)
@@ -66,7 +69,9 @@ namespace DANGCAPNE.Services
                 File.Delete(physicalPath);
             }
 
-            GeneratePdfDocument(request, physicalPath, profiles, _environment.WebRootPath);
+            var verifyUrl = BuildVerifyUrl(request.RequestCode);
+            var qrBytes = GenerateQrPng(verifyUrl);
+            GeneratePdfDocument(request, physicalPath, profiles, _environment.WebRootPath, verifyUrl, qrBytes);
 
             var fileInfo = new FileInfo(physicalPath);
             if (existingAttachment == null)
@@ -92,7 +97,7 @@ namespace DANGCAPNE.Services
             return existingAttachment;
         }
 
-        private static void GeneratePdfDocument(Request request, string outputPath, IReadOnlyCollection<DigitalSignatureProfile> profiles, string webRootPath)
+        private static void GeneratePdfDocument(Request request, string outputPath, IReadOnlyCollection<DigitalSignatureProfile> profiles, string webRootPath, string verifyUrl, byte[] qrPng)
         {
             var dataEntries = request.DataEntries
                 .OrderBy(entry => entry.FieldKey)
@@ -117,6 +122,15 @@ namespace DANGCAPNE.Services
                         column.Item().Text("PHIEU XAC NHAN DON TU").FontSize(20).Bold().FontColor(Colors.Blue.Darken2);
                         column.Item().Text($"Ma don: {request.RequestCode}").SemiBold();
                         column.Item().Text($"Loai don: {request.FormTemplate?.Name ?? "Khong xac dinh"}");
+                        column.Item().PaddingTop(6).Row(row =>
+                        {
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().Text("Link xac minh:").FontSize(10).FontColor(Colors.Grey.Darken1);
+                                col.Item().Text(verifyUrl).FontSize(10).FontColor(Colors.Blue.Darken2);
+                            });
+                            row.ConstantItem(80).AlignRight().Height(80).Image(qrPng);
+                        });
                     });
 
                     page.Content().Column(column =>
@@ -232,6 +246,29 @@ namespace DANGCAPNE.Services
                     });
                 });
             }).GeneratePdf(outputPath);
+        }
+
+        private string BuildVerifyUrl(string requestCode)
+        {
+            var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+                ?? _configuration["App:BaseUrl"]
+                ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                baseUrl = "http://localhost:5268";
+            }
+
+            baseUrl = baseUrl.TrimEnd('/');
+            return $"{baseUrl}/Requests/Verify/{Uri.EscapeDataString(requestCode)}";
+        }
+
+        private static byte[] GenerateQrPng(string payload)
+        {
+            using var generator = new QRCodeGenerator();
+            using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
+            var qr = new PngByteQRCode(data);
+            return qr.GetGraphic(10);
         }
 
         private static void AddHeaderCell(TableDescriptor table, string text)

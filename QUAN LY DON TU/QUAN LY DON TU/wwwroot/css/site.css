@@ -70,7 +70,7 @@
 }
 
 body {
-    font-family: 'Inter', 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', 'Segoe UI', 'Noto Sans', 'Roboto', Arial, -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -86,10 +86,23 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Raleway', 'Segoe UI', 'Noto Sans', Arial, sans-serif;
     font-weight: 600;
     color: var(--text-primary);
     letter-spacing: -0.02em;
+}
+
+input,
+button,
+select,
+textarea,
+table,
+th,
+td,
+.nav-link,
+.user-name,
+.user-role {
+    font-family: 'Inter', 'Segoe UI', 'Noto Sans', 'Roboto', Arial, sans-serif;
 }
 
 /* UI Elements adjustments for Light Theme */

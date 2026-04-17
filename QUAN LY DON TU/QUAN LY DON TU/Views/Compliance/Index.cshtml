@@ -1,0 +1,129 @@
+@model DANGCAPNE.ViewModels.PolicyPortalViewModel
+@{
+    ViewData["Title"] = "Chính sách nội bộ";
+}
+<div class="page-content">
+    <div class="d-flex justify-between align-center mb-24" style="flex-wrap:wrap;gap:16px">
+        <div>
+            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px">Chính sách nội bộ</h2>
+            <p class="text-muted">Theo dõi quy định, biểu mẫu bắt buộc và trạng thái xác nhận đã đọc của nhân viên</p>
+        </div>
+    </div>
+
+    @if (Model.CanManage)
+    {
+        <div class="glass-card mb-24">
+            <div class="card-header"><h3><i class="bi bi-file-earmark-plus text-primary"></i> Đăng chính sách mới</h3></div>
+            <div class="card-body">
+                <form method="post" asp-action="Publish">
+                    <div class="form-row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Tiêu đề chính sách</label>
+                                <input type="text" name="Title" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="form-group">
+                                <label class="form-label">Phiên bản</label>
+                                <input type="text" name="Version" class="form-control" placeholder="1.0" />
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="form-group">
+                                <label class="form-label">Link tài liệu</label>
+                                <input type="text" name="FileUrl" class="form-control" placeholder="/docs/noi-quy.pdf" required />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Đăng chính sách</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="content-grid-2">
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-journal-text text-success"></i> Chính sách đang hiệu lực</h3></div>
+            <div class="card-body" style="padding:0">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Chính sách</th>
+                            <th>Phiên bản</th>
+                            <th>Ngày phát hành</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.MyAcknowledgements)
+                    {
+                        var policy = item.PolicyDocument;
+                        if (policy == null)
+                        {
+                            continue;
+                        }
+                        var isDone = item.Status == "Acknowledged";
+                        <tr>
+                            <td>
+                                <strong>@policy.Title</strong>
+                                @if (Model.CanManage)
+                                {
+                                    <div class="text-muted" style="font-size:11px;margin-top:4px">
+                                        Đã đọc: @(Model.AcknowledgedCounts.ContainsKey(policy.Id) ? Model.AcknowledgedCounts[policy.Id] : 0)
+                                        | Chưa đọc: @(Model.PendingCounts.ContainsKey(policy.Id) ? Model.PendingCounts[policy.Id] : 0)
+                                    </div>
+                                }
+                            </td>
+                            <td>@policy.Version</td>
+                            <td>@policy.PublishedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <span class="status-badge @(isDone ? "approved" : "pending")">@(isDone ? "Đã đọc" : "Chờ xác nhận")</span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(policy.FileUrl))
+                                {
+                                    <a href="@policy.FileUrl" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-box-arrow-up-right"></i> Mở</a>
+                                }
+                                @if (!isDone)
+                                {
+                                    <form method="post" asp-action="Acknowledge" style="display:inline-block">
+                                        <input type="hidden" name="id" value="@policy.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check2-circle"></i> Tôi đã đọc</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-megaphone text-warning"></i> Gần đây</h3></div>
+            <div class="card-body">
+                @if (Model.RecentPolicies.Any())
+                {
+                    @foreach (var policy in Model.RecentPolicies)
+                    {
+                        <div class="meta-box" style="margin-bottom:12px">
+                            <div class="d-flex justify-between align-center" style="gap:12px">
+                                <div>
+                                    <strong>@policy.Title</strong>
+                                    <div class="text-muted" style="font-size:12px">Phiên bản @policy.Version · @policy.PublishedAt.ToString("dd/MM/yyyy")</div>
+                                </div>
+                                <a href="@policy.FileUrl" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-eye"></i> Xem</a>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:32px"><i class="bi bi-journal-x"></i><h3>Chưa có chính sách nào</h3></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

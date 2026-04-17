@@ -2,12 +2,51 @@
 @{
     ViewData["TitleI18n"] = "NavDelegate";
     ViewData["Title"] = "Quản lý ủy quyền";
+    var today = DateTime.Today;
+    var myActiveCount = Model.MyDelegations.Count(d => d.IsActive && d.StartDate <= today && d.EndDate >= today);
+    var myUpcomingCount = Model.MyDelegations.Count(d => d.IsActive && d.StartDate > today);
+    var delegatedToMeCount = Model.DelegatedToMe.Count(d => d.IsActive && d.StartDate <= today && d.EndDate >= today);
+    var expiringSoonCount = Model.MyDelegations.Count(d => d.IsActive && d.EndDate >= today && d.EndDate <= today.AddDays(3));
 }
 <div class="page-content">
-    <div class="d-flex justify-between align-center mb-24">
+    <div class="d-flex justify-between align-center mb-24" style="flex-wrap:wrap;gap:16px">
         <div>
             <h2 style="font-size:24px;font-weight:800;margin-bottom:4px" data-i18n="DelegateTitle">Ủy quyền phê duyệt</h2>
-            <p class="text-muted" data-i18n="DelegateSubtitle">Ủy quyền duyệt đơn khi vắng mặt</p>
+            <p class="text-muted" data-i18n="DelegateSubtitle">Thiết lập người duyệt thay, theo dõi trạng thái hiệu lực và kiểm soát rủi ro khi bạn vắng mặt</p>
+        </div>
+        <div class="text-muted" style="font-size:13px">
+            <i class="bi bi-info-circle"></i> Chỉ các đơn trong thời gian hiệu lực mới được duyệt thay
+        </div>
+    </div>
+
+    <div class="content-grid-4 mb-24">
+        <div class="glass-card">
+            <div class="card-body">
+                <div class="text-muted" style="font-size:12px">Ủy quyền đang hiệu lực</div>
+                <div style="font-size:28px;font-weight:800;color:var(--primary-color)">@myActiveCount</div>
+                <div class="text-muted" style="font-size:12px">Các ủy quyền bạn đã giao hiện đang hoạt động</div>
+            </div>
+        </div>
+        <div class="glass-card">
+            <div class="card-body">
+                <div class="text-muted" style="font-size:12px">Sắp có hiệu lực</div>
+                <div style="font-size:28px;font-weight:800;color:var(--warning-color)">@myUpcomingCount</div>
+                <div class="text-muted" style="font-size:12px">Ủy quyền đã lên lịch nhưng chưa bắt đầu</div>
+            </div>
+        </div>
+        <div class="glass-card">
+            <div class="card-body">
+                <div class="text-muted" style="font-size:12px">Người đang ủy quyền cho tôi</div>
+                <div style="font-size:28px;font-weight:800;color:var(--success-color)">@delegatedToMeCount</div>
+                <div class="text-muted" style="font-size:12px">Số quyền duyệt thay bạn đang nhận</div>
+            </div>
+        </div>
+        <div class="glass-card">
+            <div class="card-body">
+                <div class="text-muted" style="font-size:12px">Sắp hết hạn trong 3 ngày</div>
+                <div style="font-size:28px;font-weight:800;color:var(--danger-color)">@expiringSoonCount</div>
+                <div class="text-muted" style="font-size:12px">Nên rà soát để tránh gián đoạn phê duyệt</div>
+            </div>
         </div>
     </div>
 
@@ -15,6 +54,11 @@
         <div class="glass-card">
             <div class="card-header"><h3><i class="bi bi-plus-circle text-primary"></i> <span data-i18n="DelegateCreateNew">Tạo ủy quyền mới</span></h3></div>
             <div class="card-body">
+                <div class="meta-box" style="margin-bottom:16px">
+                    <div class="text-muted" style="font-size:12px;line-height:1.7">
+                        <strong>Quy tắc:</strong> người được ủy quyền sẽ nhìn thấy và xử lý các đơn đang chờ duyệt của bạn trong khoảng thời gian đã thiết lập. Hệ thống không cho phép tự ủy quyền hoặc tạo 2 khoảng thời gian bị trùng nhau.
+                    </div>
+                </div>
                 <form method="post" asp-action="CreateDelegation">
                     <div class="form-group">
                         <label class="form-label" data-i18n="DelegateToLabel">Người được ủy quyền *</label>
@@ -44,40 +88,147 @@
                         <label class="form-label" data-i18n="DelegateReason">Lý do</label>
                         <textarea name="Reason" class="form-control" data-i18n="DelegateReasonPlaceholder" placeholder="Lý do ủy quyền (tùy chọn)"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-right"></i> <span data-i18n="DelegateCreateNew">Tạo ủy quyền</span></button>
+                    <div class="d-flex gap-8 align-center flex-wrap">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-right"></i> <span data-i18n="DelegateCreateNew">Tạo ủy quyền</span></button>
+                        <span class="text-muted" style="font-size:12px">Khuyến nghị: chỉ ủy quyền cho người cùng cấp hoặc hiểu rõ luồng phê duyệt của bạn</span>
+                    </div>
                 </form>
             </div>
         </div>
 
         <div class="glass-card">
-            <div class="card-header"><h3><i class="bi bi-arrow-left-right text-success"></i> <span data-i18n="DelegateActiveList">Ủy quyền đang hoạt động</span></h3></div>
-            <div class="card-body">
+            <div class="card-header"><h3><i class="bi bi-arrow-left-right text-success"></i> <span data-i18n="DelegateActiveList">Toàn bộ ủy quyền đang hoạt động</span></h3></div>
+            <div class="card-body" style="padding:0">
                 @if (Model.ActiveDelegations.Any())
                 {
-                    @foreach (var d in Model.ActiveDelegations)
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Người giao</th>
+                                <th>Người nhận</th>
+                                <th>Hiệu lực</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model.ActiveDelegations)
+                            {
+                                var isUpcoming = d.StartDate > today;
+                                var statusText = isUpcoming ? "Sắp hiệu lực" : "Đang hoạt động";
+                                var statusCss = isUpcoming ? "pending" : "approved";
+                                <tr>
+                                    <td>
+                                        <strong>@d.Delegator?.FullName</strong>
+                                        <div class="text-muted" style="font-size:12px">@d.Delegator?.EmployeeCode</div>
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary">@d.Delegate?.FullName</strong>
+                                        <div class="text-muted" style="font-size:12px">@d.Delegate?.EmployeeCode</div>
+                                    </td>
+                                    <td>
+                                        @d.StartDate.ToString("dd/MM/yyyy") → @d.EndDate.ToString("dd/MM/yyyy")
+                                        @if (!string.IsNullOrEmpty(d.Reason))
+                                        {
+                                            <div class="text-muted" style="font-size:12px;margin-top:4px">@d.Reason</div>
+                                        }
+                                    </td>
+                                    <td><span class="status-badge @statusCss">@statusText</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:32px"><i class="bi bi-arrow-left-right"></i><h3 data-i18n="DelegateEmpty">Chưa có ủy quyền nào</h3></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid-2" style="margin-top:24px">
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-person-workspace text-primary"></i> Ủy quyền của tôi</h3></div>
+            <div class="card-body">
+                @if (Model.MyDelegations.Any())
+                {
+                    @foreach (var d in Model.MyDelegations)
                     {
+                        var isUpcoming = d.IsActive && d.StartDate > today;
+                        var isActive = d.IsActive && d.StartDate <= today && d.EndDate >= today;
+                        var isExpired = !isActive && !isUpcoming;
+                        var badgeCss = isActive ? "approved" : isUpcoming ? "pending" : "rejected";
+                        var badgeText = isActive ? "Hiệu lực" : isUpcoming ? "Sắp hiệu lực" : "Hết hiệu lực";
                         <div class="meta-box" style="margin-bottom:12px">
-                            <div class="d-flex justify-between align-center">
+                            <div class="d-flex justify-between align-center" style="gap:12px;flex-wrap:wrap">
                                 <div>
-                                    <strong>@d.Delegator?.FullName</strong>
-                                    <i class="bi bi-arrow-right text-primary" style="margin:0 8px"></i>
-                                    <strong class="text-primary">@d.Delegate?.FullName</strong>
+                                    <strong>@d.Delegate?.FullName</strong>
+                                    <div class="text-muted" style="font-size:12px;margin-top:4px">
+                                        <i class="bi bi-calendar"></i> @d.StartDate.ToString("dd/MM/yyyy") → @d.EndDate.ToString("dd/MM/yyyy")
+                                    </div>
                                 </div>
-                                <span class="status-badge approved" data-i18n="DelegateActive">Đang hoạt động</span>
+                                <div class="d-flex gap-8 align-center">
+                                    <span class="status-badge @badgeCss">@badgeText</span>
+                                    @if (isActive || isUpcoming)
+                                    {
+                                        <form method="post" asp-action="CancelDelegation">
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <button type="submit" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Hủy</button>
+                                        </form>
+                                    }
+                                </div>
                             </div>
-                            <div class="text-muted" style="font-size:12px;margin-top:8px">
-                                <i class="bi bi-calendar"></i> @d.StartDate.ToString("dd/MM/yyyy") → @d.EndDate.ToString("dd/MM/yyyy")
-                                @if (!string.IsNullOrEmpty(d.Reason))
-                                {
-                                    <br/><i class="bi bi-chat-left-text"></i> @d.Reason
-                                }
-                            </div>
+                            @if (isActive && d.EndDate <= today.AddDays(3))
+                            {
+                                <div class="text-warning" style="font-size:12px;margin-top:8px"><i class="bi bi-exclamation-circle"></i> Ủy quyền này sắp hết hạn</div>
+                            }
+                            @if (isExpired)
+                            {
+                                <div class="text-muted" style="font-size:12px;margin-top:8px"><i class="bi bi-clock-history"></i> Bản ghi này đã kết thúc, chỉ dùng để đối chiếu lịch sử</div>
+                            }
+                            @if (!string.IsNullOrEmpty(d.Reason))
+                            {
+                                <div class="text-muted" style="font-size:12px;margin-top:8px"><i class="bi bi-chat-left-text"></i> @d.Reason</div>
+                            }
                         </div>
                     }
                 }
                 else
                 {
-                    <div class="empty-state" style="padding:32px"><i class="bi bi-arrow-left-right"></i><h3 data-i18n="DelegateEmpty">Chưa có ủy quyền nào</h3></div>
+                    <div class="empty-state" style="padding:32px"><i class="bi bi-person-workspace"></i><h3>Bạn chưa tạo ủy quyền nào</h3></div>
+                }
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-person-check text-warning"></i> Người đang ủy quyền cho tôi</h3></div>
+            <div class="card-body">
+                @if (Model.DelegatedToMe.Any())
+                {
+                    @foreach (var d in Model.DelegatedToMe)
+                    {
+                        var isUpcoming = d.StartDate > today;
+                        <div class="meta-box" style="margin-bottom:12px">
+                            <div class="d-flex justify-between align-center" style="gap:12px;flex-wrap:wrap">
+                                <strong>@d.Delegator?.FullName</strong>
+                                <span class="status-badge @(isUpcoming ? "pending" : "approved")">@(isUpcoming ? "Sắp hiệu lực" : "Có thể duyệt thay")</span>
+                            </div>
+                            <div class="text-muted" style="font-size:12px;margin-top:4px">
+                                <i class="bi bi-calendar"></i> @d.StartDate.ToString("dd/MM/yyyy") → @d.EndDate.ToString("dd/MM/yyyy")
+                            </div>
+                            <div class="text-muted" style="font-size:12px;margin-top:4px">
+                                <i class="bi bi-person-badge"></i> Khi có đơn chờ duyệt của người này, bạn sẽ thấy trong danh sách phê duyệt
+                            </div>
+                            @if (!string.IsNullOrEmpty(d.Reason))
+                            {
+                                <div class="text-muted" style="font-size:12px;margin-top:8px"><i class="bi bi-chat-left-text"></i> @d.Reason</div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:32px"><i class="bi bi-person-check"></i><h3>Hiện chưa có ai ủy quyền cho bạn</h3></div>
                 }
             </div>
         </div>

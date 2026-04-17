@@ -5,6 +5,7 @@ using DANGCAPNE.Models.Timekeeping;
 using DANGCAPNE.Models.SystemModels;
 using DANGCAPNE.Models.Finance;
 using DANGCAPNE.Models.HR;
+using DANGCAPNE.Models.Compliance;
 
 namespace DANGCAPNE.ViewModels
 {
@@ -109,10 +110,15 @@ namespace DANGCAPNE.ViewModels
         public string? StatusFilter { get; set; }
         public string? TypeFilter { get; set; }
         public string? SearchQuery { get; set; }
+        public int? DepartmentIdFilter { get; set; }
+        public DateTime? FromDateFilter { get; set; }
+        public DateTime? ToDateFilter { get; set; }
+        public string? PriorityFilter { get; set; }
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
         public int PageSize { get; set; } = 10;
         public List<FormTemplate> FormTemplates { get; set; } = new();
+        public List<Department> Departments { get; set; } = new();
     }
 
         public class AnnualLeaveBucketViewModel
@@ -154,6 +160,7 @@ namespace DANGCAPNE.ViewModels
         public Dictionary<int, ApprovalSlaViewModel> ApprovalSla { get; set; } = new();
         public List<RequestComment> Comments { get; set; } = new();
         public List<RequestAuditLog> AuditLogs { get; set; } = new();
+        public List<RequestTimelineEventViewModel> Timeline { get; set; } = new();
         public bool CanApprove { get; set; }
         public bool CanReject { get; set; }
         public bool CanEdit { get; set; }
@@ -164,6 +171,22 @@ namespace DANGCAPNE.ViewModels
         public List<FormField> FormFields { get; set; } = new();
     }
 
+    public class RequestTimelineEventViewModel
+    {
+        public DateTime At { get; set; }
+        public string Kind { get; set; } = string.Empty; // Created, Approved, Rejected, Comment, Status
+        public string Title { get; set; } = string.Empty;
+        public string? ActorName { get; set; }
+        public string? Details { get; set; }
+    }
+
+    public class RequestVerifyViewModel
+    {
+        public Request? Request { get; set; }
+        public List<RequestApproval> Approvals { get; set; } = new();
+        public bool CanOpenInSystem { get; set; }
+    }
+
     public class ApprovalListViewModel
     {
         public List<RequestApproval> PendingApprovals { get; set; } = new();
@@ -171,6 +194,8 @@ namespace DANGCAPNE.ViewModels
         public Dictionary<int, ApprovalSlaViewModel> ApprovalSla { get; set; } = new();
         public string? StatusFilter { get; set; }
         public int TotalPending { get; set; }
+        public List<int> DelegatedApprovalIds { get; set; } = new();
+        public Dictionary<int, string> DelegatedFromNames { get; set; } = new();
     }
 
     public class ApprovalSlaViewModel
@@ -319,6 +344,37 @@ namespace DANGCAPNE.ViewModels
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public string? Reason { get; set; }
+        public List<Delegation> MyDelegations { get; set; } = new();
+        public List<Delegation> DelegatedToMe { get; set; } = new();
+    }
+
+    public class PolicyPortalViewModel
+    {
+        public List<PolicyDocument> ActivePolicies { get; set; } = new();
+        public List<PolicyAcknowledgement> MyAcknowledgements { get; set; } = new();
+        public List<PolicyDocument> RecentPolicies { get; set; } = new();
+        public bool CanManage { get; set; }
+        public string? Title { get; set; }
+        public string? Version { get; set; }
+        public string? FileUrl { get; set; }
+        public Dictionary<int, int> AcknowledgedCounts { get; set; } = new();
+        public Dictionary<int, int> PendingCounts { get; set; } = new();
+    }
+
+    public class EnterpriseChecklistViewModel
+    {
+        public string Mode { get; set; } = "onboarding";
+        public int? SelectedUserId { get; set; }
+        public List<User> Employees { get; set; } = new();
+        public List<OnboardingTaskTemplate> OnboardingTemplates { get; set; } = new();
+        public List<OffboardingTaskTemplate> OffboardingTemplates { get; set; } = new();
+        public List<OnboardingTask> OnboardingTasks { get; set; } = new();
+        public List<OffboardingTask> OffboardingTasks { get; set; } = new();
+        public List<Role> Roles { get; set; } = new();
+        public string? TemplateName { get; set; }
+        public string? TemplateDescription { get; set; }
+        public int DefaultDueDays { get; set; } = 7;
+        public int? DefaultAssigneeRoleId { get; set; }
     }
 
     public class ProfileViewModel

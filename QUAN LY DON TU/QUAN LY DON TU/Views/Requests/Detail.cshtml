@@ -110,13 +110,6 @@
                         <form method="post" asp-controller="Approvals" asp-action="ProcessApproval">
                             <input type="hidden" name="ApprovalId" value="@Model.CurrentApprovalId" />
                             <input type="hidden" name="RequestId" value="@Model.Request?.Id" />
-                            @if (Model.CurrentApprovalId.HasValue && Model.ApprovalSla.TryGetValue(Model.CurrentApprovalId.Value, out var currentSla))
-                            {
-                                <div class="sla-inline">
-                                    <span class="status-badge @(currentSla.IsOverdue ? "rejected" : "pending")">@currentSla.StatusText</span>
-                                    <small>@currentSla.RemainingText</small>
-                                </div>
-                            }
                             <div class="form-group">
                                 <label class="form-label" data-i18n="LabelCommentReason">Nhận xét / Lý do</label>
                                 <textarea name="Comments" class="form-control" placeholder="Nhập nhận xét (tùy chọn khi duyệt, bắt buộc khi từ chối)" data-i18n="PlaceholderLongComment"></textarea>
@@ -409,13 +402,6 @@
                                             <span class="atl-badge @badgeCls">@badgeText</span>
                                         </div>
                                         <div class="atl-role">@(sa.StepName ?? $"Bước {sa.StepOrder}")</div>
-                                        @if (Model.ApprovalSla.TryGetValue(sa.Id, out var lineSla))
-                                        {
-                                            <div class="sla-inline">
-                                                <span class="atl-badge @(lineSla.IsOverdue || lineSla.IsBreached ? "b-rejected" : "b-pending")">@lineSla.StatusText</span>
-                                                <small>@lineSla.RemainingText</small>
-                                            </div>
-                                        }
                                         @if (!string.IsNullOrEmpty(sa.Comments))
                                         {
                                             <div class="atl-comment">"@sa.Comments"</div>
@@ -458,6 +444,41 @@
                                 <div style="font-size:11px;color:var(--text-muted)">@log.CreatedAt.ToString("HH:mm dd/MM/yyyy")</div>
                             </div>
                         </div>
+                    }
+                </div>
+            </div>
+
+            <div class="glass-card" style="margin-top:16px">
+                <div class="card-header"><h3><i class="bi bi-activity"></i> Timeline</h3></div>
+                <div class="card-body" style="padding:12px 20px">
+                    @if (Model.Timeline != null && Model.Timeline.Any())
+                    {
+                        <div class="audit-list">
+                            @foreach (var item in Model.Timeline.Take(25))
+                            {
+                                <div class="audit-item">
+                                    <div class="audit-icon comment"><i class="bi bi-dot"></i></div>
+                                    <div style="flex:1">
+                                        <div style="font-size:13px;font-weight:600">
+                                            @item.Title
+                                            @if (!string.IsNullOrWhiteSpace(item.ActorName))
+                                            {
+                                                <span class="text-muted"> · @item.ActorName</span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(item.Details))
+                                        {
+                                            <div style="font-size:12px;color:var(--text-muted)">@item.Details</div>
+                                        }
+                                        <div style="font-size:11px;color:var(--text-muted)">@item.At.ToString("HH:mm dd/MM/yyyy")</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">Chưa có timeline.</div>
                     }
                 </div>
             </div>

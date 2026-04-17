@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
 using DANGCAPNE.Data;
+using DANGCAPNE.Filters;
 using DANGCAPNE.Hubs;
 using DANGCAPNE.Models.HR;
 using DANGCAPNE.Models.Requests;
@@ -12,19 +13,24 @@ using DANGCAPNE.ViewModels;
 
 namespace DANGCAPNE.Controllers
 {
+    [PermissionAuthorize("approvals.view")]
     public class ApprovalsController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<NotificationHub> _hubContext;
-        private readonly IApprovalSlaService _slaService;
         private readonly IApprovedRequestPdfService _pdfService;
+        private readonly IEmailNotificationService _emailNotificationService;
 
-        public ApprovalsController(ApplicationDbContext context, IHubContext<NotificationHub> hubContext, IApprovalSlaService slaService, IApprovedRequestPdfService pdfService)
+        public ApprovalsController(
+            ApplicationDbContext context,
+            IHubContext<NotificationHub> hubContext,
+            IApprovedRequestPdfService pdfService,
+            IEmailNotificationService emailNotificationService)
         {
             _context = context;
             _hubContext = hubContext;
-            _slaService = slaService;
             _pdfService = pdfService;
+            _emailNotificationService = emailNotificationService;
         }
 
         public async Task<IActionResult> Index(string? status)
@@ -32,11 +38,14 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
 
+            var delegatedFromMap = await GetActiveDelegatorMapAsync(userId.Value);
+            var approverIds = delegatedFromMap.Keys.Append(userId.Value).Distinct().ToList();
+
             var pending = await _context.RequestApprovals
                 .Include(a => a.Request).ThenInclude(r => r!.Requester)
                 .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
                 .Include(a => a.Approver)
-                .Where(a => a.ApproverId == userId && a.Status == "Pending")
+                .Where(a => a.ApproverId.HasValue && approverIds.Contains(a.ApproverId.Value) && a.Status == "Pending")
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
 
@@ -44,7 +53,7 @@ namespace DANGCAPNE.Controllers
                 .Include(a => a.Request).ThenInclude(r => r!.Requester)
                 .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
                 .Include(a => a.Approver)
-                .Where(a => a.ApproverId == userId && a.Status != "Pending")
+                .Where(a => a.ApproverId.HasValue && approverIds.Contains(a.ApproverId.Value) && a.Status != "Pending")
                 .OrderByDescending(a => a.ActionDate)
                 .Take(50)
                 .ToListAsync();
@@ -53,26 +62,37 @@ namespace DANGCAPNE.Controllers
             {
                 PendingApprovals = pending,
                 ProcessedApprovals = processed,
-                ApprovalSla = await _slaService.BuildForApprovalsAsync(pending.Concat(processed).ToList()),
+                ApprovalSla = new Dictionary<int, ApprovalSlaViewModel>(),
                 StatusFilter = status,
-                TotalPending = pending.Count
+                TotalPending = pending.Count,
+                DelegatedApprovalIds = pending.Where(a => a.ApproverId.HasValue && delegatedFromMap.ContainsKey(a.ApproverId.Value)).Select(a => a.Id).ToList(),
+                DelegatedFromNames = pending
+                    .Concat(processed)
+                    .Where(a => a.ApproverId.HasValue && delegatedFromMap.ContainsKey(a.ApproverId.Value))
+                    .ToDictionary(a => a.Id, a => delegatedFromMap[a.ApproverId!.Value])
             };
 
             return View(model);
         }
 
-                [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> ProcessApproval(ApprovalActionViewModel model)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var delegatedFromMap = await GetActiveDelegatorMapAsync(userId.Value);
+            var approverIds = delegatedFromMap.Keys.Append(userId.Value).Distinct().ToList();
 
             var approval = await _context.RequestApprovals
                 .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
-                .FirstOrDefaultAsync(a => a.Id == model.ApprovalId && a.ApproverId == userId);
+                .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                .FirstOrDefaultAsync(a => a.Id == model.ApprovalId && a.ApproverId.HasValue && approverIds.Contains(a.ApproverId.Value));
 
             if (approval == null) return NotFound();
+
+            string delegatedFromName = string.Empty;
+            var actingOnBehalf = approval.ApproverId.HasValue && delegatedFromMap.TryGetValue(approval.ApproverId.Value, out delegatedFromName);
 
             if (approval.Request?.FormTemplate?.RequiresFinancialApproval == true && model.Action == "Approve")
             {
@@ -96,17 +116,9 @@ namespace DANGCAPNE.Controllers
                 approval.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
                 var nextApproval = await _context.RequestApprovals
-                    .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
+                    .Where(a => a.RequestId == request.Id && a.Status == "Pending" && a.StepOrder > approval.StepOrder)
                     .OrderBy(a => a.StepOrder)
                     .FirstOrDefaultAsync();
-
-                while (nextApproval != null && nextApproval.Status == "Skipped")
-                {
-                    nextApproval = await _context.RequestApprovals
-                        .Where(a => a.RequestId == request.Id && a.StepOrder > nextApproval.StepOrder && a.Status == "Pending")
-                        .OrderBy(a => a.StepOrder)
-                        .FirstOrDefaultAsync();
-                }
 
                 if (nextApproval != null)
                 {
@@ -134,6 +146,27 @@ namespace DANGCAPNE.Controllers
                                 type = "Approval",
                                 actionUrl = $"/Requests/Detail/{request.Id}"
                             });
+
+                        var nextApprover = await _context.Users
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(u => u.Id == nextApproval.ApproverId.Value);
+                        if (!string.IsNullOrWhiteSpace(nextApprover?.Email))
+                        {
+                            await _emailNotificationService.SendTemplatedEmailAsync(
+                                tenantId,
+                                "NewRequest",
+                                nextApprover.Email,
+                                new Dictionary<string, string>
+                                {
+                                    ["ApproverName"] = nextApprover.FullName,
+                                    ["RequesterName"] = request.Requester?.FullName ?? "Nhan vien",
+                                    ["FormName"] = request.FormTemplate?.Name ?? "Don tu",
+                                    ["RequestCode"] = request.RequestCode,
+                                    ["ActionUrl"] = $"/Requests/Detail/{request.Id}",
+                                    ["Message"] = $"{request.RequestCode} can duyet"
+                                },
+                                request.Id);
+                        }
                     }
 
                     _context.Notifications.Add(new Models.SystemModels.Notification
@@ -195,6 +228,23 @@ namespace DANGCAPNE.Controllers
                             requestCode = request.RequestCode,
                             newStatus = "Approved"
                         });
+
+                    if (!string.IsNullOrWhiteSpace(request.Requester?.Email))
+                    {
+                        await _emailNotificationService.SendTemplatedEmailAsync(
+                            tenantId,
+                            "Approved",
+                            request.Requester.Email,
+                            new Dictionary<string, string>
+                            {
+                                ["RequesterName"] = request.Requester.FullName,
+                                ["ApproverName"] = HttpContext.Session.GetString("FullName") ?? "Approver",
+                                ["RequestCode"] = request.RequestCode,
+                                ["ActionUrl"] = $"/Requests/Detail/{request.Id}",
+                                ["Message"] = $"Don {request.RequestCode} da duoc phe duyet"
+                            },
+                            request.Id);
+                    }
                 }
             }
             else if (model.Action == "Reject")
@@ -224,6 +274,24 @@ namespace DANGCAPNE.Controllers
                         requestCode = request.RequestCode,
                         newStatus = "Rejected"
                     });
+
+                if (!string.IsNullOrWhiteSpace(request.Requester?.Email))
+                {
+                    await _emailNotificationService.SendTemplatedEmailAsync(
+                        tenantId,
+                        "Rejected",
+                        request.Requester.Email,
+                        new Dictionary<string, string>
+                        {
+                            ["RequesterName"] = request.Requester.FullName,
+                            ["ApproverName"] = HttpContext.Session.GetString("FullName") ?? "Approver",
+                            ["RequestCode"] = request.RequestCode,
+                            ["Comments"] = model.Comments ?? string.Empty,
+                            ["ActionUrl"] = $"/Requests/Detail/{request.Id}",
+                            ["Message"] = $"Don {request.RequestCode} bi tu choi"
+                        },
+                        request.Id);
+                }
             }
             else if (model.Action == "RequestEdit")
             {
@@ -251,7 +319,7 @@ namespace DANGCAPNE.Controllers
                 Action = model.Action,
                 OldStatus = oldStatus,
                 NewStatus = request.Status,
-                Details = model.Comments,
+                Details = actingOnBehalf ? $"[Uy quyen tu {delegatedFromName}] {model.Comments}" : model.Comments,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
             });
 
@@ -314,16 +382,22 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var delegatedFromMap = await GetActiveDelegatorMapAsync(userId.Value);
+            var approverIds = delegatedFromMap.Keys.Append(userId.Value).Distinct().ToList();
 
             int processed = 0;
             var approvedRequestIds = new List<int>();
             foreach (var approvalId in model.ApprovalIds)
             {
                 var approval = await _context.RequestApprovals
-                    .Include(a => a.Request)
-                    .FirstOrDefaultAsync(a => a.Id == approvalId && a.ApproverId == userId && a.Status == "Pending");
+                    .Include(a => a.Request).ThenInclude(r => r!.Requester)
+                    .Include(a => a.Request).ThenInclude(r => r!.FormTemplate)
+                    .FirstOrDefaultAsync(a => a.Id == approvalId && a.ApproverId.HasValue && approverIds.Contains(a.ApproverId.Value) && a.Status == "Pending");
 
                 if (approval == null) continue;
+
+                string delegatedFromName = string.Empty;
+                var actingOnBehalf = approval.ApproverId.HasValue && delegatedFromMap.TryGetValue(approval.ApproverId.Value, out delegatedFromName);
 
                 approval.Status = model.Action == "Approve" ? "Approved" : "Rejected";
                 approval.ActionDate = DateTime.UtcNow;
@@ -334,11 +408,21 @@ namespace DANGCAPNE.Controllers
 
                 if (model.Action == "Approve")
                 {
-                    var hasMoreSteps = await _context.RequestApprovals
-                        .AnyAsync(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending");
+                    var nextApproval = await _context.RequestApprovals
+                        .Where(a => a.RequestId == request.Id && a.Status == "Pending" && a.StepOrder > approval.StepOrder)
+                        .OrderBy(a => a.StepOrder)
+                        .FirstOrDefaultAsync();
 
-                    request.Status = hasMoreSteps ? "InProgress" : "Approved";
-                    if (!hasMoreSteps) request.CompletedAt = DateTime.UtcNow;
+                    if (nextApproval != null)
+                    {
+                        request.Status = "InProgress";
+                        request.CurrentStepOrder = nextApproval.StepOrder;
+                    }
+                    else
+                    {
+                        request.Status = "Approved";
+                        request.CompletedAt = DateTime.UtcNow;
+                    }
                 }
                 else
                 {
@@ -356,13 +440,31 @@ namespace DANGCAPNE.Controllers
                         ActionUrl = $"/Requests/Detail/{request.Id}",
                         RelatedRequestId = request.Id
                     });
+
+                    if (!string.IsNullOrWhiteSpace(request.Requester?.Email))
+                    {
+                        await _emailNotificationService.SendTemplatedEmailAsync(
+                            tenantId,
+                            "Rejected",
+                            request.Requester.Email,
+                            new Dictionary<string, string>
+                            {
+                                ["RequesterName"] = request.Requester.FullName,
+                                ["ApproverName"] = HttpContext.Session.GetString("FullName") ?? "Approver",
+                                ["RequestCode"] = request.RequestCode,
+                                ["Comments"] = model.Comments ?? string.Empty,
+                                ["ActionUrl"] = $"/Requests/Detail/{request.Id}",
+                                ["Message"] = $"Don {request.RequestCode} bi tu choi"
+                            },
+                            request.Id);
+                    }
                 }
 
                 // If approved and moved to next step, notify next person
                 if (model.Action == "Approve" && request.Status == "InProgress")
                 {
                     var nextApproval = await _context.RequestApprovals
-                        .Where(a => a.RequestId == request.Id && a.StepOrder > approval.StepOrder && a.Status == "Pending")
+                        .Where(a => a.RequestId == request.Id && a.Status == "Pending")
                         .OrderBy(a => a.StepOrder)
                         .FirstOrDefaultAsync();
 
@@ -404,6 +506,23 @@ namespace DANGCAPNE.Controllers
                         ActionUrl = $"/Requests/Detail/{request.Id}",
                         RelatedRequestId = request.Id
                     });
+
+                    if (!string.IsNullOrWhiteSpace(request.Requester?.Email))
+                    {
+                        await _emailNotificationService.SendTemplatedEmailAsync(
+                            tenantId,
+                            "Approved",
+                            request.Requester.Email,
+                            new Dictionary<string, string>
+                            {
+                                ["RequesterName"] = request.Requester.FullName,
+                                ["ApproverName"] = HttpContext.Session.GetString("FullName") ?? "Approver",
+                                ["RequestCode"] = request.RequestCode,
+                                ["ActionUrl"] = $"/Requests/Detail/{request.Id}",
+                                ["Message"] = $"Don {request.RequestCode} da duoc phe duyet"
+                            },
+                            request.Id);
+                    }
                 }
 
                 request.UpdatedAt = DateTime.UtcNow;
@@ -414,7 +533,7 @@ namespace DANGCAPNE.Controllers
                     UserId = userId.Value,
                     Action = $"Bulk{model.Action}",
                     NewStatus = request.Status,
-                    Details = model.Comments,
+                    Details = actingOnBehalf ? $"[Uy quyen tu {delegatedFromName}] {model.Comments}" : model.Comments,
                     IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
                 });
 
@@ -520,6 +639,18 @@ namespace DANGCAPNE.Controllers
                 "Rejected" => "Rejected",
                 _ => "Pending"
             };
+        }
+
+        private async Task<Dictionary<int, string>> GetActiveDelegatorMapAsync(int userId)
+        {
+            var today = DateTime.Today;
+
+            return await _context.Delegations
+                .Include(d => d.Delegator)
+                .Where(d => d.DelegateId == userId && d.IsActive && d.StartDate <= today && d.EndDate >= today)
+                .ToDictionaryAsync(
+                    d => d.DelegatorId,
+                    d => d.Delegator != null ? d.Delegator.FullName : $"User #{d.DelegatorId}");
         }
     }
 }

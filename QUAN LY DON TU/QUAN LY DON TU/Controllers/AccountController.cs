@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.ViewModels;
 using DANGCAPNE.Models.Organization;
+using DANGCAPNE.Models.Timekeeping;
 using Microsoft.AspNetCore.SignalR;
 using DANGCAPNE.Hubs;
+using DANGCAPNE.Security;
 using Npgsql;
 using System.Linq;
 using System.Security.Cryptography;
@@ -142,6 +144,12 @@ namespace DANGCAPNE.Controllers
             HttpContext.Session.SetString("PendingRememberMe", model.RememberMe ? "1" : "0");
             await WriteAuthAuditLog(user.Id, user.Email, "LoginSuccess", true, "Employee code accepted, awaiting biometric verification");
 
+            var demoSkipBiometric = string.Equals(Environment.GetEnvironmentVariable("DEMO_SKIP_BIOMETRIC"), "1", StringComparison.OrdinalIgnoreCase);
+            if (demoSkipBiometric && string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("FinalizeLogin");
+            }
+
             if (!user.IsBiometricEnrolled)
             {
                 return RedirectToAction("EnrollBiometrics");
@@ -229,6 +237,7 @@ namespace DANGCAPNE.Controllers
             var email = HttpContext.Session.GetString("Email");
             if (userId.HasValue)
             {
+                await MarkCurrentSessionOfflineAsync(userId.Value);
                 var user = await _context.Users.FindAsync(userId.Value);
                 if (user != null)
                 {
@@ -796,6 +805,7 @@ namespace DANGCAPNE.Controllers
             }
 
             await _context.SaveChangesAsync();
+            await TrackOnlineSessionAsync(user);
 
             HttpContext.Session.Remove("PendingUserId");
             HttpContext.Session.Remove("PendingRememberMe");
@@ -838,8 +848,11 @@ namespace DANGCAPNE.Controllers
                 primaryRole = "Accountant";
             }
 
+            var permissions = PermissionCatalog.ResolvePermissions(user, roles, primaryRole);
+
             HttpContext.Session.SetString("Roles", string.Join(",", roles));
             HttpContext.Session.SetString("PrimaryRole", primaryRole);
+            HttpContext.Session.SetString("Permissions", string.Join(",", permissions));
         }
 
         private static string? NormalizeIp(string? ipText)
@@ -958,7 +971,78 @@ namespace DANGCAPNE.Controllers
             }
 
             ApplyUserSession(user);
+            await TrackOnlineSessionAsync(user);
             return true;
+        }
+
+        private async Task TrackOnlineSessionAsync(User user)
+        {
+            try
+            {
+                var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var userAgent = Request.Headers.UserAgent.ToString();
+
+                var existing = await _context.EmployeeOnlineSessions
+                    .Where(s => s.UserId == user.Id && s.Status == "Online")
+                    .OrderByDescending(s => s.LastSeenAt)
+                    .FirstOrDefaultAsync();
+
+                if (existing == null)
+                {
+                    _context.EmployeeOnlineSessions.Add(new EmployeeOnlineSession
+                    {
+                        TenantId = user.TenantId,
+                        UserId = user.Id,
+                        SessionToken = HttpContext.Session.Id,
+                        LoginAt = DateTime.UtcNow,
+                        LastSeenAt = DateTime.UtcNow,
+                        Status = "Online",
+                        LastIpAddress = remoteIp,
+                        DeviceName = string.IsNullOrWhiteSpace(userAgent) ? "Unknown" : userAgent[..Math.Min(250, userAgent.Length)]
+                    });
+                }
+                else
+                {
+                    existing.LastSeenAt = DateTime.UtcNow;
+                    existing.LastIpAddress = remoteIp;
+                    existing.DeviceName = string.IsNullOrWhiteSpace(userAgent) ? existing.DeviceName : userAgent[..Math.Min(250, userAgent.Length)];
+                    existing.Status = "Online";
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch
+            {
+                // Keep auth flow resilient even if session tracking fails.
+            }
+        }
+
+        private async Task MarkCurrentSessionOfflineAsync(int userId)
+        {
+            try
+            {
+                var currentToken = HttpContext.Session.Id;
+                var session = await _context.EmployeeOnlineSessions
+                    .Where(s => s.UserId == userId && s.Status == "Online")
+                    .OrderByDescending(s => s.LastSeenAt)
+                    .FirstOrDefaultAsync(s => s.SessionToken == currentToken)
+                    ?? await _context.EmployeeOnlineSessions
+                        .Where(s => s.UserId == userId && s.Status == "Online")
+                        .OrderByDescending(s => s.LastSeenAt)
+                        .FirstOrDefaultAsync();
+
+                if (session != null)
+                {
+                    session.Status = "Offline";
+                    session.LogoutAt = DateTime.UtcNow;
+                    session.LastSeenAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch
+            {
+                // Ignore to avoid blocking logout.
+            }
         }
     }
 

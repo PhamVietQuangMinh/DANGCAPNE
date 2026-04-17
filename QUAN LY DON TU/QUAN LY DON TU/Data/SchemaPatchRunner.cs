@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace DANGCAPNE.Data
 {
@@ -357,7 +357,15 @@ namespace DANGCAPNE.Data
                 ALTER TABLE "PasswordHistories" ADD COLUMN IF NOT EXISTS "ChangeSource" character varying(50) NOT NULL DEFAULT 'SelfService';
                 """,
                 """
-                ALTER TABLE "DigitalSignatureProfiles" ADD COLUMN IF NOT EXISTS "SignatureName" character varying(150) NOT NULL DEFAULT 'Chữ ký mặc định';
+                ALTER TABLE "WorkflowRoutingRules" ADD COLUMN IF NOT EXISTS "RouteType" character varying(20) NOT NULL DEFAULT 'Sequential';
+                ALTER TABLE "WorkflowRoutingRules" ADD COLUMN IF NOT EXISTS "ParallelGroupCode" character varying(50) NULL;
+                ALTER TABLE "WorkflowRoutingRules" ADD COLUMN IF NOT EXISTS "MinApprovalsRequired" integer NOT NULL DEFAULT 1;
+                UPDATE "WorkflowRoutingRules"
+                SET "RouteType" = 'Sequential'
+                WHERE "RouteType" IS NULL OR "RouteType" = '';
+                """,
+                """
+                ALTER TABLE "DigitalSignatureProfiles" ADD COLUMN IF NOT EXISTS "SignatureName" character varying(150) NOT NULL DEFAULT 'Chá»¯ kÃ½ máº·c Ä‘á»‹nh';
                 """,
                 """
                 ALTER TABLE "KpiSnapshots" ADD COLUMN IF NOT EXISTS "MetricCode" character varying(50) NOT NULL DEFAULT 'GENERAL';
@@ -388,19 +396,19 @@ namespace DANGCAPNE.Data
                     ELSE "EmployeeCode"
                 END;
                 INSERT INTO "Departments" ("TenantId", "Name", "Code", "IsActive", "CreatedAt")
-                SELECT 1, 'Phòng Công nghệ Thông tin', 'IT', TRUE, NOW()
+                SELECT 1, 'PhÃ²ng CÃ´ng nghá»‡ ThÃ´ng tin', 'IT', TRUE, NOW()
                 WHERE NOT EXISTS (
                     SELECT 1 FROM "Departments" WHERE "TenantId" = 1 AND "Code" = 'IT'
                 );
 
                 INSERT INTO "Roles" ("TenantId", "Name", "Description", "CreatedAt")
-                SELECT 1, 'IT', 'Vận hành kỹ thuật, cấp mã nhân viên và hỗ trợ truy cập', NOW()
+                SELECT 1, 'IT', 'Váº­n hÃ nh ká»¹ thuáº­t, cáº¥p mÃ£ nhÃ¢n viÃªn vÃ  há»— trá»£ truy cáº­p', NOW()
                 WHERE NOT EXISTS (
                     SELECT 1 FROM "Roles" WHERE "TenantId" = 1 AND "Name" = 'IT'
                 );
 
                 INSERT INTO "Roles" ("TenantId", "Name", "Description", "CreatedAt")
-                SELECT 1, 'ITManager', 'Quản lý phòng IT, tách biệt với Manager chung', NOW()
+                SELECT 1, 'ITManager', 'Quáº£n lÃ½ phÃ²ng IT, tÃ¡ch biá»‡t vá»›i Manager chung', NOW()
                 WHERE NOT EXISTS (
                     SELECT 1 FROM "Roles" WHERE "TenantId" = 1 AND "Name" = 'ITManager'
                 );
@@ -514,56 +522,56 @@ namespace DANGCAPNE.Data
 
             var itDepartment = await db.Departments.FirstOrDefaultAsync(d => d.TenantId == tenantId && d.Code == "IT");
             var salesDepartment = await db.Departments.FirstOrDefaultAsync(d => d.TenantId == tenantId && d.Code == "SALES");
-            var headJobTitle = await db.JobTitles.FirstOrDefaultAsync(j => j.TenantId == tenantId && j.Name == "Trưởng phòng");
-            var itManagerPosition = await db.Positions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Name == "Trưởng phòng IT");
-            var generalManagerPosition = await db.Positions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Name == "Trưởng phòng KD");
+            var headJobTitle = await db.JobTitles.FirstOrDefaultAsync(j => j.TenantId == tenantId && j.Name == "TrÆ°á»Ÿng phÃ²ng");
+            var itManagerPosition = await db.Positions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Name == "TrÆ°á»Ÿng phÃ²ng IT");
+            var generalManagerPosition = await db.Positions.FirstOrDefaultAsync(p => p.TenantId == tenantId && p.Name == "TrÆ°á»Ÿng phÃ²ng KD");
             var defaultBranch = await db.Branches.Where(b => b.TenantId == tenantId).OrderBy(b => b.Id).FirstOrDefaultAsync();
 
             if (defaultBranch == null)
             {
-                defaultBranch = new Models.Organization.Branch { TenantId = tenantId, Name = "Trụ sở chính", Address = "N/A", TimeZone = "SE Asia Standard Time" };
+                defaultBranch = new Models.Organization.Branch { TenantId = tenantId, Name = "Trá»¥ sá»Ÿ chÃ­nh", Address = "N/A", TimeZone = "SE Asia Standard Time" };
                 db.Branches.Add(defaultBranch);
                 await db.SaveChangesAsync();
             }
 
             if (salesDepartment == null)
             {
-                salesDepartment = new Models.Organization.Department { TenantId = tenantId, Name = "Phòng Kinh doanh", Code = "SALES", IsActive = true, CreatedAt = now };
+                salesDepartment = new Models.Organization.Department { TenantId = tenantId, Name = "PhÃ²ng Kinh doanh", Code = "SALES", IsActive = true, CreatedAt = now };
                 db.Departments.Add(salesDepartment);
                 await db.SaveChangesAsync();
             }
 
             if (itDepartment == null)
             {
-                itDepartment = new Models.Organization.Department { TenantId = tenantId, Name = "Phòng Công nghệ Thông tin", Code = "IT", IsActive = true, CreatedAt = now };
+                itDepartment = new Models.Organization.Department { TenantId = tenantId, Name = "PhÃ²ng CÃ´ng nghá»‡ ThÃ´ng tin", Code = "IT", IsActive = true, CreatedAt = now };
                 db.Departments.Add(itDepartment);
                 await db.SaveChangesAsync();
             }
 
             if (headJobTitle == null)
             {
-                headJobTitle = new Models.Organization.JobTitle { TenantId = tenantId, Name = "Trưởng phòng", Level = 3 };
+                headJobTitle = new Models.Organization.JobTitle { TenantId = tenantId, Name = "TrÆ°á»Ÿng phÃ²ng", Level = 3 };
                 db.JobTitles.Add(headJobTitle);
                 await db.SaveChangesAsync();
             }
 
             if (itManagerPosition == null)
             {
-                itManagerPosition = new Models.Organization.Position { TenantId = tenantId, Name = "Trưởng phòng IT", DepartmentId = itDepartment.Id };
+                itManagerPosition = new Models.Organization.Position { TenantId = tenantId, Name = "TrÆ°á»Ÿng phÃ²ng IT", DepartmentId = itDepartment.Id };
                 db.Positions.Add(itManagerPosition);
                 await db.SaveChangesAsync();
             }
 
             if (generalManagerPosition == null)
             {
-                generalManagerPosition = new Models.Organization.Position { TenantId = tenantId, Name = "Trưởng phòng KD", DepartmentId = salesDepartment.Id };
+                generalManagerPosition = new Models.Organization.Position { TenantId = tenantId, Name = "TrÆ°á»Ÿng phÃ²ng KD", DepartmentId = salesDepartment.Id };
                 db.Positions.Add(generalManagerPosition);
                 await db.SaveChangesAsync();
             }
 
-            var managerRoleId = await EnsureRoleAsync(db, tenantId, "Manager", "Quản lý");
-            var itRoleId = await EnsureRoleAsync(db, tenantId, "IT", "Vận hành kỹ thuật, cấp mã nhân viên và hỗ trợ truy cập");
-            var itManagerRoleId = await EnsureRoleAsync(db, tenantId, "ITManager", "Quản lý phòng IT, tách biệt với Manager chung");
+            var managerRoleId = await EnsureRoleAsync(db, tenantId, "Manager", "Quáº£n lÃ½");
+            var itRoleId = await EnsureRoleAsync(db, tenantId, "IT", "Váº­n hÃ nh ká»¹ thuáº­t, cáº¥p mÃ£ nhÃ¢n viÃªn vÃ  há»— trá»£ truy cáº­p");
+            var itManagerRoleId = await EnsureRoleAsync(db, tenantId, "ITManager", "Quáº£n lÃ½ phÃ²ng IT, tÃ¡ch biá»‡t vá»›i Manager chung");
 
             var employeeCodePermissionId = await EnsurePermissionAsync(db, tenantId, "Issue Employee Code", "EMPLOYEE_CODE_ISSUE", "Issue employee code by department");
             var accountSupportPermissionId = await EnsurePermissionAsync(db, tenantId, "Support Account Access", "ACCOUNT_SUPPORT", "Reset login IP, password and access states");
@@ -590,7 +598,7 @@ namespace DANGCAPNE.Data
                 itManagerUser = new Models.Organization.User
                 {
                     TenantId = tenantId,
-                    FullName = "Lê Văn IT Manager",
+                    FullName = "LÃª VÄƒn IT Manager",
                     Email = "itmanager@company.com",
                     PasswordHash = defaultPasswordHash,
                     EmployeeCode = "ITM001",
@@ -608,7 +616,7 @@ namespace DANGCAPNE.Data
             }
             else
             {
-                itManagerUser.FullName = "Lê Văn IT Manager";
+                itManagerUser.FullName = "LÃª VÄƒn IT Manager";
                 itManagerUser.Email = "itmanager@company.com";
                 itManagerUser.EmployeeCode = "ITM001";
                 itManagerUser.DepartmentId = itDepartment.Id;
@@ -632,7 +640,7 @@ namespace DANGCAPNE.Data
                 generalManagerUser = new Models.Organization.User
                 {
                     TenantId = tenantId,
-                    FullName = "Nguyễn Văn Manager",
+                    FullName = "Nguyá»…n VÄƒn Manager",
                     Email = "manager@company.com",
                     PasswordHash = defaultPasswordHash,
                     EmployeeCode = "MNG001",
@@ -650,7 +658,7 @@ namespace DANGCAPNE.Data
             }
             else
             {
-                generalManagerUser.FullName = "Nguyễn Văn Manager";
+                generalManagerUser.FullName = "Nguyá»…n VÄƒn Manager";
                 generalManagerUser.EmployeeCode = "MNG001";
                 generalManagerUser.DepartmentId = salesDepartment.Id;
                 generalManagerUser.BranchId ??= defaultBranch.Id;
@@ -805,3 +813,4 @@ namespace DANGCAPNE.Data
         }
     }
 }
+

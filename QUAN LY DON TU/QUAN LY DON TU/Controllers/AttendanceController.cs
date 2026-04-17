@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Models.Timekeeping;
+using DANGCAPNE.Services;
 using System.Net;
 using System.Linq;
 using System.Text.Json;
@@ -11,10 +12,12 @@ namespace DANGCAPNE.Controllers
     public class AttendanceController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAttendanceRiskScoringService _riskScoringService;
 
-        public AttendanceController(ApplicationDbContext context)
+        public AttendanceController(ApplicationDbContext context, IAttendanceRiskScoringService riskScoringService)
         {
             _context = context;
+            _riskScoringService = riskScoringService;
         }
 
         public async Task<IActionResult> Index()
@@ -138,7 +141,8 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Json(new { success = false, message = "Phien dang nhap het han" });
 
-            if (!IsInternalNetwork(HttpContext.Connection.RemoteIpAddress))
+            var isInternal = IsInternalNetwork(HttpContext.Connection.RemoteIpAddress);
+            if (!isInternal)
                 return Json(new { success = false, message = "Ban dang o ngoai mang noi bo, khong the cham cong." });
 
             var user = await _context.Users.FindAsync(userId);
@@ -203,24 +207,34 @@ namespace DANGCAPNE.Controllers
                 .FirstOrDefaultAsync(c => c.BranchId == user.BranchId && c.IsActive);
 
             string source = "FaceRecognition";
+            var qrRequired = config != null && !string.IsNullOrEmpty(config.QrCodeKey);
+            var wifiRequired = config != null && !string.IsNullOrEmpty(config.WifiBssid);
+            var gpsRequired = config != null && config.AllowedLatitude.HasValue;
+            var qrMatchedOk = !qrRequired;
+            var wifiMatchedOk = !wifiRequired;
+            var gpsMatchedOk = !gpsRequired;
+            var faceMatchedOk = enrolledDescriptors.Count == 0 || !user.IsBiometricEnrolled || (faceMatched ?? true);
 
-            if (config != null && !string.IsNullOrEmpty(config.QrCodeKey))
+            if (qrRequired)
             {
                 if (qrCode != config.QrCodeKey)
                     return Json(new { success = false, message = "Ma QR khong hop le" });
+                qrMatchedOk = true;
                 source = "QRCode";
             }
-            if (config != null && !string.IsNullOrEmpty(config.WifiBssid))
+            if (wifiRequired)
             {
                 if (wifiBssid != config.WifiBssid)
                     return Json(new { success = false, message = "Vui long ket noi dung Wifi van phong" });
+                wifiMatchedOk = true;
                 source = "Wifi";
             }
-            if (config != null && config.AllowedLatitude.HasValue && lat.HasValue)
+            if (gpsRequired && lat.HasValue && lon.HasValue)
             {
                 double distance = CalculateDistance(lat.Value, lon!.Value, config.AllowedLatitude.Value, config.AllowedLongitude!.Value);
                 if (distance > config.AllowedRadiusMeters)
                     return Json(new { success = false, message = $"Ban dang o qua xa van phong ({Math.Round(distance)}m)" });
+                gpsMatchedOk = true;
                 source = "GPS";
             }
 
@@ -230,6 +244,20 @@ namespace DANGCAPNE.Controllers
 
             if (timesheet == null)
             {
+                var risk = _riskScoringService.Evaluate(new AttendanceRiskInput
+                {
+                    InternalNetwork = isInternal,
+                    BiometricRequired = user.IsBiometricEnrolled,
+                    FaceMatched = faceMatchedOk,
+                    WifiRequired = wifiRequired,
+                    WifiMatched = wifiMatchedOk,
+                    QrRequired = qrRequired,
+                    QrMatched = qrMatchedOk,
+                    GpsRequired = gpsRequired,
+                    GpsMatched = gpsMatchedOk,
+                    HasPhoto = !string.IsNullOrWhiteSpace(photoBase64)
+                });
+
                 timesheet = new Timesheet
                 {
                     TenantId = tenantId,
@@ -243,11 +271,45 @@ namespace DANGCAPNE.Controllers
                     WifiBssid = wifiBssid,
                     QrCodeKey = qrCode,
                     PhotoUrl = photoBase64,
-                    Status = "Present"
+                    Status = "Present",
+                    Notes = $"RiskScore={risk.Score};RiskLevel={risk.Level};Reasons={string.Join(",", risk.Reasons)}"
                 };
                 _context.Timesheets.Add(timesheet);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, type = "checkin", message = "Vao thanh cong", time = DateTime.UtcNow.ToString("HH:mm:ss") });
+
+                if (risk.NeedsManualReview)
+                {
+                    var existsReview = await _context.AttendanceAdjustmentRequests
+                        .AnyAsync(a => a.TimesheetId == timesheet.Id && a.Status == "Pending");
+                    if (!existsReview)
+                    {
+                        _context.AttendanceAdjustmentRequests.Add(new AttendanceAdjustmentRequest
+                        {
+                            TenantId = tenantId,
+                            UserId = userId.Value,
+                            TimesheetId = timesheet.Id,
+                            AttendanceDate = today,
+                            RequestedCheckIn = timesheet.CheckIn,
+                            Reason = $"Auto risk review ({risk.Level})",
+                            Notes = $"RiskScore={risk.Score};{string.Join(" | ", risk.Reasons)}",
+                            Status = "Pending",
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        });
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    type = "checkin",
+                    message = "Vao thanh cong",
+                    time = DateTime.UtcNow.ToString("HH:mm:ss"),
+                    riskScore = risk.Score,
+                    riskLevel = risk.Level,
+                    needsReview = risk.NeedsManualReview
+                });
             }
 
             if (timesheet.CheckOut == null)

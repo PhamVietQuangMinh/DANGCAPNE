@@ -1,0 +1,97 @@
+@model DANGCAPNE.ViewModels.RequestVerifyViewModel
+@{
+    ViewData["Title"] = "Xác minh đơn";
+}
+
+<div class="page-content">
+    <div class="glass-card">
+        <div class="card-header">
+            <h3><i class="bi bi-patch-check-fill text-success"></i> Xác minh đơn</h3>
+        </div>
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Verify", "Requests")" class="d-flex gap-8 flex-wrap" style="margin-bottom:16px;align-items:flex-end">
+                <div style="flex:1;min-width:280px">
+                    <label class="form-label">Nhập mã đơn để xác minh</label>
+                    <input type="text" name="id" class="form-control" value="@Model.Request?.RequestCode" placeholder="Ví dụ: REQ-20260415-001" />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Tra cứu
+                </button>
+            </form>
+
+            @if (Model.Request == null)
+            {
+                <div class="alert alert-danger">Không tìm thấy đơn hoặc mã xác minh không hợp lệ.</div>
+            }
+            else
+            {
+                <div class="info-grid-2" style="margin-bottom: 20px">
+                    <div>
+                        <span class="text-muted" style="font-size:12px">Mã đơn</span><br />
+                        <strong class="text-primary">@Model.Request.RequestCode</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size:12px">Trạng thái</span><br />
+                        <strong>@Model.Request.Status</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size:12px">Loại đơn</span><br />
+                        <strong>@Model.Request.FormTemplate?.Name</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size:12px">Người gửi</span><br />
+                        <strong>@Model.Request.Requester?.FullName</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size:12px">Ngày tạo</span><br />
+                        <strong>@Model.Request.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size:12px">Hoàn tất</span><br />
+                        <strong>@(Model.Request.CompletedAt.HasValue ? Model.Request.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm") : "--")</strong>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="margin-top: 16px">
+                    <div class="card-header">
+                        <h3><i class="bi bi-list-check"></i> Lịch sử phê duyệt</h3>
+                    </div>
+                    <div class="card-body" style="padding: 0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Bước</th>
+                                    <th>Vai trò</th>
+                                    <th>Người xử lý</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thời gian</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in Model.Approvals)
+                                {
+                                    <tr>
+                                        <td>@a.StepOrder</td>
+                                        <td>@a.StepName</td>
+                                        <td>@(a.Approver?.FullName ?? "--")</td>
+                                        <td>@a.Status</td>
+                                        <td class="text-muted">@(a.ActionDate.HasValue ? a.ActionDate.Value.ToString("dd/MM/yyyy HH:mm") : "--")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @if (Model.CanOpenInSystem)
+                {
+                    <div style="margin-top: 16px">
+                        <a class="btn btn-primary" href="@Url.Action("Detail", "Requests", new { id = Model.Request.Id })">
+                            <i class="bi bi-box-arrow-up-right"></i> Mở trong hệ thống
+                        </a>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

@@ -1,29 +1,180 @@
-@model DANGCAPNE.ViewModels.ITDashboardViewModel
+﻿@model DANGCAPNE.ViewModels.ITDashboardViewModel
 @{
     ViewData["Title"] = "IT Dashboard";
+    var failed = (int?)(ViewBag.TotalFailedWeek) ?? 0;
+    var success = (int?)(ViewBag.TotalSuccessWeek) ?? 0;
+    var activeSessions = (int?)(ViewBag.ActiveSessionCount) ?? 0;
+    var suspiciousIps = (int?)(ViewBag.SuspiciousIpCount) ?? 0;
 }
-<h1>Quản lý IT</h1>
-<div class="row">
-    <div class="col-md-6">
-        <h3>Nhật ký đăng nhập gần đây</h3>
-        <table class="table">
-            <thead><tr><th>Thời gian</th><th>User</th><th>Action</th></tr></thead>
-            <tbody>
-                @foreach (var log in Model.RecentAuthLogs)
-                {
-                    <tr><td>@log.CreatedAt</td><td>@log.Email</td><td>@log.Action</td></tr>
-                }
-            </tbody>
-        </table>
+
+<div class="page-content">
+    <div class="glass-card dashboard-summary-card mb-24" style="padding:16px 20px;">
+        <div class="dashboard-summary-main">
+            <div class="text-muted" style="font-size:12px">IT vận hành</div>
+            <div style="font-size:24px;font-weight:800">IT Security Dashboard</div>
+            <div class="text-muted" style="font-size:12px">Giám sát truy cập, phiên online và rủi ro đăng nhập</div>
+        </div>
+        <div class="dashboard-summary-pills d-flex align-center gap-12">
+            <div class="stat-pill danger">
+                <div class="pill-label">Login failed (7 ngày)</div>
+                <div class="pill-value">@failed</div>
+            </div>
+            <div class="stat-pill success">
+                <div class="pill-label">Login success (7 ngày)</div>
+                <div class="pill-value">@success</div>
+            </div>
+            <div class="stat-pill">
+                <div class="pill-label">Session online</div>
+                <div class="pill-value">@activeSessions</div>
+            </div>
+            <div class="stat-pill">
+                <div class="pill-label">IP nghi ngờ</div>
+                <div class="pill-value">@suspiciousIps</div>
+            </div>
+        </div>
     </div>
-    <div class="col-md-6">
-        <h3>Người dùng chờ duyệt</h3>
-        <ul>
-            @foreach (var user in Model.PendingWhitelist)
-            {
-                <li>@user.FullName (@user.Email) <a href="/IT/ApproveUser/@user.Id" class="btn btn-sm btn-success">Duyệt</a></li>
-            }
-        </ul>
+
+    <div class="dashboard-panels-grid">
+        <div class="glass-card">
+            <div class="card-header">
+                <h3><i class="bi bi-person-fill-lock text-warning"></i> Tài khoản chờ duyệt</h3>
+                <a class="btn btn-outline btn-sm" href="@Url.Action("AllowedIPs", "IT")">
+                    <i class="bi bi-hdd-network"></i> Quản lý Wifi
+                </a>
+            </div>
+            <div class="card-body dashboard-table-wrap" style="padding:0;">
+                @if (!Model.PendingWhitelist.Any())
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-check2-circle"></i>
+                        <h3>Không có tài khoản chờ duyệt</h3>
+                    </div>
+                }
+                else
+                {
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-right">Xử lý</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var user in Model.PendingWhitelist)
+                        {
+                            <tr>
+                                <td><strong>@user.FullName</strong></td>
+                                <td>@user.Email</td>
+                                <td class="text-muted">@user.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                <td class="text-right">
+                                    <div class="inline-actions" style="justify-content:flex-end;">
+                                        <form asp-controller="IT" asp-action="ApproveUser" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check2"></i> Duyệt</button>
+                                        </form>
+                                        <form asp-controller="IT" asp-action="RejectUser" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-x"></i> Từ chối</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header">
+                <h3><i class="bi bi-activity text-primary"></i> Phiên đăng nhập online</h3>
+            </div>
+            <div class="card-body dashboard-table-wrap" style="padding:0;">
+                @if (!Model.OnlineSessions.Any())
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-wifi-off"></i>
+                        <h3>Không có phiên online</h3>
+                    </div>
+                }
+                else
+                {
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>IP</th>
+                                <th>LastSeen</th>
+                                <th class="text-right">Xử lý</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var s in Model.OnlineSessions)
+                        {
+                            <tr>
+                                <td><strong>@(s.User?.FullName ?? "Unknown")</strong></td>
+                                <td>@(s.LastIpAddress ?? "-")</td>
+                                <td class="text-muted">@s.LastSeenAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                <td class="text-right">
+                                    <form asp-controller="IT" asp-action="ForceLogout" method="post" style="display:inline-flex;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="sessionId" value="@s.Id" />
+                                        <button type="submit" class="btn btn-outline btn-sm">
+                                            <i class="bi bi-box-arrow-right"></i> Force logout
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+
+        <div class="glass-card dashboard-span-2">
+            <div class="card-header">
+                <h3><i class="bi bi-journal-text text-info"></i> Nhật ký đăng nhập gần đây</h3>
+            </div>
+            <div class="card-body dashboard-table-wrap" style="padding:0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Email</th>
+                            <th>Action</th>
+                            <th>IP</th>
+                            <th>Kết quả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var log in Model.RecentAuthLogs)
+                    {
+                        <tr>
+                            <td>@log.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                            <td>@log.Email</td>
+                            <td>@log.Action</td>
+                            <td>@(log.IpAddress ?? "-")</td>
+                            <td>
+                                @if (log.IsSuccess)
+                                {
+                                    <span class="status-badge approved">Success</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge rejected">Failed</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
-

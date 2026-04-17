@@ -178,12 +178,12 @@
                             {
                                 <div class="leave-card" data-year="@bucket.Year" data-remaining="@bucket.Remaining.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                                     <div class="leave-card-year">@bucket.Year</div>
-                                    <div class="leave-card-main">Còn lại @bucket.Remaining ngày</div>
-                                    <div class="leave-card-meta">Quỹ năm: @bucket.TotalEntitled ngày</div>
-                                    <div class="leave-card-meta">Đã dùng: @bucket.Used ngày</div>
+                                    <div class="leave-card-main">Có thể dùng @bucket.Remaining ngày</div>
+                                    <div class="leave-card-meta">Phép năm được cấp: @bucket.TotalEntitled ngày</div>
+                                    <div class="leave-card-meta">Đã sử dụng: @bucket.Used ngày</div>
                                     @if (bucket.CarryOver > 0)
                                     {
-                                        <div class="leave-card-meta">Bao gồm chuyển sang: @bucket.CarryOver ngày</div>
+                                        <div class="leave-card-meta">Phép chuyển từ năm trước: @bucket.CarryOver ngày</div>
                                     }
                                 </div>
                             }
@@ -681,7 +681,7 @@
         for (let current = new Date(startDate); current <= endDate; current.setDate(current.getDate() + 1)) {
             const exactToken = current.toISOString().slice(0, 10);
             const recurringToken = exactToken.slice(5);
-            if (current.getDay() === 0) {
+            if (current.getDay() === 0 || current.getDay() === 6) {
                 continue;
             }
             if (holidaySet.has(exactToken) || holidaySet.has(recurringToken)) {

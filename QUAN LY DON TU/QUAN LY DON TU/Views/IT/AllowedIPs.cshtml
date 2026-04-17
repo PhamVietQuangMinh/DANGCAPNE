@@ -1,234 +1,61 @@
-@model List<DANGCAPNE.Models.Security.AllowedIp>
+﻿@model List<DANGCAPNE.Models.Security.AllowedIp>
 @{
     ViewData["Title"] = "Quản lý Wifi công ty";
     var detectedIp = ViewData["DetectedIp"]?.ToString() ?? "N/A";
     var activeCount = Model.Count(x => x.IsActive);
-    var totalCount  = Model.Count;
+    var totalCount = Model.Count;
 }
 
-<style>
-    :root {
-        --primary: #6366f1;
-        --secondary: #94a3b8;
-        --accent: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --card-bg: #ffffff;
-        --bg-main: #f8fafc;
-        --border-color: #e2e8f0;
-        --text-dark: #0f172a;
-        --text-muted: #64748b;
-        --radius: 16px;
-        --vibrant-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        --mesh-gradient: linear-gradient(110deg, #1e1b4b 0%, #312e81 40%, rgba(79, 70, 229, 0.8) 100%);
+<div class="page-content wifi-page">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mb-24" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>@TempData["Success"]</span>
+        </div>
     }
 
-    /* Animation */
-    @@keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-24" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>@TempData["Error"]</span>
+        </div>
     }
 
-    .animate-in { animation: fadeInUp 0.5s ease out forwards; }
-
-    /* Hero Section */
-    .ip-hero {
-        background: var(--mesh-gradient);
-        border-radius: 24px;
-        padding: 48px;
-        margin-bottom: 32px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        gap: 32px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-    }
-
-    .ip-hero::before {
-        content: "";
-        position: absolute;
-        top: -20%; right: -10%;
-        width: 300px; height: 300px;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        pointer-events: none;
-    }
-
-    .ip-hero-icon {
-        width: 80px; height: 80px;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 36px; border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-
-    .ip-hero-content h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
-    .ip-hero-content p { color: rgba(255, 255, 255, 0.8); font-size: 15px; max-width: 600px; margin: 0; line-height: 1.6; }
-
-    /* Stats Grid */
-    .ip-stats-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        margin-bottom: 32px;
-    }
-
-    .ip-stat-card {
-        background: white;
-        border-radius: 24px;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .ip-stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
-
-    .stat-card-icon {
-        width: 56px; height: 56px;
-        border-radius: 16px;
-        display: flex; align-items: center; justify-content: center; font-size: 24px;
-    }
-    .stat-card-icon.blue { background: #eff6ff; color: #3b82f6; }
-    .stat-card-icon.emerald { background: #ecfdf5; color: #10b981; }
-    .stat-card-icon.amber { background: #fff7ed; color: #f59e0b; }
-
-    .stat-info .stat-val { font-size: 32px; font-weight: 800; color: var(--text-dark); line-height: 1; }
-    .stat-info .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* Forms */
-    .add-section-card {
-        background: white;
-        border-radius: 24px;
-        padding: 32px;
-        margin-bottom: 32px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-
-    .add-section-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; color: var(--text-dark); }
-    
-    /* Alignment FIX for Button */
-    .form-flex-row {
-        display: flex; gap: 24px; align-items: flex-end; width: 100%;
-    }
-    
-    .form-group-item { flex: 1; min-width: 0; }
-    .form-group-item.desc { flex: 1.5; }
-
-    .form-label-custom { display: block; font-size: 14px; font-weight: 700; color: #334155; margin-bottom: 10px; }
-    .form-input-custom {
-        width: 100%; height: 52px; border-radius: 12px; border: 1.5px solid #e2e8f0;
-        padding: 0 16px; font-size: 14px; transition: all 0.2s; background: #f8fafc;
-    }
-    .form-input-custom:focus {
-        background: white; border-color: var(--primary); outline: none;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-    }
-
-    .btn-premium {
-        height: 52px; padding: 0 32px; border-radius: 12px;
-        background: var(--vibrant-gradient); color: white;
-        font-weight: 700; border: none; cursor: pointer;
-        display: flex; align-items: center; gap: 10px;
-        transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.25);
-        white-space: nowrap;
-    }
-    .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.3); }
-
-    /* Table Design */
-    .table-container-card {
-        background: white; border-radius: 24px;
-        border: 1px solid var(--border-color); overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-
-    .table-header-custom {
-        padding: 24px 32px; border-bottom: 1px solid #f1f5f9;
-        display: flex; align-items: center; justify-content: space-between;
-        background: #fdfdfd;
-    }
-    .table-header-custom h4 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-dark); }
-    
-    .ip-search { position: relative; width: 300px; }
-    .ip-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-    .ip-search input { width: 100%; height: 42px; border-radius: 10px; border: 1.5px solid #e2e8f0; padding: 0 12px 0 40px; font-size: 14px; }
-
-    .modern-table { width: 100%; border-collapse: collapse; }
-    .modern-table th {
-        padding: 20px 24px; background: #f8fafc; text-align: left;
-        font-size: 12px; font-weight: 700; color: var(--text-muted);
-        text-transform: uppercase; letter-spacing: 1px;
-        border-bottom: 2px solid #f1f5f9;
-    }
-    .modern-table td { padding: 20px 24px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b; }
-    .modern-table tr:hover td { background: #f9fafb; cursor: pointer; }
-    
-    .ip-address-tag {
-        font-family: 'JetBrains Mono', 'Fira Code', monospace;
-        background: #eef2ff; color: #4f46e5; border: 1px solid #e0e7ff;
-        padding: 6px 14px; border-radius: 10px; font-weight: 700;
-        display: inline-block; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.05);
-    }
-    
-    .status-pill {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
-    }
-    .status-pill.active { background: #dcfce7; color: #15803d; }
-    .status-pill.inactive { background: #f1f5f9; color: #64748b; }
-    
-    .action-group { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-action-tool {
-        width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid #f1f5f9;
-        background: white; color: #64748b; display: flex; align-items: center; justify-content: center;
-        transition: all 0.2s; cursor: pointer;
-    }
-    .btn-action-tool:hover { transform: scale(1.1); border-color: var(--primary); color: var(--primary); }
-    .btn-action-tool.delete:hover { border-color: var(--danger); color: var(--danger); background: #fef2f2; }
-
-    .empty-state-visual { padding: 100px 48px; text-align: center; }
-    .empty-state-visual i { font-size: 64px; color: #cbd5e1; margin-bottom: 24px; display: block; }
-    .empty-state-visual h5 { font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
-    .empty-state-visual p { color: var(--text-muted); font-size: 14px; }
-</style>
-
-<div class="animate-in">
-    <!-- Premium Hero Section -->
-    <div class="ip-hero">
-        <div class="ip-hero-icon"><i class="bi bi-wifi"></i></div>
-        <div class="ip-hero-content">
-            <h2>Quản lý Wifi công ty được cấp quyền</h2>
-            <p>Hệ thống chỉ phê duyệt các yêu cầu đăng nhập từ địa chỉ Wifi văn phòng có trong danh sách này. Đây là chốt chặn bảo mật đầu tiên đối với mọi tài khoản nhân viên.</p>
+    <div class="glass-card wifi-hero mb-24">
+        <div class="wifi-hero-left">
+            <div class="wifi-hero-icon"><i class="bi bi-hdd-network-fill"></i></div>
+            <div>
+                <h2>Quản lý Wifi công ty</h2>
+                <p>Chỉ cho phép đăng nhập từ mạng nội bộ đã được phê duyệt. Danh sách này giúp tăng an toàn truy cập cho toàn bộ hệ thống.</p>
+            </div>
+        </div>
+        <div class="wifi-hero-ip">
+            <div class="hero-ip-label">IP truy cập hiện tại</div>
+            <div class="hero-ip-value">@detectedIp</div>
         </div>
     </div>
 
-    <!-- Smart Stats Grid -->
-    <div class="ip-stats-container">
-        <div class="ip-stat-card">
-            <div class="stat-card-icon emerald"><i class="bi bi-shield-check"></i></div>
-            <div class="stat-info">
-                <div class="stat-val">@activeCount</div>
+    <div class="wifi-stats mb-24">
+        <div class="glass-card stat-card-lite">
+            <div class="stat-icon success"><i class="bi bi-shield-check"></i></div>
+            <div>
+                <div class="stat-value">@activeCount</div>
                 <div class="stat-label">Wifi đang hoạt động</div>
             </div>
         </div>
-        <div class="ip-stat-card">
-            <div class="stat-card-icon blue"><i class="bi bi-database-fill"></i></div>
-            <div class="stat-info">
-                <div class="stat-val">@totalCount</div>
-                <div class="stat-label">Tổng các mục đã lưu</div>
+        <div class="glass-card stat-card-lite">
+            <div class="stat-icon primary"><i class="bi bi-list-ul"></i></div>
+            <div>
+                <div class="stat-value">@totalCount</div>
+                <div class="stat-label">Tổng mục đã lưu</div>
             </div>
         </div>
-        <div class="ip-stat-card">
-            <div class="stat-card-icon amber"><i class="bi bi-shield-lock-fill"></i></div>
-            <div class="stat-info">
-                <div class="stat-val">@(activeCount > 0 ? "BẬT" : "TẮT")</div>
+        <div class="glass-card stat-card-lite">
+            <div class="stat-icon warning"><i class="bi bi-shield-lock-fill"></i></div>
+            <div>
+                <div class="stat-value">@(activeCount > 0 ? "BẬT" : "TẮT")</div>
                 <div class="stat-label">Trạng thái bảo vệ</div>
             </div>
         </div>
@@ -236,132 +63,414 @@
 
     @if (activeCount == 0 && totalCount > 0)
     {
-        <div class="alert alert-warning shadow-sm animate-in" style="border-radius: 20px; border: none; background: #fffbeb; padding: 24px; margin-bottom: 32px; display: flex; align-items: flex-start; gap: 20px;">
-            <i class="bi bi-radioactive" style="font-size: 28px; color: #d97706;"></i>
-            <div>
-                <h6 style="color: #92400e; font-weight: 800; margin-bottom: 4px;">Cảnh báo: Tường lửa đang tạm tắt!</h6>
-                <p style="color: #b45309; margin: 0; font-size: 14px;">Bạn đang không có bất kỳ Wifi nào ở trạng thái HOẠT ĐỘNG. Hệ thống sẽ tạm thời cho phép tất cả các mạng nội bộ. Hãy kích hoạt ít nhất 1 Wifi để bảo đảm an toàn.</p>
-            </div>
+        <div class="alert alert-warning mb-24" role="alert">
+            <i class="bi bi-exclamation-octagon-fill"></i>
+            <span>Hiện không có Wifi nào ở trạng thái hoạt động. Hãy bật ít nhất 1 Wifi để đảm bảo an toàn truy cập.</span>
         </div>
     }
 
-    <!-- Redesigned Add Form -->
-    <div class="add-section-card">
-        <h4><i class="bi bi-plus-circle-fill" style="color: var(--primary);"></i> Cấp quyền Wifi mới</h4>
-        <form asp-controller="IT" asp-action="Add" method="post" id="addIpForm">
-            @Html.AntiForgeryToken()
-            <div class="form-flex-row">
-                <div class="form-group-item">
-                    <label class="form-label-custom">Địa chỉ Wifi (IP/Dải IP) <span style="color:red;">*</span></label>
-                    <input type="text" name="ipAddress" id="ipAddressInput" class="form-input-custom"
-                           placeholder="ví dụ: 192.168.1.50" required
-                           pattern="^(\d{1,3}\.){3}\d{1,3}$" title="Vui lòng nhập định dạng IPv4" />
+    <div class="glass-card mb-24">
+        <div class="card-header">
+            <h3><i class="bi bi-plus-circle-fill text-primary"></i> Cấp quyền Wifi mới</h3>
+        </div>
+        <div class="card-body">
+            <form asp-controller="IT" asp-action="Add" method="post" id="addIpForm" class="wifi-form-grid">
+                @Html.AntiForgeryToken()
+                <div>
+                    <label class="form-label">Địa chỉ Wifi (IP)</label>
+                    <input type="text" name="ipAddress" id="ipAddressInput" class="form-control" placeholder="Ví dụ: 192.168.1.50" required />
                 </div>
-                <div class="form-group-item desc">
-                    <label class="form-label-custom">Mô tả / Vị trí văn phòng</label>
-                    <input type="text" name="label" class="form-input-custom"
-                           placeholder="ví dụ: Văn phòng Tầng 4 - CN Hà Nội" maxlength="200" />
+                <div>
+                    <label class="form-label">Mô tả / Vị trí</label>
+                    <input type="text" name="label" class="form-control" placeholder="Ví dụ: Văn phòng Tầng 4 - CN Hà Nội" maxlength="200" />
                 </div>
-                <button type="button" class="btn-premium" onclick="confirmAddIp()">
-                    <i class="bi bi-plus-lg"></i> Thêm vào danh sách
-                </button>
-            </div>
-        </form>
+                <div class="form-action-wrap">
+                    <button type="button" class="btn btn-primary" onclick="confirmAddIp()">
+                        <i class="bi bi-plus-lg"></i> Thêm vào danh sách
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- Registry Dashboard Table -->
-    <div class="table-container-card">
-        <div class="table-header-custom">
-            <h4>Danh sách điểm truy cập an toàn (@totalCount)</h4>
-            <div class="ip-search">
+    <div class="glass-card">
+        <div class="card-header table-head-wrap">
+            <h3><i class="bi bi-wifi"></i> Danh sách điểm truy cập an toàn (@totalCount)</h3>
+            <div class="search-wrap">
                 <i class="bi bi-search"></i>
-                <input type="text" id="searchIp" placeholder="Tìm kiếm IP hoặc vị trí..." oninput="filterTable(this.value)" />
+                <input type="text" id="searchIp" class="form-control" placeholder="Tìm theo IP hoặc vị trí..." oninput="filterTable(this.value)" />
             </div>
         </div>
 
-        @if (Model.Count == 0)
-        {
-            <div class="empty-state-visual">
-                <i class="bi bi-wifi-off"></i>
-                <h5>Chưa có dữ liệu Wifi</h5>
-                <p>Danh sách trắng đang trống. Hãy thiết lập điểm truy cập Wifi văn phòng đầu tiên để bảo vệ ứng dụng.</p>
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="modern-table" id="ipTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 70px;">#</th>
-                            <th>Địa chỉ Wifi</th>
-                            <th>Mô tả / Vị trí</th>
-                            <th>Trạng thái</th>
-                            <th>Người tạo</th>
-                            <th style="text-align: right;">Cài đặt</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (int i = 0; i < Model.Count; i++)
-                        {
-                            var ip = Model[i];
-                            <tr data-search="@ip.IpAddress @ip.Label">
-                                <td style="color: #94a3b8; font-weight: 600;">@(i+1)</td>
-                                <td><span class="ip-address-tag">@ip.IpAddress</span></td>
-                                <td style="font-weight: 600; color: #334155;">@(string.IsNullOrWhiteSpace(ip.Label) ? "—" : ip.Label)</td>
-                                <td>
-                                    <span class="status-pill @(ip.IsActive ? "active" : "inactive")">
-                                        <i class="bi @(ip.IsActive ? "bi-check2-circle" : "bi-dash-circle")"></i>
-                                        @(ip.IsActive ? "Đang hoạt động" : "Tạm dừng")
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style="font-weight: 700;">@(ip.AddedByUser?.FullName ?? "Hệ thống")</div>
-                                    <div style="font-size: 11px; color:#94a3b8;">@ip.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
-                                </td>
-                                <td>
-                                    <div class="action-group">
-                                        <form asp-controller="IT" asp-action="Toggle" asp-route-id="@ip.Id" method="post" style="margin:0;">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn-action-tool"
-                                                    title="@(ip.IsActive ? "Tạm dừng" : "Bật lại")"
-                                                    onclick="return confirm('@(ip.IsActive ? $"Xác nhận tạm dừng Wifi {ip.IpAddress}?" : $"Kích hoạt lại Wifi {ip.IpAddress}?")')">
-                                                <i class="bi @(ip.IsActive ? "bi-pause-circle" : "bi-play-circle")" style="color:@(ip.IsActive ? "#f59e0b" : "#10b981")"></i>
-                                            </button>
-                                        </form>
-                                        <form asp-controller="IT" asp-action="Delete" asp-route-id="@ip.Id" method="post" style="margin:0;">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn-action-tool delete"
-                                                    title="Gỡ bỏ vĩnh viễn"
-                                                    onclick="return confirm('Xóa vĩnh viễn Wifi @ip.IpAddress? Mọi người dùng Wifi này sẽ bị chặn truy cập!')">
-                                                <i class="bi bi-trash3-fill"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
+        <div class="card-body" style="padding:0;">
+            @if (Model.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="bi bi-wifi-off"></i>
+                    <h3>Chưa có dữ liệu Wifi</h3>
+                    <p>Hãy thêm điểm truy cập đầu tiên để hệ thống bắt đầu kiểm soát nguồn đăng nhập.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-wrap wifi-table-wrap">
+                    <table class="data-table wifi-table" id="ipTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Địa chỉ Wifi</th>
+                                <th>Mô tả / Vị trí</th>
+                                <th>Trạng thái</th>
+                                <th>Người tạo</th>
+                                <th class="text-right">Cài đặt</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Count; i++)
+                            {
+                                var ip = Model[i];
+                                <tr data-search="@ip.IpAddress @ip.Label">
+                                    <td data-label="#">@(i + 1)</td>
+                                    <td data-label="Địa chỉ Wifi">
+                                        <span class="ip-chip">@ip.IpAddress</span>
+                                    </td>
+                                    <td data-label="Mô tả / Vị trí">@(string.IsNullOrWhiteSpace(ip.Label) ? "-" : ip.Label)</td>
+                                    <td data-label="Trạng thái">
+                                        @if (ip.IsActive)
+                                        {
+                                            <span class="status-badge approved"><i class="bi bi-check2-circle"></i> Đang hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge draft"><i class="bi bi-pause-circle"></i> Tạm dừng</span>
+                                        }
+                                    </td>
+                                    <td data-label="Người tạo">
+                                        <div class="creator-name">@(ip.AddedByUser?.FullName ?? "Hệ thống")</div>
+                                        <div class="text-muted" style="font-size:11px;">@ip.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
+                                    </td>
+                                    <td data-label="Cài đặt" class="text-right">
+                                        <div class="inline-actions" style="justify-content:flex-end;">
+                                            <form asp-controller="IT" asp-action="Toggle" asp-route-id="@ip.Id" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-outline btn-sm"
+                                                        onclick="return confirm('@(ip.IsActive ? $"Xác nhận tạm dừng Wifi {ip.IpAddress}?" : $"Kích hoạt lại Wifi {ip.IpAddress}?")')">
+                                                    <i class="bi @(ip.IsActive ? "bi-pause-circle" : "bi-play-circle")"></i>
+                                                    @(ip.IsActive ? "Tạm dừng" : "Bật lại")
+                                                </button>
+                                            </form>
+                                            <form asp-controller="IT" asp-action="Delete" asp-route-id="@ip.Id" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Xóa vĩnh viễn Wifi @ip.IpAddress?')">
+                                                    <i class="bi bi-trash3"></i> Xóa
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
+<style>
+    .wifi-page .alert {
+        border-radius: 12px;
+        border: 1px solid var(--border-glass);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .wifi-hero {
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: linear-gradient(135deg, rgba(92, 103, 242, 0.18), rgba(124, 58, 237, 0.12));
+    }
+
+    .wifi-hero-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .wifi-hero-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #ffffff;
+        background: var(--accent-gradient);
+        flex-shrink: 0;
+    }
+
+    .wifi-hero h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .wifi-hero p {
+        margin: 4px 0 0;
+        color: var(--text-secondary);
+    }
+
+    .wifi-hero-ip {
+        min-width: 180px;
+        border: 1px solid var(--border-glass);
+        border-radius: 12px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.6);
+    }
+
+    .hero-ip-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+    }
+
+    .hero-ip-value {
+        font-size: 16px;
+        font-weight: 700;
+        font-family: "Consolas", "Courier New", monospace;
+    }
+
+    .wifi-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .stat-card-lite {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .stat-icon.success { color: #047857; background: #d1fae5; }
+    .stat-icon.primary { color: #1d4ed8; background: #dbeafe; }
+    .stat-icon.warning { color: #b45309; background: #fef3c7; }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .stat-label {
+        margin-top: 3px;
+        color: var(--text-muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+    }
+
+    .wifi-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .form-action-wrap {
+        display: flex;
+        align-items: end;
+    }
+
+    .table-head-wrap {
+        gap: 12px;
+    }
+
+    .search-wrap {
+        min-width: 280px;
+        position: relative;
+    }
+
+    .search-wrap i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .search-wrap .form-control {
+        padding-left: 34px;
+    }
+
+    .wifi-table th,
+    .wifi-table td {
+        text-align: left !important;
+        padding: 12px 16px !important;
+        vertical-align: middle;
+    }
+
+    .wifi-table th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-glass);
+    }
+
+    .wifi-table tbody tr:hover {
+        background: rgba(92, 103, 242, 0.04);
+    }
+
+    .ip-chip {
+        display: inline-block;
+        border-radius: 999px;
+        border: 1px solid rgba(92, 103, 242, 0.25);
+        background: rgba(92, 103, 242, 0.08);
+        color: #4338ca;
+        padding: 4px 10px;
+        font-family: "Consolas", "Courier New", monospace;
+        font-weight: 700;
+        font-size: 12px;
+    }
+
+    .creator-name {
+        font-weight: 700;
+    }
+
+    @@media (max-width: 1100px) {
+        .wifi-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-action-wrap {
+            justify-content: flex-start;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .wifi-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .wifi-hero {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .wifi-hero-ip {
+            min-width: 0;
+        }
+
+        .table-head-wrap {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-wrap {
+            min-width: 0;
+            width: 100%;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .wifi-table-wrap {
+            overflow: visible;
+        }
+
+        .wifi-table thead {
+            display: none;
+        }
+
+        .wifi-table,
+        .wifi-table tbody,
+        .wifi-table tr,
+        .wifi-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .wifi-table tr {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .wifi-table td {
+            border: 0;
+            padding: 0 0 10px 0 !important;
+            text-align: left !important;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .wifi-table td:last-child {
+            padding-bottom: 0 !important;
+        }
+
+        .wifi-table td::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .wifi-table td.text-right {
+            text-align: left !important;
+        }
+
+        .wifi-table .inline-actions {
+            justify-content: flex-start !important;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
 @section Scripts {
 <script>
-    function filterTable(val) {
-        const q = val.toLowerCase();
-        document.querySelectorAll('#ipTable tbody tr').forEach(row => {
+    function filterTable(value) {
+        const query = (value || '').toLowerCase();
+        document.querySelectorAll('#ipTable tbody tr').forEach(function (row) {
             const text = (row.dataset.search || '').toLowerCase();
-            row.style.display = text.includes(q) ? '' : 'none';
+            row.style.display = text.includes(query) ? '' : 'none';
         });
     }
 
     function confirmAddIp() {
-        const ip = document.getElementById('ipAddressInput').value.trim();
-        if (!ip) { alert('Vui lòng nhập địa chỉ Wifi.'); return; }
-        if (confirm(`Thêm Wifi "${ip}" vào hệ thống phê duyệt?`)) {
+        const input = document.getElementById('ipAddressInput');
+        const ip = (input?.value || '').trim();
+
+        if (!ip) {
+            alert('Vui lòng nhập địa chỉ Wifi.');
+            return;
+        }
+
+        if (confirm('Thêm Wifi "' + ip + '" vào danh sách truy cập an toàn?')) {
             document.getElementById('addIpForm').submit();
         }
     }

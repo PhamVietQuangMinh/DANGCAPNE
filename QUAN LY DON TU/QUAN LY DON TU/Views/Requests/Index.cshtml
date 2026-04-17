@@ -14,6 +14,15 @@
     <div class="filter-bar">
         <form method="get" class="d-flex gap-8 flex-wrap" style="flex:1">
             <input type="text" name="search" class="form-control search-input" placeholder="Tìm theo mã đơn, tiêu đề..." value="@Model.SearchQuery" data-i18n="LabelSearch" />
+            <input type="date" name="from" class="form-control" value="@(Model.FromDateFilter.HasValue ? Model.FromDateFilter.Value.ToString("yyyy-MM-dd") : "")" />
+            <input type="date" name="to" class="form-control" value="@(Model.ToDateFilter.HasValue ? Model.ToDateFilter.Value.ToString("yyyy-MM-dd") : "")" />
+            <select name="departmentId" class="form-control">
+                <option value="">Tất cả phòng ban</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d.Id" selected="@(Model.DepartmentIdFilter == d.Id)">@d.Name</option>
+                }
+            </select>
             <select name="status" class="form-control">
                 <option value="" data-i18n="FilterAllStatus">Tất cả trạng thái</option>
                 <option value="Pending" selected="@(Model.StatusFilter == "Pending")" data-i18n="TblPending">Chờ duyệt</option>
@@ -21,6 +30,13 @@
                 <option value="Approved" selected="@(Model.StatusFilter == "Approved")" data-i18n="TblApproved">Đã duyệt</option>
                 <option value="Rejected" selected="@(Model.StatusFilter == "Rejected")" data-i18n="TblRejected">Từ chối</option>
                 <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")" data-i18n="TblCancelled">Đã hủy</option>
+            </select>
+            <select name="priority" class="form-control">
+                <option value="">Tất cả ưu tiên</option>
+                <option value="Low" selected="@(Model.PriorityFilter == "Low")">Low</option>
+                <option value="Normal" selected="@(Model.PriorityFilter == "Normal")">Normal</option>
+                <option value="High" selected="@(Model.PriorityFilter == "High")">High</option>
+                <option value="Urgent" selected="@(Model.PriorityFilter == "Urgent")">Urgent</option>
             </select>
             <select name="type" class="form-control">
                 <option value="" data-i18n="FilterType">Tất cả loại đơn</option>
@@ -87,7 +103,7 @@
         <div class="pagination">
             @for (int i = 1; i <= Model.TotalPages; i++)
             {
-                <a href="@Url.Action("Index", new { page = i, status = Model.StatusFilter, type = Model.TypeFilter, search = Model.SearchQuery })"
+                <a href="@Url.Action("Index", new { page = i, status = Model.StatusFilter, type = Model.TypeFilter, search = Model.SearchQuery, departmentId = Model.DepartmentIdFilter, from = Model.FromDateFilter, to = Model.ToDateFilter, priority = Model.PriorityFilter })"
                    class="page-link @(i == Model.CurrentPage ? "active" : "")">@i</a>
             }
         </div>

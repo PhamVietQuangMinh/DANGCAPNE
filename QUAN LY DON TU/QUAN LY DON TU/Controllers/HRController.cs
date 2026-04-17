@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
+using DANGCAPNE.Filters;
 using DANGCAPNE.ViewModels;
+using DANGCAPNE.Models.HR;
+using DANGCAPNE.Models.Organization;
 using DANGCAPNE.Models.Requests;
 
 namespace DANGCAPNE.Controllers
@@ -130,6 +133,211 @@ namespace DANGCAPNE.Controllers
             return View(model);
         }
 
+        [PermissionAuthorize("checklist.manage")]
+        public async Task<IActionResult> EnterpriseChecklist(string mode = "onboarding", int? userId = null)
+        {
+            var currentUserId = HttpContext.Session.GetInt32("UserId");
+            if (currentUserId == null) return RedirectToAction("Login", "Account");
+
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries);
+            if (!roles.Contains("HR") && !roles.Contains("Admin"))
+                return RedirectToAction("AccessDenied", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            mode = string.Equals(mode, "offboarding", StringComparison.OrdinalIgnoreCase) ? "offboarding" : "onboarding";
+
+            var employees = await _context.Users
+                .Where(u => u.TenantId == tenantId && u.Status == "Active")
+                .OrderBy(u => u.FullName)
+                .ToListAsync();
+
+            var model = new EnterpriseChecklistViewModel
+            {
+                Mode = mode,
+                SelectedUserId = userId,
+                Employees = employees,
+                Roles = await _context.Roles.OrderBy(r => r.Name).ToListAsync(),
+                OnboardingTemplates = await _context.OnboardingTaskTemplates
+                    .Include(t => t.DefaultAssigneeRole)
+                    .Where(t => t.TenantId == tenantId)
+                    .OrderBy(t => t.Name)
+                    .ToListAsync(),
+                OffboardingTemplates = await _context.OffboardingTaskTemplates
+                    .Include(t => t.DefaultAssigneeRole)
+                    .Where(t => t.TenantId == tenantId)
+                    .OrderBy(t => t.Name)
+                    .ToListAsync(),
+                OnboardingTasks = await _context.OnboardingTasks
+                    .Include(t => t.Template)
+                    .Include(t => t.User)
+                    .Include(t => t.AssignedTo)
+                    .Where(t => userId == null || t.UserId == userId.Value)
+                    .OrderBy(t => t.Status)
+                    .ThenBy(t => t.DueDate)
+                    .ToListAsync(),
+                OffboardingTasks = await _context.OffboardingTasks
+                    .Include(t => t.Template)
+                    .Include(t => t.User)
+                    .Include(t => t.AssignedTo)
+                    .Where(t => userId == null || t.UserId == userId.Value)
+                    .OrderBy(t => t.Status)
+                    .ThenBy(t => t.DueDate)
+                    .ToListAsync()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("checklist.manage")]
+        public async Task<IActionResult> CreateChecklistTemplate(EnterpriseChecklistViewModel model)
+        {
+            var currentUserId = HttpContext.Session.GetInt32("UserId");
+            if (currentUserId == null) return RedirectToAction("Login", "Account");
+
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries);
+            if (!roles.Contains("HR") && !roles.Contains("Admin"))
+                return RedirectToAction("AccessDenied", "Account");
+
+            if (string.IsNullOrWhiteSpace(model.TemplateName))
+            {
+                TempData["Error"] = "Vui lòng nhập tên checklist mẫu.";
+                return RedirectToAction("EnterpriseChecklist", new { mode = model.Mode });
+            }
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            if (string.Equals(model.Mode, "offboarding", StringComparison.OrdinalIgnoreCase))
+            {
+                _context.OffboardingTaskTemplates.Add(new OffboardingTaskTemplate
+                {
+                    TenantId = tenantId,
+                    Name = model.TemplateName.Trim(),
+                    Description = model.TemplateDescription?.Trim(),
+                    DefaultDueDays = model.DefaultDueDays <= 0 ? 7 : model.DefaultDueDays,
+                    DefaultAssigneeRoleId = model.DefaultAssigneeRoleId
+                });
+            }
+            else
+            {
+                _context.OnboardingTaskTemplates.Add(new OnboardingTaskTemplate
+                {
+                    TenantId = tenantId,
+                    Name = model.TemplateName.Trim(),
+                    Description = model.TemplateDescription?.Trim(),
+                    DefaultDueDays = model.DefaultDueDays <= 0 ? 7 : model.DefaultDueDays,
+                    DefaultAssigneeRoleId = model.DefaultAssigneeRoleId
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã tạo checklist mẫu.";
+            return RedirectToAction("EnterpriseChecklist", new { mode = model.Mode });
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("checklist.manage")]
+        public async Task<IActionResult> GenerateChecklist(string mode, int selectedUserId)
+        {
+            var currentUserId = HttpContext.Session.GetInt32("UserId");
+            if (currentUserId == null) return RedirectToAction("Login", "Account");
+
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries);
+            if (!roles.Contains("HR") && !roles.Contains("Admin"))
+                return RedirectToAction("AccessDenied", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            mode = string.Equals(mode, "offboarding", StringComparison.OrdinalIgnoreCase) ? "offboarding" : "onboarding";
+
+            var employee = await _context.Users.FirstOrDefaultAsync(u => u.Id == selectedUserId && u.TenantId == tenantId);
+            if (employee == null)
+            {
+                TempData["Error"] = "Không tìm thấy nhân viên cần tạo checklist.";
+                return RedirectToAction("EnterpriseChecklist", new { mode });
+            }
+
+            if (mode == "offboarding")
+            {
+                var templates = await _context.OffboardingTaskTemplates.Where(t => t.TenantId == tenantId).ToListAsync();
+                foreach (var template in templates)
+                {
+                    var exists = await _context.OffboardingTasks.AnyAsync(t => t.TemplateId == template.Id && t.UserId == selectedUserId && t.Status != "Cancelled");
+                    if (exists) continue;
+
+                    _context.OffboardingTasks.Add(new OffboardingTask
+                    {
+                        TemplateId = template.Id,
+                        UserId = selectedUserId,
+                        AssignedToUserId = await ResolveDefaultAssigneeUserIdAsync(template.DefaultAssigneeRoleId, tenantId),
+                        DueDate = DateTime.Today.AddDays(template.DefaultDueDays <= 0 ? 7 : template.DefaultDueDays),
+                        Status = "Open"
+                    });
+                }
+            }
+            else
+            {
+                var templates = await _context.OnboardingTaskTemplates.Where(t => t.TenantId == tenantId).ToListAsync();
+                foreach (var template in templates)
+                {
+                    var exists = await _context.OnboardingTasks.AnyAsync(t => t.TemplateId == template.Id && t.UserId == selectedUserId && t.Status != "Cancelled");
+                    if (exists) continue;
+
+                    _context.OnboardingTasks.Add(new OnboardingTask
+                    {
+                        TemplateId = template.Id,
+                        UserId = selectedUserId,
+                        AssignedToUserId = await ResolveDefaultAssigneeUserIdAsync(template.DefaultAssigneeRoleId, tenantId),
+                        DueDate = DateTime.Today.AddDays(template.DefaultDueDays <= 0 ? 7 : template.DefaultDueDays),
+                        Status = "Open"
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã sinh checklist {mode} cho {employee.FullName}.";
+            return RedirectToAction("EnterpriseChecklist", new { mode, userId = selectedUserId });
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("checklist.manage")]
+        public async Task<IActionResult> UpdateChecklistTask(string mode, int id, string action)
+        {
+            var currentUserId = HttpContext.Session.GetInt32("UserId");
+            if (currentUserId == null) return RedirectToAction("Login", "Account");
+
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries);
+            if (!roles.Contains("HR") && !roles.Contains("Admin"))
+                return RedirectToAction("AccessDenied", "Account");
+
+            mode = string.Equals(mode, "offboarding", StringComparison.OrdinalIgnoreCase) ? "offboarding" : "onboarding";
+            var markDone = string.Equals(action, "complete", StringComparison.OrdinalIgnoreCase);
+
+            if (mode == "offboarding")
+            {
+                var task = await _context.OffboardingTasks.FindAsync(id);
+                if (task != null)
+                {
+                    task.Status = markDone ? "Completed" : "Open";
+                    task.CompletedAt = markDone ? DateTime.UtcNow : null;
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("EnterpriseChecklist", new { mode, userId = task.UserId });
+                }
+            }
+            else
+            {
+                var task = await _context.OnboardingTasks.FindAsync(id);
+                if (task != null)
+                {
+                    task.Status = markDone ? "Completed" : "Open";
+                    task.CompletedAt = markDone ? DateTime.UtcNow : null;
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("EnterpriseChecklist", new { mode, userId = task.UserId });
+                }
+            }
+
+            TempData["Error"] = "Không tìm thấy task cần cập nhật.";
+            return RedirectToAction("EnterpriseChecklist", new { mode });
+        }
+
         private async Task<List<AnomalyAlert>> DetectAnomalies(int tenantId, DateTime threeMonthsAgo)
         {
             var anomalies = new List<AnomalyAlert>();
@@ -188,6 +396,20 @@ namespace DANGCAPNE.Controllers
             }
 
             return anomalies;
+        }
+
+        private async Task<int?> ResolveDefaultAssigneeUserIdAsync(int? roleId, int tenantId)
+        {
+            if (!roleId.HasValue)
+            {
+                return null;
+            }
+
+            return await _context.UserRoles
+                .Where(ur => ur.RoleId == roleId.Value && ur.User!.TenantId == tenantId && ur.User.Status == "Active")
+                .OrderBy(ur => ur.User!.FullName)
+                .Select(ur => (int?)ur.UserId)
+                .FirstOrDefaultAsync();
         }
     }
 }

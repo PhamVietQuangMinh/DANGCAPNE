@@ -21,10 +21,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Session for authentication
 builder.Services.AddHttpClient<DANGCAPNE.Services.GeminiAIService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IFileService, DANGCAPNE.Services.FileService>();
-builder.Services.AddScoped<DANGCAPNE.Services.IApprovalSlaService, DANGCAPNE.Services.ApprovalSlaService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IApprovedRequestPdfService, DANGCAPNE.Services.ApprovedRequestPdfService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IPayrollPdfService, DANGCAPNE.Services.PayrollPdfService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IFaceDescriptorMigrationService, DANGCAPNE.Services.FaceDescriptorMigrationService>();
+builder.Services.AddScoped<DANGCAPNE.Services.IEmailNotificationService, DANGCAPNE.Services.EmailNotificationService>();
+builder.Services.AddScoped<DANGCAPNE.Services.IAttendanceRiskScoringService, DANGCAPNE.Services.AttendanceRiskScoringService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

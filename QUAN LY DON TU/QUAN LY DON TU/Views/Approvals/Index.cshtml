@@ -29,7 +29,6 @@
                                 <th>Nguoi gui</th>
                                 <th>Tieu de</th>
                                 <th>Buoc</th>
-                                <th>SLA</th>
                                 <th>Ngay gui</th>
                                 <th>Thao tac</th>
                             </tr>
@@ -37,20 +36,19 @@
                         <tbody>
                             @foreach (var approval in Model.PendingApprovals)
                             {
-                                Model.ApprovalSla.TryGetValue(approval.Id, out var pendingSla);
+                                var isDelegated = Model.DelegatedApprovalIds.Contains(approval.Id);
                                 <tr>
                                     <td><input type="checkbox" name="ApprovalIds" value="@approval.Id" class="bulk-check" /></td>
                                     <td><strong class="text-primary">@approval.Request?.RequestCode</strong></td>
                                     <td><i class="bi @approval.Request?.FormTemplate?.Icon" style="color:@approval.Request?.FormTemplate?.IconColor"></i> @approval.Request?.FormTemplate?.Name</td>
                                     <td>@approval.Request?.Requester?.FullName</td>
                                     <td>@approval.Request?.Title</td>
-                                    <td><span class="status-badge pending">@approval.StepName</span></td>
                                     <td>
-                                        @if (pendingSla != null)
+                                        <span class="status-badge pending">@approval.StepName</span>
+                                        @if (isDelegated)
                                         {
-                                            <div class="sla-stack">
-                                                <span class="status-badge @(pendingSla.IsOverdue ? "rejected" : "pending")">@pendingSla.StatusText</span>
-                                                <span class="sla-time @(pendingSla.IsOverdue ? "overdue" : "")">@pendingSla.RemainingText</span>
+                                            <div class="text-muted" style="font-size:11px;margin-top:4px">
+                                                <i class="bi bi-person-check"></i> Duyệt thay: @Model.DelegatedFromNames[approval.Id]
                                             </div>
                                         }
                                     </td>
@@ -87,7 +85,6 @@
                             <th>Loai</th>
                             <th>Nguoi gui</th>
                             <th>Trang thai</th>
-                            <th>SLA</th>
                             <th>Nhan xet</th>
                             <th>Ngay xu ly</th>
                         </tr>
@@ -95,7 +92,6 @@
                     <tbody>
                         @foreach (var approval in Model.ProcessedApprovals.Take(20))
                         {
-                            Model.ApprovalSla.TryGetValue(approval.Id, out var processedSla);
                             var statusCss = approval.Status.ToLower();
                             var statusText = approval.Status switch
                             {
@@ -108,17 +104,16 @@
                             <tr onclick="location.href='@Url.Action("Detail", "Requests", new { id = approval.RequestId })'" style="cursor:pointer">
                                 <td><strong class="text-primary">@approval.Request?.RequestCode</strong></td>
                                 <td>@approval.Request?.FormTemplate?.Name</td>
-                                <td>@approval.Request?.Requester?.FullName</td>
-                                <td><span class="status-badge @statusCss">@statusText</span></td>
                                 <td>
-                                    @if (processedSla != null)
+                                    @approval.Request?.Requester?.FullName
+                                    @if (approval.ApproverId.HasValue && Model.DelegatedFromNames.ContainsKey(approval.Id))
                                     {
-                                        <div class="sla-stack">
-                                            <span class="status-badge @(processedSla.IsBreached ? "rejected" : "approved")">@processedSla.StatusText</span>
-                                            <span class="sla-time">@(processedSla.DueAt?.ToString("Han dd/MM HH:mm") ?? "")</span>
+                                        <div class="text-muted" style="font-size:11px;margin-top:4px">
+                                            <i class="bi bi-person-check"></i> Duyệt thay: @Model.DelegatedFromNames[approval.Id]
                                         </div>
                                     }
                                 </td>
+                                <td><span class="status-badge @statusCss">@statusText</span></td>
                                 <td class="text-muted">@(approval.Comments?.Length > 40 ? approval.Comments.Substring(0, 40) + "..." : approval.Comments ?? "-")</td>
                                 <td class="text-muted">@approval.ActionDate?.ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>

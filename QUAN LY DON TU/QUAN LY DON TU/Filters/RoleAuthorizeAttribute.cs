@@ -31,8 +31,9 @@ namespace DANGCAPNE.Filters
 
             var roles = (http.Session.GetString("Roles") ?? string.Empty)
                 .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var primaryRole = http.Session.GetString("PrimaryRole") ?? string.Empty;
 
-            if (!_roles.Any(r => roles.Contains(r)))
+            if (!_roles.Any(r => roles.Contains(r) || string.Equals(primaryRole, r, StringComparison.OrdinalIgnoreCase)))
             {
                 context.Result = new RedirectToActionResult("AccessDenied", "Account", null);
                 return;

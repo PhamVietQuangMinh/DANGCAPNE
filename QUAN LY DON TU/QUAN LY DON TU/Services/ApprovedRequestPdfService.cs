@@ -6,6 +6,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using QRCoder;
+using System.Globalization;
 
 namespace DANGCAPNE.Services
 {
@@ -108,6 +109,9 @@ namespace DANGCAPNE.Services
                 .ToList();
 
             var signatures = BuildSignatures(request, approvals, profiles);
+            var fields = dataEntries.ToDictionary(x => x.FieldKey, x => x.FieldValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+            var leaveType = fields.TryGetValue("leave_type", out var leaveTypeValue) ? leaveTypeValue : string.Empty;
+            var isSickLeave = string.Equals(leaveType, "SL", StringComparison.OrdinalIgnoreCase);
 
             Document.Create(container =>
             {
@@ -119,17 +123,23 @@ namespace DANGCAPNE.Services
 
                     page.Header().Column(column =>
                     {
-                        column.Item().Text("PHIEU XAC NHAN DON TU").FontSize(20).Bold().FontColor(Colors.Blue.Darken2);
-                        column.Item().Text($"Ma don: {request.RequestCode}").SemiBold();
-                        column.Item().Text($"Loai don: {request.FormTemplate?.Name ?? "Khong xac dinh"}");
+                        column.Spacing(4);
+                        column.Item().AlignCenter().Text(isSickLeave ? "DON XIN NGHI OM / GIAY XAC NHAN NGHI BENH" : "PHIEU XAC NHAN DON TU")
+                            .FontSize(isSickLeave ? 17 : 20)
+                            .Bold()
+                            .FontColor(Colors.Blue.Darken2);
+                        column.Item().AlignCenter().Text("(Ban dien tu co gia tri doi chieu noi bo)").FontSize(9).FontColor(Colors.Grey.Darken1);
                         column.Item().PaddingTop(6).Row(row =>
                         {
                             row.RelativeItem().Column(col =>
                             {
-                                col.Item().Text("Link xac minh:").FontSize(10).FontColor(Colors.Grey.Darken1);
-                                col.Item().Text(verifyUrl).FontSize(10).FontColor(Colors.Blue.Darken2);
+                                col.Spacing(2);
+                                col.Item().Text($"So/ma don: {request.RequestCode}").SemiBold();
+                                col.Item().Text($"Loai bieu mau: {ResolveLeaveTypeLabel(leaveType, request.FormTemplate?.Name)}");
+                                col.Item().Text($"Ngay lap: {request.CreatedAt:dd/MM/yyyy HH:mm}");
+                                col.Item().Text($"Link xac minh: {verifyUrl}").FontSize(9).FontColor(Colors.Blue.Darken2);
                             });
-                            row.ConstantItem(80).AlignRight().Height(80).Image(qrPng);
+                            row.ConstantItem(72).AlignRight().Height(72).Image(qrPng);
                         });
                     });
 
@@ -137,32 +147,14 @@ namespace DANGCAPNE.Services
                     {
                         column.Spacing(16);
 
-                        column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(12).Column(info =>
+                        if (isSickLeave)
                         {
-                            info.Spacing(6);
-                            info.Item().Text($"Tieu de: {request.Title}").Bold();
-                            info.Item().Text($"Nguoi gui: {request.Requester?.FullName ?? "Khong xac dinh"}");
-                            info.Item().Text($"Phong ban: {request.Requester?.Department?.Name ?? "Khong xac dinh"}");
-                            info.Item().Text($"Thoi gian gui: {request.CreatedAt:dd/MM/yyyy HH:mm}");
-                            info.Item().Text($"Hoan tat phe duyet: {(request.CompletedAt.HasValue ? request.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm") : "--")}");
-                            info.Item().Text("Chu ky nguoi gui: xac nhan bang tai khoan dang nhap trong he thong.");
-                        });
-
-                        column.Item().Text("Noi dung don").FontSize(14).Bold();
-                        column.Item().Table(table =>
+                            RenderSickLeaveSection(column, request, fields);
+                        }
+                        else
                         {
-                            table.ColumnsDefinition(columns =>
-                            {
-                                columns.ConstantColumn(180);
-                                columns.RelativeColumn();
-                            });
-
-                            foreach (var entry in dataEntries)
-                            {
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6).Text(entry.FieldKey).SemiBold();
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6).Text(entry.FieldValue ?? "--");
-                            }
-                        });
+                            RenderDefaultRequestSection(column, request, dataEntries);
+                        }
 
                         column.Item().Text("Xac nhan phe duyet").FontSize(14).Bold();
                         column.Item().Table(table =>
@@ -198,7 +190,7 @@ namespace DANGCAPNE.Services
                             text.Span("DONE").Bold().FontColor(Colors.Green.Darken2);
                         });
 
-                        column.Item().Text("Chu ky xac nhan").FontSize(14).Bold();
+                        column.Item().Text(isSickLeave ? "Xac nhan ky duyet va dong dau" : "Chu ky xac nhan").FontSize(14).Bold();
                         column.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
@@ -210,29 +202,29 @@ namespace DANGCAPNE.Services
 
                             foreach (var signature in signatures)
                             {
-                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Column(cell =>
+                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).MinHeight(120).Column(cell =>
                                 {
                                     cell.Spacing(6);
-                                    cell.Item().Text(signature.RoleLabel).SemiBold();
-                                    cell.Item().Text(signature.SignerName);
+                                    cell.Item().AlignCenter().Text(signature.RoleLabel).SemiBold();
+                                    cell.Item().AlignCenter().Text(signature.SignerName);
 
                                     var imageBytes = TryLoadSignatureImage(signature.SignatureImageUrl, webRootPath);
                                     if (imageBytes != null)
                                     {
-                                        cell.Item().Height(50).Image(imageBytes);
+                                        cell.Item().PaddingVertical(4).AlignCenter().Height(42).Image(imageBytes);
                                     }
                                     else
                                     {
-                                        cell.Item().Text(signature.SignatureLabel).Italic().FontColor(Colors.Blue.Darken2);
+                                        cell.Item().AlignCenter().Text(signature.SignatureLabel).Italic().FontColor(Colors.Blue.Darken2);
                                     }
 
-                                    cell.Item().Text(signature.SignedAt.HasValue
+                                    cell.Item().AlignCenter().Text(signature.SignedAt.HasValue
                                         ? $"Ky luc: {signature.SignedAt:dd/MM/yyyy HH:mm}"
                                         : "Chua ky");
 
                                     if (!string.IsNullOrWhiteSpace(signature.IpAddress))
                                     {
-                                        cell.Item().Text($"IP: {signature.IpAddress}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                                        cell.Item().AlignCenter().Text($"IP: {signature.IpAddress}").FontSize(9).FontColor(Colors.Grey.Darken1);
                                     }
                                 });
                             }
@@ -241,11 +233,109 @@ namespace DANGCAPNE.Services
 
                     page.Footer().AlignCenter().Text(text =>
                     {
-                        text.Span("File PDF duoc tao tu dong sau khi HR duyet xong - ");
+                        text.Span(isSickLeave ? "Tai lieu dien tu phuc vu doi chieu giay nghi benh/noi bo - " : "File PDF duoc tao tu dong sau khi phe duyet xong - ");
                         text.Span(DateTime.Now.ToString("dd/MM/yyyy HH:mm")).SemiBold();
                     });
                 });
             }).GeneratePdf(outputPath);
+        }
+
+        private static void RenderDefaultRequestSection(ColumnDescriptor column, Request request, IReadOnlyCollection<RequestData> dataEntries)
+        {
+            column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(12).Column(info =>
+            {
+                info.Spacing(6);
+                info.Item().Text($"Tieu de: {request.Title}").Bold();
+                info.Item().Text($"Nguoi gui: {request.Requester?.FullName ?? "Khong xac dinh"}");
+                info.Item().Text($"Phong ban: {request.Requester?.Department?.Name ?? "Khong xac dinh"}");
+                info.Item().Text($"Thoi gian gui: {request.CreatedAt:dd/MM/yyyy HH:mm}");
+                info.Item().Text($"Hoan tat phe duyet: {(request.CompletedAt.HasValue ? request.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm") : "--")}");
+                info.Item().Text("Chu ky nguoi gui: xac nhan bang tai khoan dang nhap trong he thong.");
+            });
+
+            column.Item().Text("Noi dung don").FontSize(14).Bold();
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(180);
+                    columns.RelativeColumn();
+                });
+
+                foreach (var entry in dataEntries)
+                {
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6).Text(entry.FieldKey).SemiBold();
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).PaddingVertical(6).Text(entry.FieldValue ?? "--");
+                }
+            });
+        }
+
+        private static void RenderSickLeaveSection(ColumnDescriptor column, Request request, IReadOnlyDictionary<string, string> fields)
+        {
+            var startDate = FormatDate(fields.TryGetValue("start_date", out var start) ? start : null);
+            var endDate = FormatDate(fields.TryGetValue("end_date", out var end) ? end : null);
+            var totalDays = fields.TryGetValue("total_days", out var days) ? days : "--";
+            var reason = fields.TryGetValue("reason", out var leaveReason) ? leaveReason : "--";
+
+            column.Item().Border(1).BorderColor(Colors.Grey.Medium).Padding(14).Column(section =>
+            {
+                section.Spacing(6);
+                section.Item().AlignCenter().Text("THONG TIN NGUOI XIN NGHI").FontSize(13).SemiBold();
+                section.Item().Row(row =>
+                {
+                    row.RelativeItem().Text($"Ho va ten: {request.Requester?.FullName ?? "Khong xac dinh"}");
+                    row.RelativeItem().Text($"Phong ban: {request.Requester?.Department?.Name ?? "Khong xac dinh"}");
+                });
+                section.Item().Row(row =>
+                {
+                    row.RelativeItem().Text($"Ma nhan vien: {request.Requester?.EmployeeCode ?? "--"}");
+                    row.RelativeItem().Text($"Ngay lap don: {request.CreatedAt:dd/MM/yyyy}");
+                });
+            });
+
+            column.Item().Border(1).BorderColor(Colors.Grey.Medium).Padding(14).Column(section =>
+            {
+                section.Spacing(8);
+                section.Item().AlignCenter().Text("NOI DUNG XIN NGHI BENH").FontSize(13).SemiBold();
+                section.Item().Text($"Kinh gui: Truong phong / Bo phan Nhan su");
+                section.Item().Text($"Toi lam don nay de de nghi nghi om tu ngay {startDate} den ngay {endDate}, tong cong {totalDays} ngay lam viec.");
+                section.Item().Text($"Ly do/nguyen nhan: {reason}");
+                section.Item().Text("Ho so kem theo: Giay kham benh / giay ra vien / giay chung nhan nghi viec huong BHXH (neu co).")
+                    .FontColor(Colors.Grey.Darken1);
+                section.Item().Text("Toi cam ket cac thong tin tren la dung su that va chiu trach nhiem truoc cong ty ve noi dung da khai.");
+            });
+
+            column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(12).Column(note =>
+            {
+                note.Spacing(4);
+                note.Item().Text("GHI CHU DOI VOI DON NGHI OM").FontSize(12).SemiBold().FontColor(Colors.Blue.Darken2);
+                note.Item().Text("- So ngay nghi tren he thong duoc tinh theo ngay lam viec, khong tinh Thu 7, Chu nhat va ngay le.").FontSize(10);
+                note.Item().Text("- Truong hop nghi dai ngay hoac nghi om co chung tu, nhan vien can bo sung minh chung dinh kem de doi chieu.").FontSize(10);
+            });
+        }
+
+        private static string ResolveLeaveTypeLabel(string leaveTypeCode, string? fallback)
+        {
+            return leaveTypeCode?.ToUpperInvariant() switch
+            {
+                "SL" => "Nghi om",
+                "AL" => "Phep nam",
+                "ML" => "Nghi thai san",
+                "UL" => "Nghi khong luong",
+                _ => fallback ?? "Khong xac dinh"
+            };
+        }
+
+        private static string FormatDate(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return "--";
+            }
+
+            return DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+                ? parsed.ToString("dd/MM/yyyy")
+                : raw;
         }
 
         private string BuildVerifyUrl(string requestCode)

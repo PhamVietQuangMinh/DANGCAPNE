@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Models.Timekeeping;
+using DANGCAPNE.ViewModels;
 
 namespace DANGCAPNE.Controllers
 {
@@ -14,22 +15,121 @@ namespace DANGCAPNE.Controllers
             _context = context;
         }
 
+        private bool IsEmployeeOnlySession()
+        {
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries);
+            // "Đổi ca" chỉ cho user thuần Employee (không kèm các quyền đặc quyền).
+            var privileged = new[] { "Admin", "HR", "Manager", "IT", "ITManager", "Accountant", "ChiefAccountant", "AccountantStaff" };
+            var hasPrivileged = roles.Any(r => privileged.Contains(r, StringComparer.OrdinalIgnoreCase));
+            var hasEmployee = roles.Any(r => string.Equals(r, "Employee", StringComparison.OrdinalIgnoreCase));
+            return hasEmployee && !hasPrivileged;
+        }
+
+        private async Task<bool> IsEmployeeOnlyUserAsync(int userId, int tenantId)
+        {
+            var roleNames = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .AsNoTracking()
+                .Where(ur => ur.UserId == userId && ur.Role != null && ur.Role.TenantId == tenantId)
+                .Select(ur => ur.Role!.Name)
+                .ToListAsync();
+
+            var privileged = new[] { "Admin", "HR", "Manager", "IT", "ITManager", "Accountant", "ChiefAccountant", "AccountantStaff" };
+            var hasPrivileged = roleNames.Any(r => privileged.Contains(r, StringComparer.OrdinalIgnoreCase));
+            var hasEmployee = roleNames.Any(r => string.Equals(r, "Employee", StringComparison.OrdinalIgnoreCase));
+            return hasEmployee && !hasPrivileged;
+        }
+
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? year = null, int? month = null)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
-            var today = DateTime.Today;
+            var now = DateTime.Today;
+            var selectedYear = year ?? now.Year;
+            var selectedMonth = month ?? now.Month;
+            if (selectedMonth < 1) selectedMonth = 1;
+            if (selectedMonth > 12) selectedMonth = 12;
+
+            var monthStart = new DateTime(selectedYear, selectedMonth, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var user = await _context.Users
+                .Include(u => u.Department)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId.Value);
+
             var schedules = await _context.UserShifts
                 .Include(us => us.Shift)
-                .Where(us => us.UserId == userId &&
-                    us.EffectiveDate.Date <= today.AddDays(30) &&
-                    (us.EndDate == null || us.EndDate.Value.Date >= today.AddDays(-7)))
+                .AsNoTracking()
+                .Where(us => us.UserId == userId.Value &&
+                             us.EffectiveDate.Date <= monthEnd &&
+                             (us.EndDate == null || us.EndDate.Value.Date >= monthStart))
                 .OrderBy(us => us.EffectiveDate)
                 .ToListAsync();
 
-            return View(schedules);
+            var timesheets = await _context.Timesheets
+                .AsNoTracking()
+                .Where(t => t.TenantId == tenantId && t.UserId == userId.Value && t.Date >= monthStart && t.Date <= monthEnd)
+                .ToListAsync();
+
+            var timesheetMap = timesheets.ToDictionary(t => t.Date.Date, t => t);
+
+            static (UserShift? match, DANGCAPNE.Models.Timekeeping.Shift? shift) ResolveShiftForDate(List<UserShift> items, DateTime date)
+            {
+                var match = items
+                    .Where(x => x.EffectiveDate.Date <= date.Date && (x.EndDate == null || x.EndDate.Value.Date >= date.Date))
+                    .OrderByDescending(x => x.EffectiveDate)
+                    .FirstOrDefault();
+                return (match, match?.Shift);
+            }
+
+            var days = new List<ShiftCalendarDayViewModel>();
+            var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
+            for (var d = 1; d <= daysInMonth; d++)
+            {
+                var date = new DateTime(monthStart.Year, monthStart.Month, d);
+                var (_, shift) = ResolveShiftForDate(schedules, date);
+
+                timesheetMap.TryGetValue(date.Date, out var ts);
+
+                days.Add(new ShiftCalendarDayViewModel
+                {
+                    Date = date,
+                    IsToday = date.Date == now,
+                    ShiftName = shift?.Name,
+                    ShiftStart = shift?.StartTime,
+                    ShiftEnd = shift?.EndTime,
+                    AttendanceStatus = ts?.Status,
+                    CheckIn = ts?.CheckIn,
+                    CheckOut = ts?.CheckOut
+                });
+            }
+
+            var workingDays = timesheets.Count(t => t.WorkHours > 0);
+            var otHours = timesheets.Sum(t => t.OtHours);
+
+            var prev = monthStart.AddMonths(-1);
+            var next = monthStart.AddMonths(1);
+
+            var model = new ShiftCalendarViewModel
+            {
+                UserFullName = user?.FullName ?? "Nhân viên",
+                EmployeeCode = user?.EmployeeCode ?? "--",
+                DepartmentName = user?.Department?.Name,
+                MonthStart = monthStart,
+                Days = days,
+                WorkingDays = workingDays,
+                OtHours = otHours,
+                PrevYear = prev.Year,
+                PrevMonth = prev.Month,
+                NextYear = next.Year,
+                NextMonth = next.Month
+            };
+
+            return View(model);
         }
 
         [HttpPost]
@@ -38,6 +138,29 @@ namespace DANGCAPNE.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Json(new { success = false, message = "Vui lòng đăng nhập" });
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            if (!IsEmployeeOnlySession())
+            {
+                return Json(new { success = false, message = "Chức năng đổi ca chỉ dành cho nhân viên." });
+            }
+
+            if (targetUserId == userId.Value)
+            {
+                return Json(new { success = false, message = "Bạn không thể đổi ca với chính mình." });
+            }
+
+            var targetUser = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == targetUserId && u.TenantId == tenantId && u.Status == "Active");
+            if (targetUser == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy đồng nghiệp để đổi ca." });
+            }
+
+            if (!await IsEmployeeOnlyUserAsync(targetUserId, tenantId))
+            {
+                return Json(new { success = false, message = "Bạn chỉ có thể đổi ca với nhân viên (không áp dụng cho Admin/HR/Manager/IT/Kế toán)." });
+            }
 
             var request = new ShiftSwapRequest
             {
@@ -59,7 +182,7 @@ namespace DANGCAPNE.Controllers
             // Gửi thông báo cho đồng nghiệp (TargetUserId) - Logic Notification đã có sẵn trong project
             // TODO: Call Notification Service
 
-            return Json(new { success = true, message = "Đã gửi yêu cầu đổi ca cho đồng nghiệp" });
+            return Json(new { success = true, message = "Đã gửi yêu cầu đổi ca cho đồng nghiệp." });
         }
 
         [HttpPost]
@@ -77,8 +200,8 @@ namespace DANGCAPNE.Controllers
             }
             else
             {
-                request.Status = "ApprovedByTarget"; // Đã đồng nghiệp đồng ý, chờ Quản lý duyệt
-                // Tùy theo chính sách, có thể chuyển thẳng sang Approved nếu không cần Manager
+                // Employee-only flow: target acceptance is final approval.
+                request.Status = "Approved";
             }
 
             await _context.SaveChangesAsync();
@@ -88,28 +211,7 @@ namespace DANGCAPNE.Controllers
         [HttpPost]
         public async Task<IActionResult> ManagerApproveSwap(int requestId, bool approve)
         {
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
-            if (!roles.Contains("Manager") && !roles.Contains("Admin"))
-                return Json(new { success = false, message = "Không có quyền duyệt" });
-
-            var request = await _context.ShiftSwapRequests.FindAsync(requestId);
-            if (request == null) return Json(new { success = false, message = "Không tìm thấy đơn" });
-
-            if (approve)
-            {
-                request.Status = "Approved";
-                request.ApprovedByManagerId = HttpContext.Session.GetInt32("UserId");
-
-                // Thực hiện hoán đổi thực tế trong bảng UserShift (Nếu dự án lưu UserShift theo ngày)
-                // Logic cập nhật UserShift ở đây...
-            }
-            else
-            {
-                request.Status = "RejectedByManager";
-            }
-
-            await _context.SaveChangesAsync();
-            return Json(new { success = true, message = "Đã xử lý đơn đổi ca" });
+            return Json(new { success = false, message = "Luồng duyệt quản lý đã được tắt. Đổi ca chỉ áp dụng giữa nhân viên." });
         }
     }
 }

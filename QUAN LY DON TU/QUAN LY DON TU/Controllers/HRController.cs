@@ -6,6 +6,7 @@ using DANGCAPNE.ViewModels;
 using DANGCAPNE.Models.HR;
 using DANGCAPNE.Models.Organization;
 using DANGCAPNE.Models.Requests;
+using System.Globalization;
 
 namespace DANGCAPNE.Controllers
 {
@@ -85,6 +86,33 @@ namespace DANGCAPNE.Controllers
                 .AsNoTracking()
                 .ToListAsync();
             model.DepartmentStats = deptStatsRaw.ToDictionary(x => x.Dept, x => x.Count);
+
+            // Employee department distribution for image export report
+            model.EmployeeDepartmentStats = model.Employees
+                .Where(e => e.Department != null)
+                .GroupBy(e => e.Department!.Name)
+                .OrderByDescending(g => g.Count())
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Leave minutes (approx): assume 1 day = 8 hours = 480 minutes
+            var leaveDaysUsed = model.LeaveBalances.Sum(lb => Math.Max(lb.Used, 0));
+            model.TotalLeaveMinutesUsed = (int)Math.Round(leaveDaysUsed * 8 * 60, MidpointRounding.AwayFromZero);
+
+            // Overtime minutes this month
+            var monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            var monthEnd = monthStart.AddMonths(1);
+            var otHours = await _context.Timesheets
+                .AsNoTracking()
+                .Where(t => t.TenantId == tenantId && t.Date >= monthStart && t.Date < monthEnd)
+                .SumAsync(t => (double?)t.OtHours) ?? 0;
+            model.TotalOvertimeMinutesThisMonth = (int)Math.Round(otHours * 60, MidpointRounding.AwayFromZero);
+
+            // Simple health score based on anomalies
+            var critical = model.Anomalies.Count(a => string.Equals(a.Severity, "Critical", StringComparison.OrdinalIgnoreCase));
+            var warning = model.Anomalies.Count(a => string.Equals(a.Severity, "Warning", StringComparison.OrdinalIgnoreCase));
+            var info = model.Anomalies.Count(a => string.Equals(a.Severity, "Info", StringComparison.OrdinalIgnoreCase));
+            var score = 10 - (critical * 3) - (warning * 1) - (info / 3);
+            model.HealthScore = Math.Clamp(score, 1, 10);
 
             return View(model);
         }

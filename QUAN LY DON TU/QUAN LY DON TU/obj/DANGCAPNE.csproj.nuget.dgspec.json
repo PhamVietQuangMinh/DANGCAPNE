@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj": {}
+    "C:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj": {}
   },
   "projects": {
-    "c:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj": {
+    "C:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj",
+        "projectUniqueName": "C:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj",
         "projectName": "DANGCAPNE",
-        "projectPath": "c:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj",
+        "projectPath": "C:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\DANGCAPNE.csproj",
         "packagesPath": "C:\\Users\\OS\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\obj\\",
+        "outputPath": "C:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "c:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\NuGet.Config",
+          "C:\\Users\\OS\\DANGCAPNE\\QUAN LY DON TU\\QUAN LY DON TU\\NuGet.Config",
           "C:\\Users\\OS\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"

@@ -124,7 +124,8 @@
     }
 
     .finance-form-grid input,
-    .finance-form-grid textarea {
+    .finance-form-grid textarea,
+    .finance-form-grid select {
         width: 100%;
         border-radius: 14px;
         border: 1px solid #d6d3d1;
@@ -325,12 +326,97 @@
         white-space: normal;
     }
 
+    .finance-action-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .finance-action-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        color: inherit;
+        text-decoration: none;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .finance-action-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        border-color: rgba(59, 130, 246, 0.22);
+    }
+
+    .finance-action-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+        color: #2563eb;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .finance-action-item strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #0f172a;
+    }
+
+    .finance-action-item span {
+        display: block;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.5;
+    }
+
+    .finance-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .finance-mini-card {
+        padding: 18px;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .finance-mini-card h4 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .finance-mini-card strong {
+        font-size: 28px;
+        color: #0f172a;
+    }
+
+    .finance-report-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
     @@media (max-width: 1180px) {
         .finance-hero,
         .finance-grid {
             grid-template-columns: 1fr;
         }
 
+        .finance-mini-grid,
+        .finance-action-grid,
         .finance-stats-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -338,6 +424,8 @@
 
     @@media (max-width: 720px) {
         .finance-hero-metrics,
+        .finance-mini-grid,
+        .finance-action-grid,
         .finance-stats-grid {
             grid-template-columns: 1fr;
         }
@@ -358,21 +446,21 @@
         <div class="glass-card finance-banner stagger-elem">
             <div class="finance-kicker">
                 <i class="bi bi-bank2"></i>
-                Kỳ lương @Model.SelectedPayrollMonth
+                Điều hành kỳ lương @Model.SelectedPayrollMonth
             </div>
-            <h1 class="finance-title">Dashboard kế toán tập trung vào bảng lương, công và đối soát nghiệp vụ.</h1>
+            <h1 class="finance-title">Trung tâm vận hành bảng lương, công, OT và đối soát tài chính nội bộ.</h1>
             <p class="finance-subtitle">
-                Theo dõi nhanh toàn bộ nhân sự tính lương, khối lượng giờ công, OT, đơn tạm ứng và các điểm cần khóa sổ trước khi chốt tháng.
+                Theo dõi nhân sự tính lương, rà soát công - tăng ca - tạm ứng, kiểm soát hồ sơ chờ duyệt và khóa sổ kỳ lương theo đúng quy trình doanh nghiệp.
             </p>
 
             <div class="finance-hero-metrics">
                 <div class="finance-hero-metric">
                     <label>Nhân sự tính lương</label>
-                    <strong>@Model.TotalPayrollEmployees</strong>
+                    <strong>@(Model.IsChiefAccountant ? Model.TotalPayrollEmployees.ToString() : "--")</strong>
                 </div>
                 <div class="finance-hero-metric">
                     <label>Tổng giờ công</label>
-                    <strong>@Model.TotalWorkHours.ToString("N1")</strong>
+                    <strong>@(Model.IsChiefAccountant ? Model.TotalWorkHours.ToString("N1") : "--")</strong>
                 </div>
                 <div class="finance-hero-metric">
                     <label>Thông báo chưa đọc</label>
@@ -395,46 +483,516 @@
                 </button>
             </form>
 
-            <form method="post" asp-action="ClosePayroll" asp-controller="Home" class="finance-form-grid">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
-                <div>
-                    <label for="closureNotes">Ghi chú chốt lương</label>
-                    <textarea id="closureNotes" name="notes" placeholder="Ví dụ: Đã đối soát OT, đã xác nhận tạm ứng lương và khóa bảng công."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary" @(Model.IsMonthClosed ? "disabled" : null)>
-                    <i class="bi bi-check2-square"></i> Chốt lương tháng @Model.SelectedPayrollMonth
-                </button>
-            </form>
+            @if (Model.IsChiefAccountant)
+            {
+                <form method="post" asp-action="ClosePayroll" asp-controller="Home" class="finance-form-grid">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                    <div>
+                        <label for="closureNotes">Ghi chú chốt lương</label>
+                        <textarea id="closureNotes" name="notes" placeholder="Ví dụ: Đã đối soát OT, đã xác nhận tạm ứng lương và khóa bảng công."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" @(Model.IsMonthClosed ? "disabled" : null)>
+                        <i class="bi bi-check2-square"></i> Chốt lương tháng @Model.SelectedPayrollMonth
+                    </button>
+                </form>
 
-            <div class="finance-status-chip @(Model.IsMonthClosed ? "closed" : "open")">
-                <i class="bi @(Model.IsMonthClosed ? "bi-shield-check" : "bi-hourglass-split")"></i>
-                @(Model.IsMonthClosed ? $"Tháng {Model.SelectedPayrollMonth} đã được chốt." : $"Tháng {Model.SelectedPayrollMonth} chưa chốt, vẫn có thể tiếp tục rà soát.")
+                <div class="finance-status-chip @(Model.IsMonthClosed ? "closed" : "open")">
+                    <i class="bi @(Model.IsMonthClosed ? "bi-shield-check" : "bi-hourglass-split")"></i>
+                    @(Model.IsMonthClosed ? $"Tháng {Model.SelectedPayrollMonth} đã được chốt." : $"Tháng {Model.SelectedPayrollMonth} chưa chốt, vẫn có thể tiếp tục rà soát.")
+                </div>
+            }
+            else
+            {
+                <div class="finance-status-chip open">
+                    <i class="bi bi-info-circle"></i>
+                    Tài khoản nhân viên kế toán: không có quyền chốt lương / xem hồ sơ lương.
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="glass-card finance-panel stagger-elem">
+        <div class="card-header">
+            <h3><i class="bi bi-lightning-charge text-warning"></i> Tác vụ kế toán trọng tâm</h3>
+            <span class="finance-caption">Các thao tác dùng nhiều trong kỳ chấm công và chốt lương</span>
+        </div>
+        <div class="card-body">
+            <div class="finance-action-grid">
+                @if (Model.IsChiefAccountant)
+                {
+                    <a class="finance-action-item" href="@Url.Action("PayrollRecords", "Home", new { payrollMonth = Model.SelectedPayrollMonth })">
+                        <div class="finance-action-icon"><i class="bi bi-wallet2"></i></div>
+                        <div>
+                            <strong>Hồ sơ lương</strong>
+                            <span>Xem phiếu lương, tổng thực lĩnh và dữ liệu đã chốt theo tháng.</span>
+                        </div>
+                    </a>
+                }
+                @if (Model.IsChiefAccountant)
+                {
+                    <a class="finance-action-item" href="@Url.Action("Index", "Approvals")">
+                        <div class="finance-action-icon"><i class="bi bi-check2-square"></i></div>
+                        <div>
+                            <strong>Danh sách chờ duyệt</strong>
+                            <span>Truy cập nhanh các hồ sơ tài chính và chứng từ đang chờ kế toán xử lý.</span>
+                        </div>
+                    </a>
+                }
+                <a class="finance-action-item" href="@Url.Action("Index", "Notifications")">
+                    <div class="finance-action-icon"><i class="bi bi-bell"></i></div>
+                    <div>
+                        <strong>Thông báo nghiệp vụ</strong>
+                        <span>Theo dõi cảnh báo mới, thay đổi hồ sơ lương và nhắc việc đối soát.</span>
+                    </div>
+                </a>
+                <a class="finance-action-item" href="@Url.Action("Index", "Requests")">
+                    <div class="finance-action-icon"><i class="bi bi-file-earmark-text"></i></div>
+                    <div>
+                        <strong>Tra cứu đơn từ</strong>
+                        <span>Mở danh sách đơn để đối chiếu nguồn dữ liệu trước khi khóa sổ.</span>
+                    </div>
+                </a>
             </div>
         </div>
     </section>
 
     <section class="finance-stats-grid stagger-elem">
         <article class="finance-stat">
-            <div class="finance-stat-label">Bản ghi Check out</div>
+            <div class="finance-stat-label">Bản ghi chấm công</div>
             <div class="finance-stat-value">@Model.TotalTimesheets</div>
-            <div class="finance-stat-sub">Tổng bản ghi trong kỳ lương đang xem</div>
+            <div class="finance-stat-sub">Tổng bản ghi công trong kỳ lương đang xem</div>
         </article>
         <article class="finance-stat">
-            <div class="finance-stat-label">Phê duyệt chờ kế toán</div>
+            <div class="finance-stat-label">Hồ sơ chờ kế toán xử lý</div>
             <div class="finance-stat-value">@Model.PendingFinanceApprovals</div>
-            <div class="finance-stat-sub">Các đơn đang cần kế toán xử lý</div>
+            <div class="finance-stat-sub">Các yêu cầu nghiệp vụ đang chờ xác nhận hoặc phê duyệt</div>
         </article>
         <article class="finance-stat">
-            <div class="finance-stat-label">Tạm ứng lương</div>
+            <div class="finance-stat-label">Tạm ứng cần theo dõi</div>
             <div class="finance-stat-value">@Model.PendingSalaryAdvanceCount</div>
-            <div class="finance-stat-sub">Đơn pending hoặc approved trong tháng</div>
+            <div class="finance-stat-sub">Các khoản cần bám sát để khấu trừ hoặc đối chiếu trong kỳ</div>
         </article>
         <article class="finance-stat">
             <div class="finance-stat-label">Điểm cần rà soát</div>
             <div class="finance-stat-value">@(Model.LateAttendanceCount + Model.AbsentAttendanceCount)</div>
-            <div class="finance-stat-sub">@Model.LateAttendanceCount đi muộn, @Model.AbsentAttendanceCount vắng mặt</div>
+            <div class="finance-stat-sub">@Model.LateAttendanceCount đi muộn, @Model.AbsentAttendanceCount vắng công cần kiểm tra</div>
         </article>
+    </section>
+
+    <section class="finance-mini-grid stagger-elem">
+        <article class="finance-mini-card">
+            <h4>Tổng thu tháng</h4>
+            <strong>@Model.TotalCashIn.ToString("N0")</strong>
+            <div class="finance-caption">Dòng tiền vào đã ghi nhận trong kỳ</div>
+        </article>
+        <article class="finance-mini-card">
+            <h4>Tổng chi tháng</h4>
+            <strong>@Model.TotalCashOut.ToString("N0")</strong>
+            <div class="finance-caption">Dòng tiền ra đã ghi nhận trong kỳ</div>
+        </article>
+        <article class="finance-mini-card">
+            <h4>Số dư quỹ tiền mặt</h4>
+            <strong>@Model.CashOnHand.ToString("N0")</strong>
+            <div class="finance-caption">Theo các phiếu thu/chi kênh tiền mặt</div>
+        </article>
+        <article class="finance-mini-card">
+            <h4>Số dư ngân hàng</h4>
+            <strong>@Model.BankBalance.ToString("N0")</strong>
+            <div class="finance-caption">Theo các giao dịch chuyển khoản đã ghi nhận</div>
+        </article>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-cash-stack text-success"></i> Lập phiếu thu / chi</h3>
+                <span class="finance-caption">Ghi nhận nghiệp vụ thu tiền, chi tiền và cập nhật sổ quỹ nội bộ</span>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="CreateCashTransaction" asp-controller="Home" class="finance-form-grid">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Loại phiếu</label>
+                            <select name="transactionType">
+                                <option value="Income">Phiếu thu</option>
+                                <option value="Expense">Phiếu chi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Kênh tiền</label>
+                            <select name="channel">
+                                <option value="Cash">Tiền mặt</option>
+                                <option value="Bank">Ngân hàng</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Ngày giao dịch</label>
+                            <input type="date" name="transactionDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div>
+                            <label>Số tiền</label>
+                            <input type="number" name="amount" min="0" step="1000" />
+                        </div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Đối tượng</label>
+                            <input type="text" name="counterpartyName" placeholder="Khách hàng / NCC / nhân viên" />
+                        </div>
+                        <div>
+                            <label>Loại đối tượng</label>
+                            <select name="counterpartyType">
+                                <option value="Customer">Khách hàng</option>
+                                <option value="Vendor">Nhà cung cấp</option>
+                                <option value="Employee">Nhân viên</option>
+                                <option value="Other">Khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Mã tham chiếu</label>
+                            <input type="text" name="referenceCode" placeholder="PT-2026-001 / UNC-..." />
+                        </div>
+                        <div>
+                            <label>Nội dung</label>
+                            <input type="text" name="content" placeholder="Nội dung phiếu thu/chi" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save2"></i> Ghi nhận thu / chi</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-clipboard-data text-info"></i> Công nợ đến hạn 3-5 ngày</h3>
+                <span class="finance-caption">Danh sách cần thu hoặc cần trả sắp đến hạn</span>
+            </div>
+            <div class="finance-list">
+                @if (Model.DueInvoices.Any())
+                {
+                    foreach (var invoice in Model.DueInvoices)
+                    {
+                        <article class="finance-list-item">
+                            <div class="finance-list-item-top">
+                                <div>
+                                    <strong>@invoice.InvoiceNo</strong>
+                                    <div class="finance-caption">@invoice.CounterpartyName · @invoice.DueDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                                <span class="finance-tag @(invoice.InvoiceType == "Receivable" ? "warn" : "ok")">@(invoice.InvoiceType == "Receivable" ? "Cần thu" : "Cần trả")</span>
+                            </div>
+                            <div class="finance-caption">Còn phải xử lý: @invoice.OutstandingAmount.ToString("N0") VND</div>
+                            <div class="finance-caption">Tuổi nợ: @invoice.AgingDays ngày</div>
+                            @if (invoice.OverCreditLimit)
+                            {
+                                <div class="finance-caption text-danger">Vượt hạn mức tín dụng</div>
+                            }
+                        </article>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:10px 0;">
+                        <i class="bi bi-journal-check"></i>
+                        <h3>Không có công nợ nào đến hạn sớm</h3>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-receipt text-primary"></i> Công nợ khách hàng</h3>
+                <span class="finance-caption">Theo dõi phải thu, tuổi nợ và cảnh báo vượt hạn mức</span>
+            </div>
+            <div class="finance-list">
+                @foreach (var invoice in Model.ReceivableInvoices)
+                {
+                    <article class="finance-list-item">
+                        <div class="finance-list-item-top">
+                            <div>
+                                <strong>@invoice.CounterpartyName</strong>
+                                <div class="finance-caption">@invoice.InvoiceNo · MST: @invoice.TaxCode</div>
+                            </div>
+                            <span class="finance-tag warn">@invoice.Status</span>
+                        </div>
+                        <div class="finance-caption">Dư nợ: @invoice.OutstandingAmount.ToString("N0") VND</div>
+                        <div class="finance-caption">Tuổi nợ: @invoice.AgingDays ngày</div>
+                        @if (invoice.OverCreditLimit)
+                        {
+                            <div class="finance-caption text-danger">Khách hàng đang vượt hạn mức tín dụng</div>
+                        }
+                    </article>
+                }
+            </div>
+        </div>
+
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-building-check text-warning"></i> Công nợ nhà cung cấp</h3>
+                <span class="finance-caption">Quản lý phải trả và kế hoạch thanh toán</span>
+            </div>
+            <div class="finance-list">
+                @foreach (var invoice in Model.PayableInvoices)
+                {
+                    <article class="finance-list-item">
+                        <div class="finance-list-item-top">
+                            <div>
+                                <strong>@invoice.CounterpartyName</strong>
+                                <div class="finance-caption">@invoice.InvoiceNo · Hạn trả: @invoice.DueDate.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <span class="finance-tag ok">@invoice.Status</span>
+                        </div>
+                        <div class="finance-caption">Còn phải trả: @invoice.OutstandingAmount.ToString("N0") VND</div>
+                        <div class="finance-caption">Tuổi khoản nợ: @invoice.AgingDays ngày</div>
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-file-earmark-plus text-success"></i> Lưu hóa đơn / công nợ</h3>
+                <span class="finance-caption">Ghi nhận phải thu, phải trả và hạn mức tín dụng</span>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="CreateInvoiceRecord" asp-controller="Home" class="finance-form-grid">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Loại công nợ</label>
+                            <select name="invoiceType">
+                                <option value="Receivable">Phải thu khách hàng</option>
+                                <option value="Payable">Phải trả nhà cung cấp</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Số hóa đơn</label>
+                            <input type="text" name="invoiceNo" />
+                        </div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Đối tác</label>
+                            <input type="text" name="counterpartyName" />
+                        </div>
+                        <div>
+                            <label>Mã số thuế</label>
+                            <input type="text" name="taxCode" />
+                        </div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Ngày hóa đơn</label>
+                            <input type="date" name="invoiceDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div>
+                            <label>Ngày đến hạn</label>
+                            <input type="date" name="dueDate" value="@DateTime.Today.AddDays(5).ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="content-grid-3">
+                        <div>
+                            <label>Giá trị hóa đơn</label>
+                            <input type="number" name="amount" step="1000" min="0" />
+                        </div>
+                        <div>
+                            <label>Đã thanh toán</label>
+                            <input type="number" name="paidAmount" step="1000" min="0" value="0" />
+                        </div>
+                        <div>
+                            <label>Hạn mức tín dụng</label>
+                            <input type="number" name="creditLimit" step="1000" min="0" value="0" />
+                        </div>
+                    </div>
+                    <div>
+                        <label>Ghi chú</label>
+                        <textarea name="notes"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save2"></i> Lưu công nợ</button>
+                </form>
+            </div>
+        </div>
+
+        @if (Model.IsChiefAccountant)
+        {
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-folder2-open text-danger"></i> Kho hóa đơn & chứng từ</h3>
+                <span class="finance-caption">Lưu trữ PDF/XML và tra cứu theo số chứng từ, mã số thuế</span>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="CreateAccountingDocument" asp-controller="Home" class="finance-form-grid" style="margin-bottom:20px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Loại chứng từ</label>
+                            <select name="documentType">
+                                <option value="InvoiceIn">Hóa đơn đầu vào</option>
+                                <option value="InvoiceOut">Hóa đơn đầu ra</option>
+                                <option value="Receipt">Phiếu thu</option>
+                                <option value="PaymentVoucher">Phiếu chi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Số chứng từ / hóa đơn</label>
+                            <input type="text" name="documentNo" />
+                        </div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Đơn vị / nhà cung cấp</label>
+                            <input type="text" name="vendorName" />
+                        </div>
+                        <div>
+                            <label>Mã số thuế</label>
+                            <input type="text" name="taxCode" />
+                        </div>
+                    </div>
+                    <div class="content-grid-3">
+                        <div>
+                            <label>Ngày chứng từ</label>
+                            <input type="date" name="documentDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div>
+                            <label>Giá trị</label>
+                            <input type="number" name="amount" step="1000" min="0" />
+                        </div>
+                        <div></div>
+                    </div>
+                    <div class="content-grid-2">
+                        <div>
+                            <label>Đường dẫn PDF</label>
+                            <input type="text" name="pdfPath" placeholder="/uploads/.../file.pdf" />
+                        </div>
+                        <div>
+                            <label>Đường dẫn XML</label>
+                            <input type="text" name="xmlPath" placeholder="/uploads/.../file.xml" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Lưu chứng từ</button>
+                </form>
+
+                <div class="finance-table-wrap">
+                    <table class="finance-table">
+                        <thead>
+                            <tr>
+                                <th>Số CT</th>
+                                <th>Loại</th>
+                                <th>Đối tác</th>
+                                <th>MST</th>
+                                <th>Ngày</th>
+                                <th>PDF/XML</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.AccountingDocuments.Any())
+                        {
+                            foreach (var doc in Model.AccountingDocuments)
+                            {
+                                <tr>
+                                    <td>@doc.DocumentNo</td>
+                                    <td>@doc.DocumentType</td>
+                                    <td>@doc.VendorName</td>
+                                    <td>@doc.TaxCode</td>
+                                    <td>@doc.DocumentDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(doc.PdfPath))
+                                        {
+                                            <a href="@doc.PdfPath" target="_blank">PDF</a>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(doc.PdfPath) && !string.IsNullOrWhiteSpace(doc.XmlPath))
+                                        {
+                                            <span> / </span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(doc.XmlPath))
+                                        {
+                                            <a href="@doc.XmlPath" target="_blank">XML</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="6" class="text-center text-muted">Chưa có chứng từ kế toán.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        }
+    </section>
+
+    @if (Model.IsChiefAccountant)
+    {
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-graph-up-arrow text-success"></i> Báo cáo kết quả kinh doanh (P&amp;L)</h3>
+                <div class="finance-report-actions">
+                    <a class="btn btn-outline btn-sm" href="@Url.Action("ExportFinanceReport", "Home", new { reportType = "pnl", payrollMonth = Model.SelectedPayrollMonth })">Xuất CSV</a>
+                </div>
+            </div>
+            <div class="finance-list">
+                <div class="finance-caption">Tổng thu: <strong>@Model.ProfitAndLoss.TotalIncome.ToString("N0")</strong></div>
+                <div class="finance-caption">Tổng chi: <strong>@Model.ProfitAndLoss.TotalExpense.ToString("N0")</strong></div>
+                <div class="finance-caption">Lợi nhuận thuần: <strong>@Model.ProfitAndLoss.NetAmount.ToString("N0")</strong></div>
+            </div>
+        </div>
+        <div class="glass-card finance-panel stagger-elem">
+            <div class="card-header">
+                <h3><i class="bi bi-bar-chart text-primary"></i> Báo cáo dòng tiền</h3>
+                <div class="finance-report-actions">
+                    <a class="btn btn-outline btn-sm" href="@Url.Action("ExportFinanceReport", "Home", new { reportType = "cashflow", payrollMonth = Model.SelectedPayrollMonth })">Xuất CSV</a>
+                </div>
+            </div>
+            <div class="finance-list">
+                <div class="finance-caption">Dòng tiền thuần: <strong>@Model.CashFlow.NetAmount.ToString("N0")</strong></div>
+                <div class="finance-caption">Tiền mặt: <strong>@Model.CashOnHand.ToString("N0")</strong></div>
+                <div class="finance-caption">Ngân hàng: <strong>@Model.BankBalance.ToString("N0")</strong></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="finance-grid">
+        <div class="glass-card finance-panel stagger-elem" style="grid-column: 1 / -1;">
+            <div class="card-header">
+                <h3><i class="bi bi-diagram-3 text-warning"></i> Bảng cân đối kế toán rút gọn</h3>
+                <div class="finance-report-actions">
+                    <a class="btn btn-outline btn-sm" href="@Url.Action("ExportFinanceReport", "Home", new { reportType = "balancesheet", payrollMonth = Model.SelectedPayrollMonth })">Xuất CSV</a>
+                </div>
+            </div>
+            <div class="card-body finance-table-wrap" style="padding:0;">
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th>Chỉ tiêu</th>
+                            <th>Giá trị</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Tiền và tương đương tiền</td><td>@Model.BalanceSheet.CashAndBank.ToString("N0")</td></tr>
+                        <tr><td>Phải thu</td><td>@Model.BalanceSheet.Receivables.ToString("N0")</td></tr>
+                        <tr><td>Phải trả</td><td>@Model.BalanceSheet.Payables.ToString("N0")</td></tr>
+                        <tr><td><strong>Vị thế ròng</strong></td><td><strong>@Model.BalanceSheet.NetPosition.ToString("N0")</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </section>
 
     <section class="finance-grid">
@@ -443,7 +1001,7 @@
                 <div class="finance-panel-header">
                     <div>
                         <h3><i class="bi bi-people-fill text-primary"></i> Bảng tổng hợp nhân sự tính lương</h3>
-                        <span class="finance-caption">Bảng này đổi theo tháng bạn chọn, không bị cố định ở tháng 4.</span>
+                        <span class="finance-caption">Dữ liệu tổng hợp theo đúng kỳ lương đang chọn để phục vụ rà soát trước khi khóa sổ.</span>
                     </div>
                     <form method="get" asp-action="Index" asp-controller="Home" class="finance-month-switcher">
                         <input type="month" name="payrollMonth" value="@Model.SelectedPayrollMonth" />
@@ -534,24 +1092,27 @@
             </div>
         </div>
     </section>
+    }
 
     <section class="finance-grid">
+        @if (Model.IsChiefAccountant)
+        {
         <div class="glass-card finance-panel stagger-elem">
             <div class="card-header">
                 <h3><i class="bi bi-calculator text-primary"></i> Phép tính lương đang áp dụng</h3>
             </div>
             <div class="finance-list">
                 <div class="finance-formula">
-                    <strong>1. Lương tháng chuẩn</strong>
+                    <strong>1. Nguyên tắc xác định lương chuẩn</strong>
                     <code>Lương chuẩn = Lương cơ bản x Hệ số lương</code>
                 </div>
                 <div class="finance-formula">
-                    <strong>2. Lương chính</strong>
+                    <strong>2. Nguyên tắc quy đổi công và giờ</strong>
                     <code>Lương / giờ = (Lương chuẩn / Chuẩn ngày công) / Chuẩn giờ/ngày
 Lương chính = Lương / giờ x Giờ công thực tế</code>
                 </div>
                 <div class="finance-formula">
-                    <strong>3. OT, đi trễ và thực lĩnh</strong>
+                    <strong>3. Nguyên tắc đối soát OT, phạt và thực lĩnh</strong>
                     <code>Lương OT = Lương / giờ x Hệ số OT x Giờ OT
 Phạt đi trễ = Phạt / phút x Tổng phút đi trễ
 Thực lĩnh = Lương chính + Lương OT + Phụ cấp + Thu nhập khác - Phạt đi trễ - Tạm ứng lương</code>
@@ -577,7 +1138,7 @@ Thực lĩnh = Lương chính + Lương OT + Phụ cấp + Thu nhập khác - Ph
                                 </div>
                                 <span class="finance-tag warn">@request.Status</span>
                             </div>
-                            <div class="finance-caption">Số tiền: @request.Amount.ToString("N0") VND</div>
+                            <div class="finance-caption">Số tiền đề nghị: @request.Amount.ToString("N0") VND</div>
                             <div class="finance-caption">Lý do: @request.Reason</div>
                         </article>
                     }
@@ -591,68 +1152,74 @@ Thực lĩnh = Lương chính + Lương OT + Phụ cấp + Thu nhập khác - Ph
                 }
             </div>
         </div>
+        }
 
-        <div class="glass-card finance-panel stagger-elem">
-            <div class="card-header">
-                <h3><i class="bi bi-check2-square text-info"></i> Hồ sơ chờ kế toán phê duyệt</h3>
-                <a href="@Url.Action("Index", "Approvals")" class="btn btn-outline btn-sm">Mở danh sách duyệt</a>
-            </div>
-            <div class="finance-list">
-                @if (Model.PendingApprovals.Any())
-                {
-                    foreach (var item in Model.PendingApprovals)
+        @if (Model.IsChiefAccountant)
+        {
+            <div class="glass-card finance-panel stagger-elem">
+                <div class="card-header">
+                    <h3><i class="bi bi-check2-square text-info"></i> Hồ sơ chờ kế toán phê duyệt</h3>
+                    <a href="@Url.Action("Index", "Approvals")" class="btn btn-outline btn-sm">Mở danh sách duyệt</a>
+                </div>
+                <div class="finance-list">
+                    @if (Model.PendingApprovals.Any())
                     {
-                        <article class="finance-list-item">
-                            <div class="finance-list-item-top">
-                                <div>
-                                    <strong>@item.RequestCode</strong>
-                                    <div class="finance-caption">@(item.FormTemplate?.Name ?? "Không xác định")</div>
+                        foreach (var item in Model.PendingApprovals)
+                        {
+                            <article class="finance-list-item">
+                                <div class="finance-list-item-top">
+                                    <div>
+                                        <strong>@item.RequestCode</strong>
+                                        <div class="finance-caption">@(item.FormTemplate?.Name ?? "Không xác định")</div>
+                                    </div>
+                                    <span class="finance-tag warn">Chờ xử lý</span>
                                 </div>
-                                <span class="finance-tag warn">Đang chờ</span>
-                            </div>
-                            <div class="finance-caption">Người gửi: @(item.Requester?.FullName ?? "Không xác định")</div>
-                            <div class="finance-caption">Ngày tạo: @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
-                            <a href="@Url.Action("Detail", "Requests", new { id = item.Id })" class="btn btn-ghost btn-sm mt-16">
-                                <i class="bi bi-arrow-right-circle"></i> Xem chi tiết
-                            </a>
-                        </article>
+                                <div class="finance-caption">Người gửi: @(item.Requester?.FullName ?? "Không xác định")</div>
+                                <div class="finance-caption">Ngày tạo: @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                <a href="@Url.Action("Detail", "Requests", new { id = item.Id })" class="btn btn-ghost btn-sm mt-16">
+                                    <i class="bi bi-arrow-right-circle"></i> Xem chi tiết
+                                </a>
+                            </article>
+                        }
                     }
-                }
-                else
-                {
-                    <div class="empty-state" style="padding:10px 0;">
-                        <i class="bi bi-patch-check"></i>
-                        <h3>Không có hồ sơ nào đang chờ kế toán</h3>
-                    </div>
-                }
+                    else
+                    {
+                        <div class="empty-state" style="padding:10px 0;">
+                            <i class="bi bi-patch-check"></i>
+                            <h3>Không có hồ sơ nào đang chờ kế toán</h3>
+                        </div>
+                    }
+                </div>
             </div>
-        </div>
+        }
     </section>
 
-    <section class="finance-grid">
-        <div class="glass-card finance-panel stagger-elem" style="grid-column: 1 / -1;">
-            <div class="card-header">
-                <h3><i class="bi bi-file-earmark-pdf text-danger"></i> Phiếu lương đã sinh cho tháng @Model.SelectedPayrollMonth</h3>
-                <span class="finance-caption">Các file PDF được tạo tự động khi chốt lương tháng.</span>
-            </div>
-            <div class="card-body finance-table-wrap" style="padding:0;">
-                <table class="finance-table">
-                    <thead>
-                        <tr>
-                            <th>Nhân sự</th>
-                            <th>Lương chính</th>
-                            <th>OT</th>
-                            <th>Phạt đi trễ</th>
-                            <th>Tạm ứng</th>
-                            <th>Thực lĩnh</th>
-                            <th>Phiếu lương</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @if (Model.RecentPayrollSlips.Any())
-                    {
-                        foreach (var slip in Model.RecentPayrollSlips)
+    @if (Model.IsChiefAccountant)
+    {
+        <section class="finance-grid">
+            <div class="glass-card finance-panel stagger-elem" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <h3><i class="bi bi-file-earmark-pdf text-danger"></i> Phiếu lương đã sinh cho tháng @Model.SelectedPayrollMonth</h3>
+                    <span class="finance-caption">Danh sách phiếu lương điện tử đã được hệ thống tạo sau khi chốt tháng.</span>
+                </div>
+                <div class="card-body finance-table-wrap" style="padding:0;">
+                    <table class="finance-table">
+                        <thead>
+                            <tr>
+                                <th>Nhân sự</th>
+                                <th>Lương chính</th>
+                                <th>OT</th>
+                                <th>Phạt đi trễ</th>
+                                <th>Tạm ứng</th>
+                                <th>Thực lĩnh</th>
+                                <th>Phiếu lương</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.RecentPayrollSlips.Any())
                         {
+                            foreach (var slip in Model.RecentPayrollSlips)
+                            {
                             <tr>
                                 <td><strong>@(slip.User?.FullName ?? "Không xác định")</strong></td>
                                 <td>@slip.MainSalary.ToString("N0")</td>
@@ -673,17 +1240,18 @@ Thực lĩnh = Lương chính + Lương OT + Phụ cấp + Thu nhập khác - Ph
                                     }
                                 </td>
                             </tr>
+                            }
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">Tháng @Model.SelectedPayrollMonth chưa có phiếu lương nào được sinh.</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Tháng @Model.SelectedPayrollMonth chưa có phiếu lương nào được sinh.</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    }
 </div>

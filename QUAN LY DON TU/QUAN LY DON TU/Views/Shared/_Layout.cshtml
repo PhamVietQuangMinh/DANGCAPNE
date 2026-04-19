@@ -27,7 +27,7 @@
                     var permissions = (Context.Session.GetString("Permissions") ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries);
                     var isAdmin = roles.Contains("Admin");
                     var isHR = roles.Contains("HR");
-                    var isManager = roles.Contains("Manager");
+                    var isManager = roles.Contains("Manager") || roles.Contains("ITManager");
                     var isIT = roles.Contains("IT") || roles.Contains("ITManager");
                     var canViewApprovals = permissions.Contains("approvals.view");
                     var canManageDelegation = permissions.Contains("delegation.manage");
@@ -43,7 +43,10 @@
                     var isAccountant = string.Equals(Context.Session.GetString("PrimaryRole"), "Accountant", StringComparison.OrdinalIgnoreCase)
                         || roles.Contains("Accountant")
                         || string.Equals(Context.Session.GetString("Department"), "Phòng Kế toán", StringComparison.OrdinalIgnoreCase);
-                    var isEmployeeOnly = !isAdmin && !isHR && !isManager && !isAccountant && !isIT;
+                    var isChiefAccountant = string.Equals(Context.Session.GetString("IsChiefAccountant"), "1", StringComparison.OrdinalIgnoreCase)
+                        || roles.Contains("ChiefAccountant");
+                    var hasEmployeeRole = roles.Contains("Employee");
+                    var isEmployeeOnly = hasEmployeeRole && !isAdmin && !isHR && !isManager && !isAccountant && !isIT;
                     var canSeeEmployeeExtras = isEmployeeOnly || isIT;
                     var currentAdminTab = Context.Request.Query["tab"].ToString();
                     var currentModuleKey = Context.Request.Query["key"].ToString();
@@ -70,6 +73,12 @@
                             <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
                                 <i class="bi bi-clock-history"></i> Timeline check out
                             </a>
+                            @if (isEmployeeOnly)
+                            {
+                                <a href="@Url.Action("EmployeeSwap", "Home")" class="nav-link @(currentController == "Home" && currentAction == "EmployeeSwap" ? "active" : "")">
+                                    <i class="bi bi-arrow-left-right"></i> Trao đổi ca làm
+                                </a>
+                            }
                             <a href="@Url.Action("Index", "Shift")" class="nav-link @(currentController == "Shift" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpSchedule">
                                 <i class="bi bi-calendar3"></i> Lịch biểu & ca làm
                             </a>
@@ -86,12 +95,15 @@
                         <a href="@Url.Action("Index", "Home")" class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
                             <i class="bi bi-cash-stack"></i> Dashboard kế toán
                         </a>
-                        <a href="@Url.Action("Index", "Approvals")" class="nav-link @(currentController == "Approvals" && currentAction == "Index" ? "active" : "")">
-                            <i class="bi bi-wallet2"></i> Duyệt nghiệp vụ lương
-                        </a>
-                        <a href="@Url.Action("PayrollRecords", "Home")" class="nav-link @(currentController == "Home" && currentAction == "PayrollRecords" ? "active" : "")">
-                            <i class="bi bi-receipt-cutoff"></i> Hồ sơ lương
-                        </a>
+                        @if (isChiefAccountant)
+                        {
+                            <a href="@Url.Action("Index", "Approvals")" class="nav-link @(currentController == "Approvals" && currentAction == "Index" ? "active" : "")">
+                                <i class="bi bi-wallet2"></i> Duyệt nghiệp vụ lương
+                            </a>
+                            <a href="@Url.Action("PayrollRecords", "Home")" class="nav-link @(currentController == "Home" && currentAction == "PayrollRecords" ? "active" : "")">
+                                <i class="bi bi-receipt-cutoff"></i> Hồ sơ lương
+                            </a>
+                        }
                         <a href="@Url.Action("Index", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Index" ? "active" : "")">
                             <i class="bi bi-folder2-open"></i> Đơn từ tài chính
                         </a>
@@ -106,9 +118,6 @@
                         </a>
                         <a href="@Url.Action("Index", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Index" ? "active" : "")" data-i18n="NavMyReq">
                             <i class="bi bi-file-earmark-text-fill"></i> Đơn từ hệ thống
-                        </a>
-                        <a href="@Url.Action("Index", "Requests", new { priority = "High" })" class="nav-link @(currentController == "Requests" && currentAction == "Index" && Context.Request.Query.ContainsKey("priority") ? "active" : "")">
-                            <i class="bi bi-funnel-fill"></i> Lọc nâng cao
                         </a>
                         <a href="@Url.Action("Verify", "Requests")" class="nav-link @(currentController == "Requests" && currentAction == "Verify" ? "active" : "")">
                             <i class="bi bi-patch-check-fill"></i> Xác minh đơn

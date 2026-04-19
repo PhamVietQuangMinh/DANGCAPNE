@@ -178,4 +178,94 @@ namespace DANGCAPNE.Models.Finance
         [ForeignKey("UserId")]
         public virtual Organization.User? User { get; set; }
     }
+
+    public class CashTransaction
+    {
+        [Key]
+        public int Id { get; set; }
+        public int TenantId { get; set; }
+        [Required, MaxLength(20)]
+        public string TransactionType { get; set; } = "Expense"; // Income, Expense
+        [Required, MaxLength(20)]
+        public string Channel { get; set; } = "Cash"; // Cash, Bank
+        public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Amount { get; set; }
+        [MaxLength(200)]
+        public string Content { get; set; } = string.Empty;
+        [MaxLength(200)]
+        public string CounterpartyName { get; set; } = string.Empty;
+        [MaxLength(50)]
+        public string CounterpartyType { get; set; } = "Other"; // Customer, Vendor, Employee, Other
+        [MaxLength(100)]
+        public string? ReferenceCode { get; set; }
+        [MaxLength(500)]
+        public string? AttachmentPath { get; set; }
+        [MaxLength(30)]
+        public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected, Paid
+        public int CreatedByUserId { get; set; }
+        public int? ApprovedByUserId { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [ForeignKey("CreatedByUserId")]
+        public virtual Organization.User? CreatedByUser { get; set; }
+        [ForeignKey("ApprovedByUserId")]
+        public virtual Organization.User? ApprovedByUser { get; set; }
+    }
+
+    public class InvoiceRecord
+    {
+        [Key]
+        public int Id { get; set; }
+        public int TenantId { get; set; }
+        [Required, MaxLength(30)]
+        public string InvoiceType { get; set; } = "Receivable"; // Receivable, Payable
+        [Required, MaxLength(50)]
+        public string InvoiceNo { get; set; } = string.Empty;
+        [MaxLength(200)]
+        public string CounterpartyName { get; set; } = string.Empty;
+        [MaxLength(50)]
+        public string TaxCode { get; set; } = string.Empty;
+        public DateTime InvoiceDate { get; set; }
+        public DateTime DueDate { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Amount { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PaidAmount { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal CreditLimit { get; set; }
+        [MaxLength(30)]
+        public string Status { get; set; } = "Open"; // Open, Partial, Paid, Overdue
+        [MaxLength(500)]
+        public string? Notes { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class AccountingDocument
+    {
+        [Key]
+        public int Id { get; set; }
+        public int TenantId { get; set; }
+        [Required, MaxLength(30)]
+        public string DocumentType { get; set; } = "Invoice"; // InvoiceIn, InvoiceOut, Receipt, PaymentVoucher
+        [Required, MaxLength(100)]
+        public string DocumentNo { get; set; } = string.Empty;
+        [MaxLength(200)]
+        public string VendorName { get; set; } = string.Empty;
+        [MaxLength(50)]
+        public string TaxCode { get; set; } = string.Empty;
+        public DateTime DocumentDate { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Amount { get; set; }
+        [MaxLength(500)]
+        public string? PdfPath { get; set; }
+        [MaxLength(500)]
+        public string? XmlPath { get; set; }
+        public int UploadedByUserId { get; set; }
+        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+
+        [ForeignKey("UploadedByUserId")]
+        public virtual Organization.User? UploadedByUser { get; set; }
+    }
 }

@@ -27,7 +27,7 @@ namespace DANGCAPNE.Security
                 PolicyView
             };
 
-            if (roles.Contains("Manager") || roles.Contains("Admin") || roles.Contains("HR"))
+            if (roles.Contains("Manager") || roles.Contains("ITManager") || roles.Contains("Admin") || roles.Contains("HR"))
             {
                 permissions.Add(ApprovalsView);
                 permissions.Add(ApprovalsAct);
@@ -57,13 +57,16 @@ namespace DANGCAPNE.Security
                 permissions.Add(ModulesView);
             }
 
-            if (roles.Contains("Manager"))
+            if (roles.Contains("Manager") || roles.Contains("ITManager"))
             {
                 permissions.Add(DelegationManage);
             }
 
-            if (string.Equals(primaryRole, "Accountant", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(user.Department?.Code, "ACC", StringComparison.OrdinalIgnoreCase))
+            var isChiefAccountant =
+                roles.Contains("ChiefAccountant") ||
+                string.Equals(user.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase);
+
+            if (isChiefAccountant)
             {
                 permissions.Add(ApprovalsView);
                 permissions.Add(ApprovalsAct);

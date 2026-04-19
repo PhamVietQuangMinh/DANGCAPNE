@@ -116,9 +116,10 @@ namespace DANGCAPNE.Controllers
 
             if (user.Status == "PendingApproval")
             {
-                await WriteAuthAuditLog(user.Id, user.Email, "LoginFailed", false, "Pending approval");
-                ViewBag.Error = "Tai khoan dang cho phe duyet.";
-                return View(model);
+                // Email approval flow removed: auto-activate legacy pending accounts.
+                user.Status = "Active";
+                user.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
             }
 
             if (user.Status == "Rejected")
@@ -185,48 +186,26 @@ namespace DANGCAPNE.Controllers
                 FullName = model.FullName,
                 Email = model.Email,
                 DepartmentId = model.DepartmentId,
-                Status = "PendingApproval",
+                Status = "Active",
                 PasswordHash = HashPassword(model.Password),
-                EmployeeCode = "PENDING",
+                EmployeeCode = "TEMP",
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            await WriteAuthAuditLog(user.Id, user.Email, "RegisterSubmitted", true, "New account submitted for approval");
 
-            // Notify HR, Admin, and Managers
-            var hrAdmins = await _context.UserRoles
-                .Include(ur => ur.Role)
-                .Where(ur => ur.Role!.Name == "Admin" || ur.Role!.Name == "HR" || ur.Role!.Name == "Manager")
-                .Select(ur => ur.UserId)
-                .Distinct()
-                .ToListAsync();
-
-            foreach (var hrId in hrAdmins)
+            if (string.IsNullOrWhiteSpace(user.EmployeeCode) || user.EmployeeCode == "TEMP" || user.EmployeeCode == "PENDING")
             {
-                _context.Notifications.Add(new Models.SystemModels.Notification
-                {
-                    TenantId = tenantId,
-                    UserId = hrId,
-                    Title = "Yêu cầu đăng ký mới",
-                    Message = $"{model.FullName} ({model.Email}) vừa đăng ký tài khoản mới.",
-                    Type = "Info",
-                    ActionUrl = "/Admin/Whitelist"
-                });
-
-                await _hubContext.Clients.Group($"user_{hrId}").SendAsync("ReceiveNotification", new
-                {
-                    title = "Yêu cầu đăng ký mới",
-                    message = $"{model.FullName} ({model.Email}) vừa đăng ký tài khoản.",
-                    type = "Info",
-                    actionUrl = "/Admin/Whitelist"
-                });
+                user.EmployeeCode = $"EMP{user.Id:D4}";
+                user.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
             }
-            await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Yêu cầu của bạn đã được gửi thành công! Vui lòng chờ quản lý phê duyệt email trước khi đăng nhập.";
+            await WriteAuthAuditLog(user.Id, user.Email, "RegisterSubmitted", true, "New account registered (auto-activated)");
+
+            TempData["Success"] = $"Đăng ký thành công! Mã nhân viên của bạn là: {user.EmployeeCode}";
             return RedirectToAction("Login");
         }
 
@@ -836,8 +815,16 @@ namespace DANGCAPNE.Controllers
 
             var roles = user.UserRoles.Select(ur => ur.Role?.Name ?? "").Where(r => !string.IsNullOrWhiteSpace(r)).ToList();
             var primaryRole = roles.FirstOrDefault() ?? "Employee";
+
+            var isChiefAccountant =
+                roles.Contains("ChiefAccountant") ||
+                string.Equals(user.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase);
+
+            var isAccountantStaff = roles.Contains("AccountantStaff");
             var isAccountant =
                 roles.Contains("Accountant") ||
+                isChiefAccountant ||
+                isAccountantStaff ||
                 string.Equals(user.Department?.Code, "ACC", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(user.Department?.Name, "Phòng Kế toán", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(user.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase) ||
@@ -853,6 +840,8 @@ namespace DANGCAPNE.Controllers
             HttpContext.Session.SetString("Roles", string.Join(",", roles));
             HttpContext.Session.SetString("PrimaryRole", primaryRole);
             HttpContext.Session.SetString("Permissions", string.Join(",", permissions));
+            HttpContext.Session.SetString("IsChiefAccountant", isChiefAccountant ? "1" : "0");
+            HttpContext.Session.SetString("IsAccountantStaff", isAccountantStaff ? "1" : "0");
         }
 
         private static string? NormalizeIp(string? ipText)

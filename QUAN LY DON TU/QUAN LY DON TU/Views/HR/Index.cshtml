@@ -12,6 +12,58 @@
         <div class="inline-actions">
             <a href="@Url.Action("LeaveManagement")" class="btn btn-outline"><i class="bi bi-calendar2-week"></i> <span data-i18n="NavLeave">Quỹ phép</span></a>
             <a href="@Url.Action("Timekeeping")" class="btn btn-outline"><i class="bi bi-clock"></i> <span data-i18n="NavTime">Check out</span></a>
+            <button type="button" class="btn btn-primary" onclick="exportHrReportImage()"><i class="bi bi-image"></i> Xuất báo cáo ảnh</button>
+        </div>
+    </div>
+
+    <div class="glass-card mb-24" id="hr-image-report" style="background:linear-gradient(180deg, rgba(99,102,241,.10), rgba(255,255,255,.02));border:1px solid var(--border-glass);">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;padding:18px 18px 10px 18px;">
+            <div style="letter-spacing:.2em;font-weight:800;color:var(--text-muted);">OAS</div>
+            <div style="font-size:28px;font-weight:900;line-height:1.1;text-align:center;">THỐNG KÊ NHÂN SỰ</div>
+            <div class="text-muted" style="font-size:12px;">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</div>
+        </div>
+        <div class="card-body" style="padding:18px;">
+            <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:stretch;">
+                <div style="background:rgba(99,102,241,.10);border:1px solid rgba(99,102,241,.18);border-radius:14px;padding:16px;">
+                    <div style="font-weight:800;color:#0f172a;opacity:.85;">TỔNG SỐ NHÂN VIÊN</div>
+                    <div style="font-size:56px;font-weight:900;line-height:1;margin-top:8px;color:#0b1220;">@Model.Employees.Count</div>
+                </div>
+                <div style="background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.18);border-radius:14px;padding:16px;">
+                    <div style="font-weight:800;color:#0f172a;opacity:.85;">ĐIỂM SỨC KHỎE NHÂN SỰ</div>
+                    <div style="display:flex;align-items:baseline;gap:10px;margin-top:10px;">
+                        <div style="width:52px;height:52px;border-radius:50%;background:#10b981;color:white;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;">@Model.HealthScore</div>
+                        <div style="font-size:18px;font-weight:900;color:#0b1220;">(@(Model.HealthScore >= 8 ? "ỔN ĐỊNH" : Model.HealthScore >= 5 ? "CẦN CHÚ Ý" : "RỦI RO"))</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:16px;background:rgba(255,255,255,.04);border:1px solid var(--border-glass);border-radius:14px;padding:14px 16px;">
+                <div style="font-weight:900;margin-bottom:10px;color:#0b1220;">PHÂN BỐ PHÒNG BAN</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+                    @foreach (var item in Model.EmployeeDepartmentStats.Take(6))
+                    {
+                        <div style="border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.10);padding:10px 12px;">
+                            <div style="font-weight:900">@item.Key</div>
+                            <div class="text-muted" style="font-size:12px;">có <strong>@item.Value</strong> nhân viên</div>
+                        </div>
+                    }
+                    @if (!Model.EmployeeDepartmentStats.Any())
+                    {
+                        <div class="text-muted" style="grid-column:1/-1">Chưa có dữ liệu phòng ban.</div>
+                    }
+                </div>
+            </div>
+
+            <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div style="background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.18);border-radius:14px;padding:14px 16px;">
+                    <div style="font-weight:900;color:#0b1220;">TỔNG SỐ PHÚT NGHỈ PHÉP</div>
+                    <div style="font-size:40px;font-weight:900;margin-top:6px;color:#0b1220;">@Model.TotalLeaveMinutesUsed</div>
+                </div>
+                <div style="background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.18);border-radius:14px;padding:14px 16px;">
+                    <div style="font-weight:900;color:#0b1220;">TỔNG SỐ PHÚT LÀM THÊM GIỜ (THÁNG)</div>
+                    <div style="font-size:40px;font-weight:900;margin-top:6px;color:#0b1220;">@Model.TotalOvertimeMinutesThisMonth</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -137,3 +189,30 @@
         </div>
     }
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+    async function exportHrReportImage() {
+        const element = document.getElementById('hr-image-report');
+        if (!element) return;
+
+        const originalScrollY = window.scrollY;
+        element.scrollIntoView({ behavior: 'instant', block: 'start' });
+        await new Promise(r => setTimeout(r, 50));
+
+        const canvas = await html2canvas(element, {
+            backgroundColor: '#ffffff',
+            scale: Math.min(window.devicePixelRatio || 1, 2),
+            useCORS: true
+        });
+
+        window.scrollTo(0, originalScrollY);
+
+        const link = document.createElement('a');
+        const now = new Date();
+        const stamp = now.toISOString().slice(0, 10);
+        link.download = `HR-Report-${stamp}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+</script>

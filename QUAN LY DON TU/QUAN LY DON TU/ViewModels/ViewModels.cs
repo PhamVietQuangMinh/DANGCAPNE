@@ -55,6 +55,7 @@ namespace DANGCAPNE.ViewModels
     {
         public User? CurrentUser { get; set; }
         public string RoleName { get; set; } = "Accountant";
+        public bool IsChiefAccountant { get; set; }
         public int UnreadNotifications { get; set; }
         public string SelectedPayrollMonth { get; set; } = string.Empty;
         public bool IsMonthClosed { get; set; }
@@ -71,6 +72,86 @@ namespace DANGCAPNE.ViewModels
         public List<PayrollEmployeeSummaryViewModel> PayrollEmployees { get; set; } = new();
         public List<PayrollClosure> RecentClosures { get; set; } = new();
         public List<PayrollSlip> RecentPayrollSlips { get; set; } = new();
+        public decimal TotalCashIn { get; set; }
+        public decimal TotalCashOut { get; set; }
+        public decimal CashOnHand { get; set; }
+        public decimal BankBalance { get; set; }
+        public decimal TotalReceivableDueSoon { get; set; }
+        public decimal TotalPayableDueSoon { get; set; }
+        public int DueReceivableCount { get; set; }
+        public int DuePayableCount { get; set; }
+        public List<CashTransactionViewModel> RecentCashTransactions { get; set; } = new();
+        public List<InvoiceSummaryViewModel> DueInvoices { get; set; } = new();
+        public List<InvoiceSummaryViewModel> ReceivableInvoices { get; set; } = new();
+        public List<InvoiceSummaryViewModel> PayableInvoices { get; set; } = new();
+        public List<AccountingDocumentViewModel> AccountingDocuments { get; set; } = new();
+        public FinancialReportSnapshotViewModel ProfitAndLoss { get; set; } = new();
+        public FinancialReportSnapshotViewModel CashFlow { get; set; } = new();
+        public BalanceSheetSnapshotViewModel BalanceSheet { get; set; } = new();
+    }
+
+    public class CashTransactionViewModel
+    {
+        public int Id { get; set; }
+        public DateTime TransactionDate { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string CounterpartyName { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? ReferenceCode { get; set; }
+    }
+
+    public class InvoiceSummaryViewModel
+    {
+        public int Id { get; set; }
+        public string InvoiceNo { get; set; } = string.Empty;
+        public string InvoiceType { get; set; } = string.Empty;
+        public string CounterpartyName { get; set; } = string.Empty;
+        public string TaxCode { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public decimal PaidAmount { get; set; }
+        public decimal OutstandingAmount { get; set; }
+        public DateTime DueDate { get; set; }
+        public int AgingDays { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public bool OverCreditLimit { get; set; }
+    }
+
+    public class AccountingDocumentViewModel
+    {
+        public int Id { get; set; }
+        public string DocumentNo { get; set; } = string.Empty;
+        public string DocumentType { get; set; } = string.Empty;
+        public string TaxCode { get; set; } = string.Empty;
+        public string VendorName { get; set; } = string.Empty;
+        public DateTime DocumentDate { get; set; }
+        public decimal Amount { get; set; }
+        public string? PdfPath { get; set; }
+        public string? XmlPath { get; set; }
+    }
+
+    public class FinancialReportSnapshotViewModel
+    {
+        public decimal TotalIncome { get; set; }
+        public decimal TotalExpense { get; set; }
+        public decimal NetAmount { get; set; }
+        public List<FinancialReportLineViewModel> Lines { get; set; } = new();
+    }
+
+    public class FinancialReportLineViewModel
+    {
+        public string Label { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+    }
+
+    public class BalanceSheetSnapshotViewModel
+    {
+        public decimal CashAndBank { get; set; }
+        public decimal Receivables { get; set; }
+        public decimal Payables { get; set; }
+        public decimal NetPosition { get; set; }
     }
 
     public class PayrollEmployeeSummaryViewModel
@@ -235,6 +316,12 @@ namespace DANGCAPNE.ViewModels
         public List<User> Employees { get; set; } = new();
         public List<LeaveBalance> LeaveBalances { get; set; } = new();
         public Dictionary<string, int> DepartmentStats { get; set; } = new();
+
+        // HR image report metrics
+        public Dictionary<string, int> EmployeeDepartmentStats { get; set; } = new();
+        public int TotalLeaveMinutesUsed { get; set; }
+        public int TotalOvertimeMinutesThisMonth { get; set; }
+        public int HealthScore { get; set; } = 10; // 1..10
         // Anomaly flags
         public List<AnomalyAlert> Anomalies { get; set; } = new();
     }

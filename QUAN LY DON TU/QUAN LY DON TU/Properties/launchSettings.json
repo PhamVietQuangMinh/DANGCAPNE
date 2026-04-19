@@ -18,6 +18,16 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
+    "http (No Biometric)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5268",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DEMO_SKIP_BIOMETRIC": "1"
+      }
+    },
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,

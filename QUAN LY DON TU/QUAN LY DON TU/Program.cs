@@ -70,6 +70,21 @@ using (var scope = app.Services.CreateScope())
             System.IO.File.WriteAllText("patch_error.txt", ex.ToString());
         }
     }
+
+    // Seed demo accounts (works across providers). Runs by default in Development,
+    // or when explicitly enabled via SEED_DEMO_ACCOUNTS=1.
+    if (app.Environment.IsDevelopment() ||
+        string.Equals(Environment.GetEnvironmentVariable("SEED_DEMO_ACCOUNTS"), "1", StringComparison.OrdinalIgnoreCase))
+    {
+        try
+        {
+            await SchemaPatchRunner.EnsureDemoAccountsAsync(db);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Startup] Demo accounts seed skipped: {ex.Message}");
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.

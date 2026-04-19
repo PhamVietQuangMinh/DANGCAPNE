@@ -1,49 +1,173 @@
-@model List<DANGCAPNE.Models.Timekeeping.UserShift>
+@model DANGCAPNE.ViewModels.ShiftCalendarViewModel
 @{
     ViewData["Title"] = "Lịch biểu & ca làm";
+    var monthLabel = Model.MonthStart.ToString("MM/yyyy");
+    var firstDay = new DateTime(Model.MonthStart.Year, Model.MonthStart.Month, 1);
+    var firstDow = (int)firstDay.DayOfWeek; // Sunday=0
+    var startOffset = (firstDow + 6) % 7; // Monday=0
+    var hasAnyData = Model.Days.Any(d =>
+        !string.IsNullOrWhiteSpace(d.ShiftName) ||
+        d.CheckIn.HasValue ||
+        d.CheckOut.HasValue ||
+        !string.IsNullOrWhiteSpace(d.AttendanceStatus));
 }
 
 <div class="page-content">
     <div class="glass-card">
         <div class="card-header">
-            <h3><i class="bi bi-calendar3 text-primary"></i> Lịch biểu & ca làm</h3>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <h3 style="margin:0;"><i class="bi bi-calendar3 text-primary"></i> Lịch biểu & ca làm</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <a class="btn btn-outline btn-sm" href="@Url.Action("Timeline", "Attendance")" title="Xem lịch chấm công (Timeline)">
+                        <i class="bi bi-lightning-charge"></i> Hệ thống lịch live
+                    </a>
+                    <a class="btn btn-outline btn-sm" href="@Url.Action("Index", new { year = Model.PrevYear, month = Model.PrevMonth })"><i class="bi bi-chevron-left"></i></a>
+                    <strong style="min-width:92px;text-align:center;">@monthLabel</strong>
+                    <a class="btn btn-outline btn-sm" href="@Url.Action("Index", new { year = Model.NextYear, month = Model.NextMonth })"><i class="bi bi-chevron-right"></i></a>
+                </div>
+            </div>
         </div>
         <div class="card-body">
-            @if (!Model.Any())
+            @if (!hasAnyData)
             {
-                <div class="empty-state">
-                    <i class="bi bi-calendar2-week"></i>
-                    <p>Hiện chưa có ca làm nào được phân cho bạn.</p>
+                <div style="padding:22px;border-radius:16px;border:1px dashed var(--border-glass);background:rgba(148,163,184,.06);display:flex;align-items:center;justify-content:center;gap:10px;">
+                    <i class="bi bi-calendar-x text-muted"></i>
+                    <div class="text-muted">Hiện chưa có ca làm nào được phân cho bạn.</div>
                 </div>
             }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Từ ngày</th>
-                                <th>Đến ngày</th>
-                                <th>Ca làm</th>
-                                <th>Giờ bắt đầu</th>
-                                <th>Giờ kết thúc</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td>@item.EffectiveDate.ToString("dd/MM/yyyy")</td>
-                                    <td>@(item.EndDate?.ToString("dd/MM/yyyy") ?? "Hiện tại")</td>
-                                    <td>@(item.Shift?.Name ?? "Chưa gán")</td>
-                                    <td>@(item.Shift?.StartTime.ToString(@"hh\:mm") ?? "--:--")</td>
-                                    <td>@(item.Shift?.EndTime.ToString(@"hh\:mm") ?? "--:--")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+
+            <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start;">
+                <div class="glass-card" style="margin:0;">
+                    <div class="card-body">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg, rgba(99,102,241,.2), rgba(59,130,246,.12));display:flex;align-items:center;justify-content:center;border:1px solid var(--border-glass);">
+                                <i class="bi bi-person-badge" style="font-size:22px;color:var(--accent-primary);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:900;font-size:16px;">@Model.UserFullName</div>
+                                <div class="text-muted" style="font-size:12px;">@Model.EmployeeCode @(!string.IsNullOrWhiteSpace(Model.DepartmentName) ? $"· {Model.DepartmentName}" : "")</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:14px;display:grid;gap:10px;">
+                            <div style="padding:12px;border-radius:14px;border:1px solid var(--border-glass);background:var(--bg-glass);">
+                                <div class="text-muted" style="font-size:12px;">NGÀY CÔNG (tháng)</div>
+                                <div style="font-size:26px;font-weight:900;color:var(--accent-primary);">@Model.WorkingDays</div>
+                            </div>
+                            <div style="padding:12px;border-radius:14px;border:1px solid var(--border-glass);background:var(--bg-glass);">
+                                <div class="text-muted" style="font-size:12px;">GIỜ TĂNG CA (tháng)</div>
+                                <div style="font-size:26px;font-weight:900;color:#f59e0b;">@Model.OtHours.ToString("N1")h</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;">
+                            <span class="badge-soft"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:6px;"></span>Đủ công</span>
+                            <span class="badge-soft"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-right:6px;"></span>Đi muộn/OT</span>
+                            <span class="badge-soft"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:6px;"></span>Vắng</span>
+                            <span class="badge-soft"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#94a3b8;margin-right:6px;"></span>Chưa có dữ liệu</span>
+                        </div>
+                    </div>
                 </div>
-            }
+
+                <div style="border:1px solid var(--border-glass);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.03);">
+                    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;border-bottom:1px solid var(--border-glass);background:rgba(148,163,184,.08);">
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">T2</div>
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">T3</div>
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">T4</div>
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">T5</div>
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">T6</div>
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">T7</div>
+                        <div style="padding:10px 8px;font-weight:800;text-align:center;">CN</div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(7,1fr);">
+                        @for (var i = 0; i < startOffset; i++)
+                        {
+                            <div style="min-height:92px;border-right:1px solid var(--border-glass);border-bottom:1px solid var(--border-glass);background:rgba(148,163,184,.04);"></div>
+                        }
+                        @foreach (var day in Model.Days)
+                        {
+                            var status = (day.AttendanceStatus ?? "").Trim();
+                            var color = status.Equals("Absent", StringComparison.OrdinalIgnoreCase) ? "#ef4444"
+                                : status.Equals("Late", StringComparison.OrdinalIgnoreCase) || status.Equals("OT", StringComparison.OrdinalIgnoreCase) ? "#f59e0b"
+                                : (day.CheckIn.HasValue || day.CheckOut.HasValue || status.Equals("Present", StringComparison.OrdinalIgnoreCase)) ? "#22c55e"
+                                : "#94a3b8";
+
+                            var shiftTime = (day.ShiftStart.HasValue && day.ShiftEnd.HasValue) ? $"{day.ShiftStart.Value:hh\\:mm}-{day.ShiftEnd.Value:hh\\:mm}" : "";
+                            var checkIn = day.CheckIn?.ToString("HH:mm") ?? "";
+                            var checkOut = day.CheckOut?.ToString("HH:mm") ?? "";
+
+                            <div class="shift-day"
+                                 data-date="@day.Date.ToString("yyyy-MM-dd")"
+                                 data-shift="@((day.ShiftName ?? "").Replace("\"", "'"))"
+                                 data-shifttime="@shiftTime"
+                                 data-status="@status"
+                                 data-checkin="@checkIn"
+                                 data-checkout="@checkOut"
+                                 onclick="openShiftDay(this)"
+                                 style="cursor:pointer;min-height:92px;border-right:1px solid var(--border-glass);border-bottom:1px solid var(--border-glass);padding:8px;position:relative;@(day.IsToday ? "background:rgba(99,102,241,.08);" : "")">
+                                <div style="display:flex;align-items:center;justify-content:space-between;">
+                                    <div style="font-weight:900;">@day.Date.Day</div>
+                                    <span title="@status" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:@color;"></span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(day.ShiftName))
+                                {
+                                    <div class="text-muted" style="font-size:12px;margin-top:8px;line-height:1.2;">
+                                        <strong style="color:var(--text);">@day.ShiftName</strong><br />
+                                        @if (day.ShiftStart.HasValue && day.ShiftEnd.HasValue)
+                                        {
+                                            <span>@day.ShiftStart.Value.ToString(@"hh\:mm")-@day.ShiftEnd.Value.ToString(@"hh\:mm")</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted" style="font-size:12px;margin-top:8px;">--</div>
+                                }
+
+                                @if (day.CheckIn.HasValue || day.CheckOut.HasValue)
+                                {
+                                    <div class="text-muted" style="font-size:11px;margin-top:6px;">
+                                        @if (day.CheckIn.HasValue) { <span>In: @day.CheckIn.Value.ToString("HH:mm")</span> }
+                                        @if (day.CheckOut.HasValue) { <span style="margin-left:8px;">Out: @day.CheckOut.Value.ToString("HH:mm")</span> }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function openShiftDay(el) {
+        const date = el.dataset.date || '';
+        const shift = el.dataset.shift || '--';
+        const shiftTime = el.dataset.shifttime || '';
+        const status = el.dataset.status || 'Chưa có dữ liệu';
+        const checkIn = el.dataset.checkin || '';
+        const checkOut = el.dataset.checkout || '';
+
+        const lines = [];
+        lines.push(`<div style="text-align:left">`);
+        lines.push(`<div><strong>Ngày:</strong> ${date}</div>`);
+        lines.push(`<div><strong>Ca:</strong> ${shift}${shiftTime ? ` (${shiftTime})` : ''}</div>`);
+        lines.push(`<div><strong>Trạng thái:</strong> ${status}</div>`);
+        if (checkIn || checkOut) {
+            lines.push(`<div><strong>Chấm công:</strong> ${checkIn ? `In ${checkIn}` : ''}${checkOut ? ` · Out ${checkOut}` : ''}</div>`);
+        }
+        lines.push(`</div>`);
+
+        if (window.Swal) {
+            Swal.fire({
+                title: 'Chi tiết ca làm',
+                html: lines.join(''),
+                confirmButtonText: 'Đóng'
+            });
+        }
+    }
+</script>
+}

@@ -76,6 +76,7 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpPost]
+        [PermissionAuthorize("approvals.act")]
         public async Task<IActionResult> ProcessApproval(ApprovalActionViewModel model)
         {
             var userId = HttpContext.Session.GetInt32("UserId");

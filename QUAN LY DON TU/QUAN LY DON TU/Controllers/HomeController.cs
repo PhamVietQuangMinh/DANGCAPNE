@@ -4,6 +4,7 @@ using DANGCAPNE.Data;
 using DANGCAPNE.ViewModels;
 using DANGCAPNE.Models.Finance;
 using DANGCAPNE.Services;
+using System.Text;
 
 namespace DANGCAPNE.Controllers
 {
@@ -34,17 +35,18 @@ namespace DANGCAPNE.Controllers
 
             if (IsAccountant(user, roles))
             {
+                var isChiefAccountant = IsChiefAccountant(user, roles);
                 var selectedPayrollMonth = string.IsNullOrWhiteSpace(payrollMonth)
                     ? DateTime.Today.ToString("yyyy-MM")
                     : payrollMonth.Trim();
-                var accountantModel = await BuildAccountantDashboardModel(userId.Value, tenantId, selectedPayrollMonth, user);
+                var accountantModel = await BuildAccountantDashboardModel(userId.Value, tenantId, selectedPayrollMonth, user, isChiefAccountant);
                 ViewData["Title"] = "Dashboard kế toán";
                 return View("AccountantDashboard", accountantModel);
             }
 
             var isAdmin = roles.Contains("Admin");
             var isHR = roles.Contains("HR");
-            var isManager = roles.Contains("Manager");
+            var isManager = roles.Contains("Manager") || roles.Contains("ITManager");
 
             var requestsQuery = _context.Requests.Where(r => r.TenantId == tenantId);
 
@@ -210,6 +212,12 @@ namespace DANGCAPNE.Controllers
             {
                 TempData["Error"] = "Bạn không có quyền chốt lương.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (!IsChiefAccountant(user, roles))
+            {
+                TempData["Error"] = "Chức năng này chỉ dành cho Kế toán trưởng.";
+                return RedirectToAction(nameof(Index), new { payrollMonth });
             }
 
             if (!TryParsePayrollMonth(payrollMonth, out var monthStart))
@@ -398,6 +406,17 @@ namespace DANGCAPNE.Controllers
             if (userId == null) return RedirectToAction("Login", "Account");
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
             var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+
+            var privileged = new[] { "Admin", "HR", "Manager", "IT", "ITManager", "Accountant", "ChiefAccountant", "AccountantStaff" };
+            var hasPrivileged = roles.Any(r => privileged.Contains(r, StringComparer.OrdinalIgnoreCase));
+            var hasEmployee = roles.Any(r => string.Equals(r, "Employee", StringComparison.OrdinalIgnoreCase));
+            var isEmployeeOnly = hasEmployee && !hasPrivileged;
+            if (!isEmployeeOnly)
+            {
+                TempData["Error"] = "Chức năng đổi ca chỉ dành cho nhân viên.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var model = await BuildEmployeeModel(userId.Value, tenantId, roles);
             ViewData["Title"] = "Doi ca";
             return View("EmployeeSwap", model);
@@ -419,6 +438,12 @@ namespace DANGCAPNE.Controllers
             if (!IsAccountant(user, roles))
             {
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (!IsChiefAccountant(user, roles))
+            {
+                TempData["Error"] = "Chức năng này chỉ dành cho Kế toán trưởng.";
+                return RedirectToAction(nameof(Index), new { payrollMonth });
             }
 
             var selectedPayrollMonth = string.IsNullOrWhiteSpace(payrollMonth)
@@ -467,6 +492,182 @@ namespace DANGCAPNE.Controllers
             return View("PayrollRecords", model);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCashTransaction(string payrollMonth, string transactionType, string channel, DateTime transactionDate, decimal amount, string content, string counterpartyName, string counterpartyType, string? referenceCode)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            var user = await _context.Users.Include(u => u.Department).Include(u => u.Position).FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (!IsAccountant(user, roles)) return RedirectToAction(nameof(Index));
+
+            var isChiefAccountant = IsChiefAccountant(user, roles);
+            _context.CashTransactions.Add(new CashTransaction
+            {
+                TenantId = tenantId,
+                TransactionType = string.IsNullOrWhiteSpace(transactionType) ? "Expense" : transactionType.Trim(),
+                Channel = string.IsNullOrWhiteSpace(channel) ? "Cash" : channel.Trim(),
+                TransactionDate = transactionDate,
+                Amount = amount,
+                Content = content?.Trim() ?? string.Empty,
+                CounterpartyName = counterpartyName?.Trim() ?? string.Empty,
+                CounterpartyType = counterpartyType?.Trim() ?? "Other",
+                ReferenceCode = string.IsNullOrWhiteSpace(referenceCode) ? null : referenceCode.Trim(),
+                Status = isChiefAccountant ? "Approved" : "Pending",
+                CreatedByUserId = userId.Value,
+                ApprovedByUserId = isChiefAccountant ? userId.Value : null,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã ghi nhận phiếu thu/chi.";
+            return RedirectToAction(nameof(Index), new { payrollMonth });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateInvoiceRecord(string payrollMonth, string invoiceType, string invoiceNo, string counterpartyName, string taxCode, DateTime invoiceDate, DateTime dueDate, decimal amount, decimal paidAmount, decimal creditLimit, string? notes)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            var user = await _context.Users.Include(u => u.Department).Include(u => u.Position).FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (!IsAccountant(user, roles)) return RedirectToAction(nameof(Index));
+
+            var outstanding = Math.Max(amount - paidAmount, 0);
+            _context.InvoiceRecords.Add(new InvoiceRecord
+            {
+                TenantId = tenantId,
+                InvoiceType = string.IsNullOrWhiteSpace(invoiceType) ? "Receivable" : invoiceType.Trim(),
+                InvoiceNo = invoiceNo.Trim(),
+                CounterpartyName = counterpartyName?.Trim() ?? string.Empty,
+                TaxCode = taxCode?.Trim() ?? string.Empty,
+                InvoiceDate = invoiceDate,
+                DueDate = dueDate,
+                Amount = amount,
+                PaidAmount = paidAmount,
+                CreditLimit = creditLimit,
+                Status = outstanding <= 0 ? "Paid" : paidAmount > 0 ? "Partial" : (dueDate.Date < DateTime.Today ? "Overdue" : "Open"),
+                Notes = notes,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã lưu hóa đơn/công nợ.";
+            return RedirectToAction(nameof(Index), new { payrollMonth });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAccountingDocument(string payrollMonth, string documentType, string documentNo, string vendorName, string taxCode, DateTime documentDate, decimal amount, string? pdfPath, string? xmlPath)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            var user = await _context.Users.Include(u => u.Department).Include(u => u.Position).FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (!IsAccountant(user, roles)) return RedirectToAction(nameof(Index));
+            if (!IsChiefAccountant(user, roles))
+            {
+                TempData["Error"] = "Chức năng này chỉ dành cho Kế toán trưởng.";
+                return RedirectToAction(nameof(Index), new { payrollMonth });
+            }
+
+            _context.AccountingDocuments.Add(new AccountingDocument
+            {
+                TenantId = tenantId,
+                DocumentType = string.IsNullOrWhiteSpace(documentType) ? "InvoiceIn" : documentType.Trim(),
+                DocumentNo = documentNo.Trim(),
+                VendorName = vendorName?.Trim() ?? string.Empty,
+                TaxCode = taxCode?.Trim() ?? string.Empty,
+                DocumentDate = documentDate,
+                Amount = amount,
+                PdfPath = string.IsNullOrWhiteSpace(pdfPath) ? null : pdfPath.Trim(),
+                XmlPath = string.IsNullOrWhiteSpace(xmlPath) ? null : xmlPath.Trim(),
+                UploadedByUserId = userId.Value,
+                UploadedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã lưu chứng từ kế toán.";
+            return RedirectToAction(nameof(Index), new { payrollMonth });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportFinanceReport(string reportType, string? payrollMonth = null)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
+            var user = await _context.Users.Include(u => u.Department).Include(u => u.Position).AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (!IsAccountant(user, roles)) return RedirectToAction(nameof(Index));
+            if (!IsChiefAccountant(user, roles))
+            {
+                TempData["Error"] = "Chức năng này chỉ dành cho Kế toán trưởng.";
+                return RedirectToAction(nameof(Index), new { payrollMonth });
+            }
+
+            var selectedPayrollMonth = string.IsNullOrWhiteSpace(payrollMonth) ? DateTime.Today.ToString("yyyy-MM") : payrollMonth.Trim();
+            if (!TryParsePayrollMonth(selectedPayrollMonth, out var monthStart))
+            {
+                monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                selectedPayrollMonth = monthStart.ToString("yyyy-MM");
+            }
+            var monthEnd = monthStart.AddMonths(1);
+
+            var transactions = await _context.CashTransactions.AsNoTracking()
+                .Where(x => x.TenantId == tenantId && x.TransactionDate >= monthStart && x.TransactionDate < monthEnd)
+                .OrderByDescending(x => x.TransactionDate)
+                .ToListAsync();
+            var invoices = await _context.InvoiceRecords.AsNoTracking()
+                .Where(x => x.TenantId == tenantId)
+                .OrderBy(x => x.DueDate)
+                .ToListAsync();
+
+            var csv = new StringBuilder();
+            var safeType = (reportType ?? "pnl").Trim().ToLowerInvariant();
+            if (safeType == "cashflow")
+            {
+                csv.AppendLine("Ngay,Loai,Kenh,SoTien,DoiTuong,NoiDung,TrangThai");
+                foreach (var item in transactions)
+                {
+                    csv.AppendLine($"{item.TransactionDate:dd/MM/yyyy},{item.TransactionType},{item.Channel},{item.Amount:0.##},{EscapeCsv(item.CounterpartyName)},{EscapeCsv(item.Content)},{item.Status}");
+                }
+            }
+            else if (safeType == "balancesheet")
+            {
+                var receivables = invoices.Where(x => x.InvoiceType == "Receivable").Sum(x => Math.Max(x.Amount - x.PaidAmount, 0));
+                var payables = invoices.Where(x => x.InvoiceType == "Payable").Sum(x => Math.Max(x.Amount - x.PaidAmount, 0));
+                var cash = transactions.Where(x => x.Channel == "Cash").Sum(x => x.TransactionType == "Income" ? x.Amount : -x.Amount);
+                var bank = transactions.Where(x => x.Channel == "Bank").Sum(x => x.TransactionType == "Income" ? x.Amount : -x.Amount);
+                csv.AppendLine("ChiTieu,SoTien");
+                csv.AppendLine($"Tien mat,{cash:0.##}");
+                csv.AppendLine($"Tien gui ngan hang,{bank:0.##}");
+                csv.AppendLine($"Phai thu,{receivables:0.##}");
+                csv.AppendLine($"Phai tra,{payables:0.##}");
+                csv.AppendLine($"Vi the rong,{(cash + bank + receivables - payables):0.##}");
+            }
+            else
+            {
+                var income = transactions.Where(x => x.TransactionType == "Income").Sum(x => x.Amount);
+                var expense = transactions.Where(x => x.TransactionType == "Expense").Sum(x => x.Amount);
+                csv.AppendLine("ChiTieu,SoTien");
+                csv.AppendLine($"Tong thu,{income:0.##}");
+                csv.AppendLine($"Tong chi,{expense:0.##}");
+                csv.AppendLine($"Loi nhuan thuan,{(income - expense):0.##}");
+            }
+
+            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"{safeType}-{selectedPayrollMonth}.csv");
+        }
+
         private async Task<DashboardViewModel> BuildEmployeeModel(int userId, int tenantId, string[] roles)
         {
             var user = await _context.Users
@@ -477,7 +678,7 @@ namespace DANGCAPNE.Controllers
 
             var isAdmin = roles.Contains("Admin");
             var isHR = roles.Contains("HR");
-            var isManager = roles.Contains("Manager");
+            var isManager = roles.Contains("Manager") || roles.Contains("ITManager");
 
             var requestsQuery = _context.Requests.Where(r => r.TenantId == tenantId);
 
@@ -652,11 +853,32 @@ namespace DANGCAPNE.Controllers
                 .OrderBy(s => s.Name)
                 .ToListAsync();
 
-            model.Colleagues = await _context.Users
+            var colleaguesRaw = await _context.Users
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
                 .AsNoTracking()
                 .Where(u => u.TenantId == tenantId && u.Status == "Active" && u.Id != userId)
                 .OrderBy(u => u.FullName)
                 .ToListAsync();
+
+            static bool IsEmployeeOnlyUser(DANGCAPNE.Models.Organization.User u)
+            {
+                var roleNames = u.UserRoles
+                    .Select(ur => ur.Role?.Name ?? string.Empty)
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var privileged = new[] { "Admin", "HR", "Manager", "IT", "ITManager", "Accountant", "ChiefAccountant", "AccountantStaff" };
+                var hasPrivileged = privileged.Any(roleNames.Contains);
+                var hasEmployee = roleNames.Contains("Employee");
+                if (hasPrivileged || !hasEmployee)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            model.Colleagues = colleaguesRaw.Where(IsEmployeeOnlyUser).ToList();
 
             model.ShiftSwapRequests = await _context.ShiftSwapRequests
                 .Include(r => r.Requester)
@@ -673,11 +895,19 @@ namespace DANGCAPNE.Controllers
         private bool IsAccountant(DANGCAPNE.Models.Organization.User? user, string[] roles)
         {
             return roles.Contains("Accountant") ||
+                   roles.Contains("ChiefAccountant") ||
+                   roles.Contains("AccountantStaff") ||
                    string.Equals(HttpContext.Session.GetString("PrimaryRole"), "Accountant", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Department?.Code, "ACC", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Department?.Name, "Phòng Kế toán", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase) ||
                    (user?.Email?.Contains("accountant", StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
+        private static bool IsChiefAccountant(DANGCAPNE.Models.Organization.User? user, string[] roles)
+        {
+            return roles.Contains("ChiefAccountant") ||
+                   string.Equals(user?.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool TryParsePayrollMonth(string? payrollMonth, out DateTime monthStart)
@@ -694,7 +924,8 @@ namespace DANGCAPNE.Controllers
             int userId,
             int tenantId,
             string selectedPayrollMonth,
-            DANGCAPNE.Models.Organization.User? currentUser)
+            DANGCAPNE.Models.Organization.User? currentUser,
+            bool isChiefAccountant)
         {
             if (!TryParsePayrollMonth(selectedPayrollMonth, out var monthStart))
             {
@@ -703,55 +934,93 @@ namespace DANGCAPNE.Controllers
             }
 
             var monthEnd = monthStart.AddMonths(1);
-            var payrollUsers = await _context.Users
-                .Include(u => u.Department)
-                .AsNoTracking()
-                .Where(u => u.TenantId == tenantId && u.Status == "Active" && u.DepartmentId != 1)
-                .OrderBy(u => u.FullName)
-                .ToListAsync();
+            var payrollUsers = new List<DANGCAPNE.Models.Organization.User>();
+            var monthTimesheets = new List<DANGCAPNE.Models.Timekeeping.Timesheet>();
+            if (isChiefAccountant)
+            {
+                payrollUsers = await _context.Users
+                    .Include(u => u.Department)
+                    .AsNoTracking()
+                    .Where(u => u.TenantId == tenantId && u.Status == "Active" && u.DepartmentId != 1)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
 
-            var payrollUserIds = payrollUsers.Select(u => u.Id).ToList();
-            var monthTimesheets = await _context.Timesheets
-                .AsNoTracking()
-                .Where(t => t.TenantId == tenantId
-                    && payrollUserIds.Contains(t.UserId)
-                    && t.Date >= monthStart
-                    && t.Date < monthEnd)
-                .ToListAsync();
+                var payrollUserIds = payrollUsers.Select(u => u.Id).ToList();
+                monthTimesheets = await _context.Timesheets
+                    .AsNoTracking()
+                    .Where(t => t.TenantId == tenantId
+                        && payrollUserIds.Contains(t.UserId)
+                        && t.Date >= monthStart
+                        && t.Date < monthEnd)
+                    .ToListAsync();
+            }
 
-            var pendingApprovals = await _context.Requests
-                .Include(r => r.Requester)
-                .Include(r => r.FormTemplate)
+            var pendingApprovals = new List<DANGCAPNE.Models.Requests.Request>();
+            if (isChiefAccountant)
+            {
+                pendingApprovals = await _context.Requests
+                    .Include(r => r.Requester)
+                    .Include(r => r.FormTemplate)
+                    .AsNoTracking()
+                    .Where(r => r.TenantId == tenantId &&
+                        r.Approvals.Any(a => a.ApproverId == userId && a.Status == "Pending"))
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Take(8)
+                    .ToListAsync();
+            }
+
+            var salaryAdvances = new List<DANGCAPNE.Models.HR.SalaryAdvanceRequest>();
+            if (isChiefAccountant)
+            {
+                salaryAdvances = await _context.SalaryAdvanceRequests
+                    .Include(r => r.User)
+                    .AsNoTracking()
+                    .Where(r => r.TenantId == tenantId
+                        && r.PayrollMonth == selectedPayrollMonth
+                        && (r.Status == "Pending" || r.Status == "Approved"))
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Take(8)
+                    .ToListAsync();
+            }
+
+            var recentClosures = new List<PayrollClosure>();
+            var recentPayrollSlips = new List<PayrollSlip>();
+            if (isChiefAccountant)
+            {
+                recentClosures = await _context.PayrollClosures
+                    .Include(p => p.ClosedByUser)
+                    .AsNoTracking()
+                    .Where(p => p.TenantId == tenantId)
+                    .OrderByDescending(p => p.ClosedAt)
+                    .Take(6)
+                    .ToListAsync();
+
+                recentPayrollSlips = await _context.PayrollSlips
+                    .Include(s => s.User)
+                    .AsNoTracking()
+                    .Where(s => s.TenantId == tenantId && s.PayrollMonth == selectedPayrollMonth)
+                    .OrderByDescending(s => s.NetSalary)
+                    .Take(8)
+                    .ToListAsync();
+            }
+
+            var cashTransactions = await _context.CashTransactions
                 .AsNoTracking()
-                .Where(r => r.TenantId == tenantId &&
-                    r.Approvals.Any(a => a.ApproverId == userId && a.Status == "Pending"))
-                .OrderByDescending(r => r.CreatedAt)
+                .Where(x => x.TenantId == tenantId && x.TransactionDate >= monthStart && x.TransactionDate < monthEnd)
+                .OrderByDescending(x => x.TransactionDate)
                 .Take(8)
                 .ToListAsync();
 
-            var salaryAdvances = await _context.SalaryAdvanceRequests
-                .Include(r => r.User)
+            var invoiceRecords = await _context.InvoiceRecords
                 .AsNoTracking()
-                .Where(r => r.TenantId == tenantId
-                    && r.PayrollMonth == selectedPayrollMonth
-                    && (r.Status == "Pending" || r.Status == "Approved"))
-                .OrderByDescending(r => r.CreatedAt)
-                .Take(8)
+                .Where(x => x.TenantId == tenantId)
+                .OrderBy(x => x.DueDate)
                 .ToListAsync();
 
-            var recentClosures = await _context.PayrollClosures
-                .Include(p => p.ClosedByUser)
+            var accountingDocuments = await _context.AccountingDocuments
                 .AsNoTracking()
-                .Where(p => p.TenantId == tenantId)
-                .OrderByDescending(p => p.ClosedAt)
-                .Take(6)
-                .ToListAsync();
-
-            var recentPayrollSlips = await _context.PayrollSlips
-                .Include(s => s.User)
-                .AsNoTracking()
-                .Where(s => s.TenantId == tenantId && s.PayrollMonth == selectedPayrollMonth)
-                .OrderByDescending(s => s.NetSalary)
+                .Where(x => x.TenantId == tenantId)
+                .OrderByDescending(x => x.DocumentDate)
                 .Take(8)
                 .ToListAsync();
 
@@ -768,48 +1037,197 @@ namespace DANGCAPNE.Controllers
                         AbsentDays = g.Count(x => x.Status == "Absent")
                     });
 
+            var dueInvoices = invoiceRecords
+                .Where(x => x.DueDate.Date >= DateTime.Today && x.DueDate.Date <= DateTime.Today.AddDays(5))
+                .Select(x => new InvoiceSummaryViewModel
+                {
+                    Id = x.Id,
+                    InvoiceNo = x.InvoiceNo,
+                    InvoiceType = x.InvoiceType,
+                    CounterpartyName = x.CounterpartyName,
+                    TaxCode = x.TaxCode,
+                    Amount = x.Amount,
+                    PaidAmount = x.PaidAmount,
+                    OutstandingAmount = Math.Max(x.Amount - x.PaidAmount, 0),
+                    DueDate = x.DueDate,
+                    AgingDays = Math.Max((DateTime.Today - x.InvoiceDate.Date).Days, 0),
+                    Status = x.Status,
+                    OverCreditLimit = x.InvoiceType == "Receivable" && x.CreditLimit > 0 && Math.Max(x.Amount - x.PaidAmount, 0) > x.CreditLimit
+                })
+                .ToList();
+
+            var receivableInvoices = invoiceRecords
+                .Where(x => x.InvoiceType == "Receivable")
+                .Select(x => new InvoiceSummaryViewModel
+                {
+                    Id = x.Id,
+                    InvoiceNo = x.InvoiceNo,
+                    InvoiceType = x.InvoiceType,
+                    CounterpartyName = x.CounterpartyName,
+                    TaxCode = x.TaxCode,
+                    Amount = x.Amount,
+                    PaidAmount = x.PaidAmount,
+                    OutstandingAmount = Math.Max(x.Amount - x.PaidAmount, 0),
+                    DueDate = x.DueDate,
+                    AgingDays = Math.Max((DateTime.Today - x.InvoiceDate.Date).Days, 0),
+                    Status = x.Status,
+                    OverCreditLimit = x.CreditLimit > 0 && Math.Max(x.Amount - x.PaidAmount, 0) > x.CreditLimit
+                })
+                .OrderByDescending(x => x.OutstandingAmount)
+                .Take(8)
+                .ToList();
+
+            var payableInvoices = invoiceRecords
+                .Where(x => x.InvoiceType == "Payable")
+                .Select(x => new InvoiceSummaryViewModel
+                {
+                    Id = x.Id,
+                    InvoiceNo = x.InvoiceNo,
+                    InvoiceType = x.InvoiceType,
+                    CounterpartyName = x.CounterpartyName,
+                    TaxCode = x.TaxCode,
+                    Amount = x.Amount,
+                    PaidAmount = x.PaidAmount,
+                    OutstandingAmount = Math.Max(x.Amount - x.PaidAmount, 0),
+                    DueDate = x.DueDate,
+                    AgingDays = Math.Max((DateTime.Today - x.InvoiceDate.Date).Days, 0),
+                    Status = x.Status,
+                    OverCreditLimit = false
+                })
+                .OrderByDescending(x => x.OutstandingAmount)
+                .Take(8)
+                .ToList();
+
+            var totalCashIn = cashTransactions.Where(x => x.TransactionType == "Income").Sum(x => x.Amount);
+            var totalCashOut = cashTransactions.Where(x => x.TransactionType == "Expense").Sum(x => x.Amount);
+            var cashOnHand = cashTransactions.Where(x => x.Channel == "Cash").Sum(x => x.TransactionType == "Income" ? x.Amount : -x.Amount);
+            var bankBalance = cashTransactions.Where(x => x.Channel == "Bank").Sum(x => x.TransactionType == "Income" ? x.Amount : -x.Amount);
+            var receivableOutstanding = receivableInvoices.Sum(x => x.OutstandingAmount);
+            var payableOutstanding = payableInvoices.Sum(x => x.OutstandingAmount);
+
+            var reportLines = cashTransactions
+                .GroupBy(x => x.TransactionType == "Income" ? "Thu tiền" : "Chi tiền")
+                .Select(g => new FinancialReportLineViewModel { Label = g.Key, Amount = g.Sum(x => x.Amount) })
+                .ToList();
+
             return new AccountantDashboardViewModel
             {
                 CurrentUser = currentUser,
                 RoleName = "Accountant",
+                IsChiefAccountant = isChiefAccountant,
                 UnreadNotifications = await _context.Notifications
                     .AsNoTracking()
                     .CountAsync(n => n.UserId == userId && !n.IsRead),
                 SelectedPayrollMonth = selectedPayrollMonth,
-                IsMonthClosed = recentClosures.Any(c => c.PayrollMonth == selectedPayrollMonth),
-                TotalPayrollEmployees = payrollUsers.Count,
-                TotalTimesheets = monthTimesheets.Count,
-                TotalWorkHours = Convert.ToDecimal(monthTimesheets.Sum(t => t.WorkHours)),
-                TotalOtHours = Convert.ToDecimal(monthTimesheets.Sum(t => t.OtHours)),
+                IsMonthClosed = isChiefAccountant && recentClosures.Any(c => c.PayrollMonth == selectedPayrollMonth),
+                TotalPayrollEmployees = isChiefAccountant ? payrollUsers.Count : 0,
+                TotalTimesheets = isChiefAccountant ? monthTimesheets.Count : 0,
+                TotalWorkHours = isChiefAccountant ? Convert.ToDecimal(monthTimesheets.Sum(t => t.WorkHours)) : 0,
+                TotalOtHours = isChiefAccountant ? Convert.ToDecimal(monthTimesheets.Sum(t => t.OtHours)) : 0,
                 PendingFinanceApprovals = pendingApprovals.Count,
-                PendingSalaryAdvanceCount = salaryAdvances.Count,
-                LateAttendanceCount = monthTimesheets.Count(t => t.Status == "Late"),
-                AbsentAttendanceCount = monthTimesheets.Count(t => t.Status == "Absent"),
+                PendingSalaryAdvanceCount = isChiefAccountant ? salaryAdvances.Count : 0,
+                LateAttendanceCount = isChiefAccountant ? monthTimesheets.Count(t => t.Status == "Late") : 0,
+                AbsentAttendanceCount = isChiefAccountant ? monthTimesheets.Count(t => t.Status == "Absent") : 0,
                 PendingApprovals = pendingApprovals,
                 SalaryAdvances = salaryAdvances,
                 RecentClosures = recentClosures,
                 RecentPayrollSlips = recentPayrollSlips,
-                PayrollEmployees = payrollUsers
-                    .Select(u =>
-                    {
-                        groupedTimesheets.TryGetValue(u.Id, out var summary);
-                        return new PayrollEmployeeSummaryViewModel
+                TotalCashIn = totalCashIn,
+                TotalCashOut = totalCashOut,
+                CashOnHand = cashOnHand,
+                BankBalance = bankBalance,
+                TotalReceivableDueSoon = dueInvoices.Where(x => x.InvoiceType == "Receivable").Sum(x => x.OutstandingAmount),
+                TotalPayableDueSoon = dueInvoices.Where(x => x.InvoiceType == "Payable").Sum(x => x.OutstandingAmount),
+                DueReceivableCount = dueInvoices.Count(x => x.InvoiceType == "Receivable"),
+                DuePayableCount = dueInvoices.Count(x => x.InvoiceType == "Payable"),
+                RecentCashTransactions = cashTransactions.Select(x => new CashTransactionViewModel
+                {
+                    Id = x.Id,
+                    TransactionDate = x.TransactionDate,
+                    Type = x.TransactionType,
+                    Channel = x.Channel,
+                    Amount = x.Amount,
+                    CounterpartyName = x.CounterpartyName,
+                    Content = x.Content,
+                    Status = x.Status,
+                    ReferenceCode = x.ReferenceCode
+                }).ToList(),
+                DueInvoices = dueInvoices,
+                ReceivableInvoices = receivableInvoices,
+                PayableInvoices = payableInvoices,
+                AccountingDocuments = accountingDocuments.Select(x => new AccountingDocumentViewModel
+                {
+                    Id = x.Id,
+                    DocumentNo = x.DocumentNo,
+                    DocumentType = x.DocumentType,
+                    TaxCode = x.TaxCode,
+                    VendorName = x.VendorName,
+                    DocumentDate = x.DocumentDate,
+                    Amount = x.Amount,
+                    PdfPath = x.PdfPath,
+                    XmlPath = x.XmlPath
+                }).ToList(),
+                ProfitAndLoss = new FinancialReportSnapshotViewModel
+                {
+                    TotalIncome = isChiefAccountant ? totalCashIn : 0,
+                    TotalExpense = isChiefAccountant ? totalCashOut : 0,
+                    NetAmount = isChiefAccountant ? (totalCashIn - totalCashOut) : 0,
+                    Lines = isChiefAccountant ? reportLines : new List<FinancialReportLineViewModel>()
+                },
+                CashFlow = new FinancialReportSnapshotViewModel
+                {
+                    TotalIncome = isChiefAccountant ? totalCashIn : 0,
+                    TotalExpense = isChiefAccountant ? totalCashOut : 0,
+                    NetAmount = isChiefAccountant ? (totalCashIn - totalCashOut) : 0,
+                    Lines = isChiefAccountant
+                        ? cashTransactions.Select(x => new FinancialReportLineViewModel
                         {
-                            UserId = u.Id,
-                            EmployeeName = u.FullName,
-                            DepartmentName = u.Department?.Name ?? "--",
-                            WorkingDays = summary?.WorkingDays ?? 0,
-                            WorkHours = summary?.WorkHours ?? 0,
-                            OtHours = summary?.OtHours ?? 0,
-                            LateDays = summary?.LateDays ?? 0,
-                            AbsentDays = summary?.AbsentDays ?? 0
-                        };
-                    })
-                    .OrderByDescending(x => x.WorkHours)
-                    .ThenBy(x => x.EmployeeName)
-                    .Take(10)
-                    .ToList()
+                            Label = $"{x.TransactionDate:dd/MM} - {x.CounterpartyName}",
+                            Amount = x.TransactionType == "Income" ? x.Amount : -x.Amount
+                        }).ToList()
+                        : new List<FinancialReportLineViewModel>()
+                },
+                BalanceSheet = new BalanceSheetSnapshotViewModel
+                {
+                    CashAndBank = isChiefAccountant ? (cashOnHand + bankBalance) : 0,
+                    Receivables = isChiefAccountant ? receivableOutstanding : 0,
+                    Payables = isChiefAccountant ? payableOutstanding : 0,
+                    NetPosition = isChiefAccountant ? (cashOnHand + bankBalance + receivableOutstanding - payableOutstanding) : 0
+                },
+                PayrollEmployees = isChiefAccountant
+                    ? payrollUsers
+                        .Select(u =>
+                        {
+                            groupedTimesheets.TryGetValue(u.Id, out var summary);
+                            return new PayrollEmployeeSummaryViewModel
+                            {
+                                UserId = u.Id,
+                                EmployeeName = u.FullName,
+                                DepartmentName = u.Department?.Name ?? "--",
+                                WorkingDays = summary?.WorkingDays ?? 0,
+                                WorkHours = summary?.WorkHours ?? 0,
+                                OtHours = summary?.OtHours ?? 0,
+                                LateDays = summary?.LateDays ?? 0,
+                                AbsentDays = summary?.AbsentDays ?? 0
+                            };
+                        })
+                        .OrderByDescending(x => x.WorkHours)
+                        .ThenBy(x => x.EmployeeName)
+                        .Take(10)
+                        .ToList()
+                    : new List<PayrollEmployeeSummaryViewModel>()
             };
+        }
+
+        private static string EscapeCsv(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var normalized = value.Replace("\"", "\"\"");
+            return normalized.Contains(',') ? $"\"{normalized}\"" : normalized;
         }
     }
 }

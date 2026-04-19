@@ -126,6 +126,9 @@ namespace DANGCAPNE.Data
         public DbSet<Asset> Assets { get; set; }
         public DbSet<PayrollClosure> PayrollClosures { get; set; }
         public DbSet<PayrollSlip> PayrollSlips { get; set; }
+        public DbSet<CashTransaction> CashTransactions { get; set; }
+        public DbSet<InvoiceRecord> InvoiceRecords { get; set; }
+        public DbSet<AccountingDocument> AccountingDocuments { get; set; }
 
         // Module 6: Multi-Tenant & System
         public DbSet<Tenant> Tenants { get; set; }

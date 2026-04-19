@@ -221,6 +221,13 @@ namespace DANGCAPNE.ViewModels
         public string Status { get; set; } = string.Empty;
     }
 
+    public class SignatureProfileViewModel
+    {
+        public string SignatureName { get; set; } = string.Empty;
+        public string? ExistingSignatureImageUrl { get; set; }
+        public string? SignatureDataUrl { get; set; }
+    }
+
     public class RequestCreateViewModel
     {
         public FormTemplate? FormTemplate { get; set; }

@@ -404,22 +404,9 @@ namespace DANGCAPNE.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return RedirectToAction("Login", "Account");
-            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
-            var roles = (HttpContext.Session.GetString("Roles") ?? "").Split(",");
 
-            var privileged = new[] { "Admin", "HR", "Manager", "IT", "ITManager", "Accountant", "ChiefAccountant", "AccountantStaff" };
-            var hasPrivileged = roles.Any(r => privileged.Contains(r, StringComparer.OrdinalIgnoreCase));
-            var hasEmployee = roles.Any(r => string.Equals(r, "Employee", StringComparison.OrdinalIgnoreCase));
-            var isEmployeeOnly = hasEmployee && !hasPrivileged;
-            if (!isEmployeeOnly)
-            {
-                TempData["Error"] = "Chức năng đổi ca chỉ dành cho nhân viên.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            var model = await BuildEmployeeModel(userId.Value, tenantId, roles);
-            ViewData["Title"] = "Doi ca";
-            return View("EmployeeSwap", model);
+            TempData["Error"] = "Chức năng trao đổi/đổi ca làm đã được tắt.";
+            return RedirectToAction(nameof(EmployeeSchedule));
         }
 
         public async Task<IActionResult> PayrollRecords(string? payrollMonth = null, int? selectedUserId = null)
@@ -654,6 +641,20 @@ namespace DANGCAPNE.Controllers
                 csv.AppendLine($"Phai thu,{receivables:0.##}");
                 csv.AppendLine($"Phai tra,{payables:0.##}");
                 csv.AppendLine($"Vi the rong,{(cash + bank + receivables - payables):0.##}");
+            }
+            else if (safeType == "revenue")
+            {
+                var income = transactions.Where(x => x.TransactionType == "Income").Sum(x => x.Amount);
+                var receivableInvoices = invoices.Where(x => x.InvoiceType == "Receivable").ToList();
+                var totalReceivable = receivableInvoices.Sum(x => x.Amount);
+                var receivedAmount = receivableInvoices.Sum(x => x.PaidAmount);
+                var outstandingReceivable = receivableInvoices.Sum(x => Math.Max(x.Amount - x.PaidAmount, 0));
+                csv.AppendLine("ChiTieu,SoTien,GhiChu");
+                csv.AppendLine($"Doanh thu thang (thu tien),{income:0.##},Da ghi nhan trong ky");
+                csv.AppendLine($"Hoa don phai thu (tong gia tri),{totalReceivable:0.##},Tong phat hanh");
+                csv.AppendLine($"Da thu tu khach hang,{receivedAmount:0.##},Da thanh toan");
+                csv.AppendLine($"Cong no phai thu con lai,{outstandingReceivable:0.##},Chua thu");
+                csv.AppendLine($"Du kien doanh thu (thu + cong no),{(income + outstandingReceivable):0.##},Uoc tinh");
             }
             else
             {
@@ -898,15 +899,17 @@ namespace DANGCAPNE.Controllers
                    roles.Contains("ChiefAccountant") ||
                    roles.Contains("AccountantStaff") ||
                    string.Equals(HttpContext.Session.GetString("PrimaryRole"), "Accountant", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(HttpContext.Session.GetString("PrimaryRole"), "ChiefAccountant", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Department?.Code, "ACC", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Department?.Name, "Phòng Kế toán", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase) ||
                    (user?.Email?.Contains("accountant", StringComparison.OrdinalIgnoreCase) ?? false);
         }
 
-        private static bool IsChiefAccountant(DANGCAPNE.Models.Organization.User? user, string[] roles)
+        private bool IsChiefAccountant(DANGCAPNE.Models.Organization.User? user, string[] roles)
         {
             return roles.Contains("ChiefAccountant") ||
+                   string.Equals(HttpContext.Session.GetString("PrimaryRole"), "ChiefAccountant", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(user?.Position?.Name, "Kế toán trưởng", StringComparison.OrdinalIgnoreCase);
         }
 

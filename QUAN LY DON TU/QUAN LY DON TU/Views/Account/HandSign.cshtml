@@ -1,0 +1,191 @@
+@model DANGCAPNE.ViewModels.SignatureProfileViewModel
+@{
+    ViewData["Title"] = "Tự ký bằng tay";
+}
+
+<div class="page-content">
+    <div style="max-width:900px;margin:0 auto">
+        <div class="glass-card mb-24">
+            <div class="card-header">
+                <h3><i class="bi bi-pen text-primary"></i> Tự ký bằng tay</h3>
+            </div>
+            <div class="card-body">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Success"]</div>
+                }
+
+                <div class="text-muted mb-12" style="font-size:13px">
+                    Ký vào khung bên dưới, sau đó bạn có thể <strong>tải chữ ký về (PNG)</strong> hoặc <strong>lưu vào hệ thống</strong> để tự động chèn vào PDF khi duyệt đơn.
+                </div>
+
+                <div class="signature-pad">
+                    <canvas id="sigCanvas" width="720" height="240"></canvas>
+                </div>
+                <div class="d-flex" style="gap:10px; margin-top:12px; flex-wrap:wrap">
+                    <button type="button" class="btn btn-ghost" onclick="clearSig()"><i class="bi bi-eraser"></i> Xóa</button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadSig()"><i class="bi bi-download"></i> Tải chữ ký (PNG)</button>
+                    <a class="btn btn-ghost" href="@Url.Action("DownloadSignature", "Account")"><i class="bi bi-cloud-download"></i> Tải chữ ký đã lưu</a>
+                </div>
+
+                <hr class="my-16" />
+
+                <form method="post" enctype="multipart/form-data" asp-action="Signature">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="SignatureDataUrl" name="SignatureDataUrl" value="" />
+
+                    <div class="form-group">
+                        <label class="form-label">Tên hiển thị chữ ký</label>
+                        <input class="form-control" id="SignatureName" name="SignatureName" value="@Model.SignatureName" required />
+                    </div>
+
+                    <div class="d-flex" style="gap:10px; flex-wrap:wrap">
+                        <button type="button" class="btn btn-primary" onclick="submitToSave()"><i class="bi bi-save"></i> Lưu chữ ký vào hệ thống</button>
+                        <a class="btn btn-ghost" href="@Url.Action("Signature", "Account")"><i class="bi bi-gear"></i> Trang quản lý chữ ký</a>
+                        <a class="btn btn-ghost" href="@Url.Action("Profile", "Account")"><i class="bi bi-person"></i> Hồ sơ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ExistingSignatureImageUrl))
+        {
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-image text-muted"></i> Chữ ký đang lưu</h3>
+                </div>
+                <div class="card-body">
+                    <div class="signature-preview">
+                        <img src="@Model.ExistingSignatureImageUrl" alt="Signature" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .signature-pad {
+        border: 1px dashed rgba(255,255,255,0.35);
+        border-radius: 14px;
+        background: rgba(255,255,255,0.92);
+        padding: 10px;
+        overflow: hidden;
+    }
+
+    #sigCanvas {
+        width: 100%;
+        height: 240px;
+        display: block;
+        touch-action: none;
+        border-radius: 10px;
+        background: white;
+    }
+
+    .signature-preview {
+        background: rgba(255,255,255,0.92);
+        border-radius: 14px;
+        padding: 12px;
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .signature-preview img {
+        max-width: 100%;
+        max-height: 130px;
+        display: block;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const canvas = document.getElementById('sigCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // HiDPI safe setup
+        (function initCanvas() {
+            const ratio = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const w = Math.floor(rect.width * ratio);
+            const h = Math.floor(rect.height * ratio);
+            canvas.width = w;
+            canvas.height = h;
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#111827';
+        })();
+
+        let drawing = false;
+        let lastX = 0, lastY = 0;
+        let hasInk = false;
+
+        function getPos(ev) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+            const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDraw(ev) {
+            drawing = true;
+            const p = getPos(ev);
+            lastX = p.x; lastY = p.y;
+            ev.preventDefault();
+        }
+
+        function moveDraw(ev) {
+            if (!drawing) return;
+            const p = getPos(ev);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            lastX = p.x; lastY = p.y;
+            hasInk = true;
+            ev.preventDefault();
+        }
+
+        function endDraw() { drawing = false; }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', moveDraw, { passive: false });
+        window.addEventListener('touchend', endDraw);
+
+        window.clearSig = function () {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('SignatureDataUrl').value = '';
+            hasInk = false;
+        }
+
+        window.downloadSig = function () {
+            if (!hasInk) {
+                Swal.fire('Chưa có chữ ký', 'Vui lòng ký vào khung trước.', 'warning');
+                return;
+            }
+            const dataUrl = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'chu-ky.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        window.submitToSave = function () {
+            if (!hasInk) {
+                Swal.fire('Chưa có chữ ký', 'Vui lòng ký vào khung trước.', 'warning');
+                return;
+            }
+            document.getElementById('SignatureDataUrl').value = canvas.toDataURL('image/png');
+            document.querySelector('form[method="post"]').submit();
+        }
+    </script>
+}
+

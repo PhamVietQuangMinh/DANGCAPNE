@@ -30,6 +30,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxFbnJvbGxCaW9tZXRyaWNzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/OS/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Account/HandSign.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxIYW5kU2lnbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/OS/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Account/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -40,6 +44,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/OS/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Account/RegisterEmail.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxSZWdpc3RlckVtYWlsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/OS/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Account/Signature.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxTaWduYXR1cmUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/OS/DANGCAPNE/QUAN LY DON TU/QUAN LY DON TU/Views/Account/VerifyBiometrics.cshtml]

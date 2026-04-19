@@ -1369,7 +1369,7 @@ namespace DANGCAPNE.Controllers
             return model;
         }
 
-                private async Task<string?> ValidateCreateRequestAsync(FormTemplate template, IFormCollection form, int userId, int tenantId)
+        private async Task<string?> ValidateCreateRequestAsync(FormTemplate template, IFormCollection form, int userId, int tenantId)
         {
             if (template.Id == 1)
             {
@@ -1441,6 +1441,12 @@ namespace DANGCAPNE.Controllers
                 {
                     return "OT cho ngày kế tiếp trở đi phải báo trước ít nhất 1 ngày.";
                 }
+            }
+
+            var routingMessage = await ValidateApprovalRoutingForTemplateAsync(template, userId, tenantId);
+            if (!string.IsNullOrWhiteSpace(routingMessage))
+            {
+                return routingMessage;
             }
 
             return null;
@@ -1625,27 +1631,46 @@ namespace DANGCAPNE.Controllers
         {
             var steps = new List<ApprovalStepDraft>();
 
-            // Backward compatible fallback.
+            static int ResolveEffectiveWorkflowId(FormTemplate t)
+            {
+                // Business rule overrides:
+                // - Leave request (template 1): basic flow (Direct manager -> HR)
+                // - Overtime request (template 2): escalation flow (Direct manager -> HR -> Director)
+                if (t.Id == 1) return 1;
+                if (t.Id == 2) return 3;
+                return t.WorkflowId ?? 1;
+            }
+
+            var effectiveWorkflowId = ResolveEffectiveWorkflowId(template);
+            var isSalaryAdvance = template.Id == 13 || (template.Name?.Contains("ứng lương", StringComparison.OrdinalIgnoreCase) ?? false);
+
             var directManagerId = await ResolveDirectManagerIdAsync(requesterId);
             var hrUserId = await ResolveRoleUserIdAsync(tenantId, "HR", requesterId);
             var accountantUserId = await ResolveAccountingUserIdAsync();
             var directorUserId = await ResolveDirectorUserIdAsync();
-            var requiresDirector = template.RequiresFinancialApproval;
-            var isSalaryAdvance = template.Id == 13 || (template.Name?.Contains("ứng lương", StringComparison.OrdinalIgnoreCase) ?? false);
 
-            AddStepIfMissing(steps, 1, "Trưởng phòng duyệt", directManagerId);
             if (isSalaryAdvance)
             {
+                AddStepIfMissing(steps, 1, "Trưởng phòng duyệt", directManagerId);
                 AddStepIfMissing(steps, 2, "Kế toán duyệt", accountantUserId);
                 AddStepIfMissing(steps, 3, "HR duyệt", hrUserId);
-                if (requiresDirector)
+                if (template.RequiresFinancialApproval)
                 {
                     AddStepIfMissing(steps, 4, "Giám đốc duyệt", directorUserId);
                 }
             }
+            else if (effectiveWorkflowId == 2)
+            {
+                // Financial flow: Accountant -> Director (PIN enforced elsewhere via RequiresFinancialApproval).
+                AddStepIfMissing(steps, 1, "Kế toán duyệt", accountantUserId);
+                AddStepIfMissing(steps, 2, "Giám đốc duyệt", directorUserId);
+            }
             else
             {
+                AddStepIfMissing(steps, 1, "Trưởng phòng duyệt", directManagerId);
                 AddStepIfMissing(steps, 2, "HR duyệt", hrUserId);
+
+                var requiresDirector = effectiveWorkflowId == 3 || template.RequiresFinancialApproval;
                 if (requiresDirector)
                 {
                     AddStepIfMissing(steps, 3, "Giám đốc duyệt", directorUserId);
@@ -1787,18 +1812,57 @@ namespace DANGCAPNE.Controllers
                 .FirstOrDefaultAsync();
         }
 
-        private async Task<string?> ValidateApprovalRoutingAsync(int requesterId, int tenantId)
+        private async Task<string?> ValidateApprovalRoutingForTemplateAsync(FormTemplate template, int requesterId, int tenantId)
         {
-            var directManagerId = await ResolveDirectManagerIdAsync(requesterId);
-            if (!directManagerId.HasValue)
+            static int ResolveEffectiveWorkflowId(FormTemplate t)
             {
-                return "ChÆ°a cáº¥u hÃ¬nh TrÆ°á»Ÿng phÃ²ng trá»±c tiáº¿p cho nhÃ¢n viÃªn nÃ y, nÃªn chÆ°a thá»ƒ gá»­i Ä‘Æ¡n.";
+                if (t.Id == 1) return 1;
+                if (t.Id == 2) return 3;
+                return t.WorkflowId ?? 1;
             }
 
-            var hrUserId = await ResolveRoleUserIdAsync(tenantId, "HR", requesterId);
-            if (!hrUserId.HasValue)
+            var effectiveWorkflowId = ResolveEffectiveWorkflowId(template);
+            var isSalaryAdvance = template.Id == 13 || (template.Name?.Contains("ứng lương", StringComparison.OrdinalIgnoreCase) ?? false);
+
+            var needsAccountant = effectiveWorkflowId == 2 || isSalaryAdvance;
+            var needsDirector = effectiveWorkflowId == 3 || effectiveWorkflowId == 2 || template.RequiresFinancialApproval;
+            var needsHr = (effectiveWorkflowId == 1 || effectiveWorkflowId == 3 || isSalaryAdvance);
+            var needsDirectManager = (effectiveWorkflowId == 1 || effectiveWorkflowId == 3 || isSalaryAdvance);
+
+            if (needsDirectManager)
             {
-                return "Há»‡ thá»‘ng chÆ°a cÃ³ ngÆ°á»i duyá»‡t HR kháº£ dá»¥ng, nÃªn chÆ°a thá»ƒ gá»­i Ä‘Æ¡n.";
+                var directManagerId = await ResolveDirectManagerIdAsync(requesterId);
+                if (!directManagerId.HasValue)
+                {
+                    return "Chưa cấu hình Trưởng phòng trực tiếp cho nhân viên này nên chưa thể gửi đơn.";
+                }
+            }
+
+            if (needsHr)
+            {
+                var hrUserId = await ResolveRoleUserIdAsync(tenantId, "HR", requesterId);
+                if (!hrUserId.HasValue)
+                {
+                    return "Hệ thống chưa có người duyệt HR khả dụng nên chưa thể gửi đơn.";
+                }
+            }
+
+            if (needsAccountant)
+            {
+                var accountantUserId = await ResolveAccountingUserIdAsync();
+                if (!accountantUserId.HasValue)
+                {
+                    return "Hệ thống chưa cấu hình người duyệt Kế toán nên chưa thể gửi đơn.";
+                }
+            }
+
+            if (needsDirector)
+            {
+                var directorUserId = await ResolveDirectorUserIdAsync();
+                if (!directorUserId.HasValue)
+                {
+                    return "Hệ thống chưa cấu hình người duyệt Giám đốc nên chưa thể gửi đơn.";
+                }
             }
 
             return null;

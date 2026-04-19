@@ -11,6 +11,7 @@ using Npgsql;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using DANGCAPNE.Models.SystemModels;
 namespace DANGCAPNE.Controllers
 {
     public class AccountController : Controller
@@ -20,12 +21,14 @@ namespace DANGCAPNE.Controllers
         private readonly ApplicationDbContext _context;
         private readonly Services.IFileService _fileService;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IWebHostEnvironment _env;
 
-        public AccountController(ApplicationDbContext context, Services.IFileService fileService, IHubContext<NotificationHub> hubContext)
+        public AccountController(ApplicationDbContext context, Services.IFileService fileService, IHubContext<NotificationHub> hubContext, IWebHostEnvironment env)
         {
             _context = context;
             _fileService = fileService;
             _hubContext = hubContext;
+            _env = env;
         }
 
                 [HttpGet]
@@ -265,6 +268,221 @@ namespace DANGCAPNE.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Signature()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            var profile = await _context.DigitalSignatureProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.UserId == userId.Value && p.IsActive);
+
+            var model = new SignatureProfileViewModel
+            {
+                SignatureName = profile?.SignatureName
+                    ?? (HttpContext.Session.GetString("FullName") ?? "Chữ ký điện tử"),
+                ExistingSignatureImageUrl = profile?.SignatureImageUrl
+            };
+
+            ViewData["Title"] = "Chữ ký điện tử";
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> HandSign()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            var profile = await _context.DigitalSignatureProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.UserId == userId.Value && p.IsActive);
+
+            var model = new SignatureProfileViewModel
+            {
+                SignatureName = profile?.SignatureName
+                    ?? (HttpContext.Session.GetString("FullName") ?? "Chữ ký điện tử"),
+                ExistingSignatureImageUrl = profile?.SignatureImageUrl
+            };
+
+            ViewData["Title"] = "Tự ký bằng tay";
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadSignature()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            var profile = await _context.DigitalSignatureProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.UserId == userId.Value && p.IsActive);
+
+            if (profile == null || string.IsNullOrWhiteSpace(profile.SignatureImageUrl))
+            {
+                TempData["Error"] = "Bạn chưa có chữ ký để tải về.";
+                return RedirectToAction(nameof(HandSign));
+            }
+
+            var normalizedPath = profile.SignatureImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var physicalPath = Path.Combine(_env.WebRootPath, normalizedPath);
+            if (!System.IO.File.Exists(physicalPath))
+            {
+                TempData["Error"] = "Không tìm thấy file chữ ký trên hệ thống.";
+                return RedirectToAction(nameof(HandSign));
+            }
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath);
+            var fileName = $"chu-ky-{userId.Value}.png";
+            return File(bytes, "image/png", fileName);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Signature(SignatureProfileViewModel model, IFormFile? signatureFile)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login");
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+
+            if (string.IsNullOrWhiteSpace(model.SignatureName))
+            {
+                ModelState.AddModelError(nameof(model.SignatureName), "Vui lòng nhập tên chữ ký.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewData["Title"] = "Chữ ký điện tử";
+                return View(model);
+            }
+
+            byte[]? signatureBytes = null;
+            string fileExt = ".png";
+
+            if (signatureFile != null && signatureFile.Length > 0)
+            {
+                if (signatureFile.Length > 500_000)
+                {
+                    ModelState.AddModelError(string.Empty, "File chữ ký quá lớn (tối đa 500KB).");
+                    ViewData["Title"] = "Chữ ký điện tử";
+                    return View(model);
+                }
+
+                fileExt = Path.GetExtension(signatureFile.FileName);
+                if (string.IsNullOrWhiteSpace(fileExt)) fileExt = ".png";
+                fileExt = fileExt.ToLowerInvariant();
+                if (fileExt != ".png" && fileExt != ".jpg" && fileExt != ".jpeg")
+                {
+                    ModelState.AddModelError(string.Empty, "Chỉ hỗ trợ ảnh chữ ký dạng PNG/JPG.");
+                    ViewData["Title"] = "Chữ ký điện tử";
+                    return View(model);
+                }
+
+                using var ms = new MemoryStream();
+                await signatureFile.CopyToAsync(ms);
+                signatureBytes = ms.ToArray();
+            }
+            else if (!string.IsNullOrWhiteSpace(model.SignatureDataUrl))
+            {
+                var dataUrl = model.SignatureDataUrl.Trim();
+                const string prefix = "data:image/png;base64,";
+                const string prefixJpg = "data:image/jpeg;base64,";
+                const string prefixJpg2 = "data:image/jpg;base64,";
+
+                string? base64 = null;
+                if (dataUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    base64 = dataUrl[prefix.Length..];
+                    fileExt = ".png";
+                }
+                else if (dataUrl.StartsWith(prefixJpg, StringComparison.OrdinalIgnoreCase))
+                {
+                    base64 = dataUrl[prefixJpg.Length..];
+                    fileExt = ".jpg";
+                }
+                else if (dataUrl.StartsWith(prefixJpg2, StringComparison.OrdinalIgnoreCase))
+                {
+                    base64 = dataUrl[prefixJpg2.Length..];
+                    fileExt = ".jpg";
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Dữ liệu chữ ký không hợp lệ.");
+                    ViewData["Title"] = "Chữ ký điện tử";
+                    return View(model);
+                }
+
+                try
+                {
+                    signatureBytes = Convert.FromBase64String(base64);
+                }
+                catch
+                {
+                    ModelState.AddModelError(string.Empty, "Không thể đọc dữ liệu chữ ký.");
+                    ViewData["Title"] = "Chữ ký điện tử";
+                    return View(model);
+                }
+
+                if (signatureBytes.Length > 500_000)
+                {
+                    ModelState.AddModelError(string.Empty, "Chữ ký quá lớn (tối đa 500KB).");
+                    ViewData["Title"] = "Chữ ký điện tử";
+                    return View(model);
+                }
+            }
+
+            var existing = await _context.DigitalSignatureProfiles
+                .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.UserId == userId.Value && p.IsActive);
+
+            string? signatureUrl = existing?.SignatureImageUrl;
+            if (signatureBytes != null)
+            {
+                var uploadsDir = Path.Combine(_env.WebRootPath, "uploads", tenantId.ToString(), "signatures");
+                Directory.CreateDirectory(uploadsDir);
+
+                var fileName = $"sig_user_{userId.Value}_{DateTime.UtcNow:yyyyMMddHHmmss}{fileExt}";
+                var physicalPath = Path.Combine(uploadsDir, fileName);
+                await System.IO.File.WriteAllBytesAsync(physicalPath, signatureBytes);
+                signatureUrl = $"/uploads/{tenantId}/signatures/{fileName}";
+
+                if (!string.IsNullOrWhiteSpace(existing?.SignatureImageUrl))
+                {
+                    try { _fileService.DeleteFile(existing.SignatureImageUrl); } catch { }
+                }
+            }
+
+            if (existing == null)
+            {
+                existing = new DigitalSignatureProfile
+                {
+                    TenantId = tenantId,
+                    UserId = userId.Value,
+                    ProviderName = signatureFile != null ? "Upload" : "HandDrawn",
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+                _context.DigitalSignatureProfiles.Add(existing);
+            }
+            else if (string.IsNullOrWhiteSpace(existing.ProviderName))
+            {
+                existing.ProviderName = signatureFile != null ? "Upload" : "HandDrawn";
+            }
+
+            existing.SignatureName = model.SignatureName.Trim();
+            existing.SignatureImageUrl = signatureUrl;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã cập nhật chữ ký điện tử.";
+            return RedirectToAction(nameof(Signature));
         }
 
         [HttpPost]

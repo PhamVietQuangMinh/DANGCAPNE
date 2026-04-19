@@ -53,10 +53,6 @@
                     <i class="bi bi-clock-history"></i>
                     <span>Timeline</span>
                 </a>
-                <a class="shortcut-item" href="@Url.Action("EmployeeSwap", "Home")">
-                    <i class="bi bi-arrow-left-right"></i>
-                    <span>Đổi ca</span>
-                </a>
                 <a class="shortcut-item" href="@Url.Action("EmployeeRequests", "Home")">
                     <i class="bi bi-clipboard-check"></i>
                     <span>Quản lý đơn</span>
@@ -630,64 +626,5 @@
             el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }, 1000);
     })();
-
-    async function submitSwap() {
-        const targetUserId = document.getElementById('swapTargetUser').value;
-        const requesterDate = document.getElementById('swapRequesterDate').value;
-        const requesterShiftId = document.getElementById('swapRequesterShift').value;
-        const targetDate = document.getElementById('swapTargetDate').value;
-        const targetShiftId = document.getElementById('swapTargetShift').value;
-        const reason = document.getElementById('swapReason').value;
-
-        if (!targetUserId || !requesterDate || !requesterShiftId || !targetDate || !targetShiftId) {
-            Swal.fire('Thiếu thông tin', 'Vui lòng chọn đầy đủ người, ngày và ca.', 'warning');
-            return;
-        }
-
-        const body = new URLSearchParams({
-            targetUserId,
-            requesterShiftId,
-            requesterDate,
-            targetShiftId,
-            targetDate,
-            reason: reason || ''
-        });
-
-        try {
-            const res = await fetch('/Shift/CreateSwapRequest', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body
-            });
-            const data = await res.json();
-            if (data.success) {
-                Swal.fire('Thành công', data.message || 'Đã gửi yêu cầu đổi ca.', 'success')
-                    .then(() => location.reload());
-            } else {
-                Swal.fire('Lỗi', data.message || 'Không thể gửi yêu cầu.', 'error');
-            }
-        } catch (e) {
-            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
-        }
-    }
-
-    async function respondSwap(requestId, accept) {
-        try {
-            const res = await fetch('/Shift/RespondToSwap', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ requestId, accept })
-            });
-            const data = await res.json();
-            if (data.success) {
-                Swal.fire('Thành công', data.message || 'Đã xử lý.', 'success')
-                    .then(() => location.reload());
-            } else {
-                Swal.fire('Lỗi', data.message || 'Không thể xử lý.', 'error');
-            }
-        } catch (e) {
-            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error');
-        }
-    }
 </script>
 }

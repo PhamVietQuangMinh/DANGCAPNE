@@ -112,6 +112,7 @@ namespace DANGCAPNE.Services
             var fields = dataEntries.ToDictionary(x => x.FieldKey, x => x.FieldValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
             var leaveType = fields.TryGetValue("leave_type", out var leaveTypeValue) ? leaveTypeValue : string.Empty;
             var isSickLeave = string.Equals(leaveType, "SL", StringComparison.OrdinalIgnoreCase);
+            var isLeaveForm = string.Equals(request.FormTemplate?.Category, "Leave", StringComparison.OrdinalIgnoreCase);
 
             Document.Create(container =>
             {
@@ -123,21 +124,44 @@ namespace DANGCAPNE.Services
 
                     page.Header().Column(column =>
                     {
-                        column.Spacing(4);
-                        column.Item().AlignCenter().Text(isSickLeave ? "DON XIN NGHI OM / GIAY XAC NHAN NGHI BENH" : "PHIEU XAC NHAN DON TU")
-                            .FontSize(isSickLeave ? 17 : 20)
-                            .Bold()
-                            .FontColor(Colors.Blue.Darken2);
-                        column.Item().AlignCenter().Text("(Ban dien tu co gia tri doi chieu noi bo)").FontSize(9).FontColor(Colors.Grey.Darken1);
-                        column.Item().PaddingTop(6).Row(row =>
+                        column.Spacing(6);
+
+                        if (isLeaveForm)
+                        {
+                            column.Item().AlignCenter().Text("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM").FontSize(12).Bold();
+                            column.Item().AlignCenter().Text("Độc lập - Tự do - Hạnh phúc").FontSize(11).Italic();
+                            column.Item().AlignCenter().Text("---------------").FontSize(10);
+
+                            column.Item().Row(row =>
+                            {
+                                row.RelativeItem().AlignRight().Text($"Ngày {request.CreatedAt:dd} tháng {request.CreatedAt:MM} năm {request.CreatedAt:yyyy}").FontSize(10);
+                            });
+
+                            var formTitle = isSickLeave
+                                ? "ĐƠN XIN PHÉP NGHỈ ỐM"
+                                : $"ĐƠN {request.FormTemplate?.Name?.ToUpperInvariant() ?? "XIN PHÉP"}";
+
+                            column.Item().AlignCenter().Text(formTitle).FontSize(18).Bold();
+                            column.Item().AlignCenter().Text("(Bản điện tử – dùng để đối chiếu nội bộ)").FontSize(9).FontColor(Colors.Grey.Darken1);
+                        }
+                        else
+                        {
+                            column.Item().AlignCenter().Text("PHIẾU XÁC NHẬN ĐƠN TỪ")
+                                .FontSize(20)
+                                .Bold()
+                                .FontColor(Colors.Blue.Darken2);
+                            column.Item().AlignCenter().Text("(Bản điện tử – dùng để đối chiếu nội bộ)").FontSize(9).FontColor(Colors.Grey.Darken1);
+                        }
+
+                        column.Item().PaddingTop(4).Row(row =>
                         {
                             row.RelativeItem().Column(col =>
                             {
                                 col.Spacing(2);
-                                col.Item().Text($"So/ma don: {request.RequestCode}").SemiBold();
-                                col.Item().Text($"Loai bieu mau: {ResolveLeaveTypeLabel(leaveType, request.FormTemplate?.Name)}");
-                                col.Item().Text($"Ngay lap: {request.CreatedAt:dd/MM/yyyy HH:mm}");
-                                col.Item().Text($"Link xac minh: {verifyUrl}").FontSize(9).FontColor(Colors.Blue.Darken2);
+                                col.Item().Text($"Số/Mã đơn: {request.RequestCode}").SemiBold();
+                                col.Item().Text($"Loại biểu mẫu: {ResolveLeaveTypeLabel(leaveType, request.FormTemplate?.Name)}");
+                                col.Item().Text($"Người gửi: {request.Requester?.FullName ?? "Không xác định"}");
+                                col.Item().Text($"Link xác minh: {verifyUrl}").FontSize(9).FontColor(Colors.Blue.Darken2);
                             });
                             row.ConstantItem(72).AlignRight().Height(72).Image(qrPng);
                         });
@@ -156,7 +180,7 @@ namespace DANGCAPNE.Services
                             RenderDefaultRequestSection(column, request, dataEntries);
                         }
 
-                        column.Item().Text("Xac nhan phe duyet").FontSize(14).Bold();
+                        column.Item().Text("Xác nhận phê duyệt").FontSize(14).Bold();
                         column.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
@@ -168,11 +192,11 @@ namespace DANGCAPNE.Services
                                 columns.RelativeColumn(3);
                             });
 
-                            AddHeaderCell(table, "Buoc");
-                            AddHeaderCell(table, "Vai tro");
-                            AddHeaderCell(table, "Nguoi xu ly");
-                            AddHeaderCell(table, "Thoi gian");
-                            AddHeaderCell(table, "Nhan xet");
+                            AddHeaderCell(table, "Bước");
+                            AddHeaderCell(table, "Vai trò");
+                            AddHeaderCell(table, "Người xử lý");
+                            AddHeaderCell(table, "Thời gian");
+                            AddHeaderCell(table, "Nhận xét");
 
                             foreach (var approval in approvals)
                             {
@@ -186,11 +210,11 @@ namespace DANGCAPNE.Services
 
                         column.Item().Border(1).BorderColor(Colors.Green.Medium).Padding(12).AlignRight().Text(text =>
                         {
-                            text.Span("TRANG THAI: ").SemiBold();
-                            text.Span("DONE").Bold().FontColor(Colors.Green.Darken2);
+                            text.Span("TRẠNG THÁI: ").SemiBold();
+                            text.Span("ĐÃ DUYỆT").Bold().FontColor(Colors.Green.Darken2);
                         });
 
-                        column.Item().Text(isSickLeave ? "Xac nhan ky duyet va dong dau" : "Chu ky xac nhan").FontSize(14).Bold();
+                        column.Item().Text("Chữ ký điện tử").FontSize(14).Bold();
                         column.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
@@ -219,8 +243,8 @@ namespace DANGCAPNE.Services
                                     }
 
                                     cell.Item().AlignCenter().Text(signature.SignedAt.HasValue
-                                        ? $"Ky luc: {signature.SignedAt:dd/MM/yyyy HH:mm}"
-                                        : "Chua ky");
+                                        ? $"Ký lúc: {signature.SignedAt:dd/MM/yyyy HH:mm}"
+                                        : "Chưa ký");
 
                                     if (!string.IsNullOrWhiteSpace(signature.IpAddress))
                                     {
@@ -233,7 +257,7 @@ namespace DANGCAPNE.Services
 
                     page.Footer().AlignCenter().Text(text =>
                     {
-                        text.Span(isSickLeave ? "Tai lieu dien tu phuc vu doi chieu giay nghi benh/noi bo - " : "File PDF duoc tao tu dong sau khi phe duyet xong - ");
+                        text.Span("File PDF được tạo tự động sau khi phê duyệt – ");
                         text.Span(DateTime.Now.ToString("dd/MM/yyyy HH:mm")).SemiBold();
                     });
                 });
@@ -245,15 +269,14 @@ namespace DANGCAPNE.Services
             column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(12).Column(info =>
             {
                 info.Spacing(6);
-                info.Item().Text($"Tieu de: {request.Title}").Bold();
-                info.Item().Text($"Nguoi gui: {request.Requester?.FullName ?? "Khong xac dinh"}");
-                info.Item().Text($"Phong ban: {request.Requester?.Department?.Name ?? "Khong xac dinh"}");
-                info.Item().Text($"Thoi gian gui: {request.CreatedAt:dd/MM/yyyy HH:mm}");
-                info.Item().Text($"Hoan tat phe duyet: {(request.CompletedAt.HasValue ? request.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm") : "--")}");
-                info.Item().Text("Chu ky nguoi gui: xac nhan bang tai khoan dang nhap trong he thong.");
+                info.Item().Text($"Tiêu đề: {request.Title}").Bold();
+                info.Item().Text($"Người gửi: {request.Requester?.FullName ?? "Không xác định"}");
+                info.Item().Text($"Phòng ban: {request.Requester?.Department?.Name ?? "Không xác định"}");
+                info.Item().Text($"Thời gian gửi: {request.CreatedAt:dd/MM/yyyy HH:mm}");
+                info.Item().Text($"Hoàn tất phê duyệt: {(request.CompletedAt.HasValue ? request.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm") : "--")}");
             });
 
-            column.Item().Text("Noi dung don").FontSize(14).Bold();
+            column.Item().Text("Nội dung đơn").FontSize(14).Bold();
             column.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
@@ -280,37 +303,37 @@ namespace DANGCAPNE.Services
             column.Item().Border(1).BorderColor(Colors.Grey.Medium).Padding(14).Column(section =>
             {
                 section.Spacing(6);
-                section.Item().AlignCenter().Text("THONG TIN NGUOI XIN NGHI").FontSize(13).SemiBold();
+                section.Item().AlignCenter().Text("THÔNG TIN NGƯỜI LÀM ĐƠN").FontSize(13).SemiBold();
                 section.Item().Row(row =>
                 {
-                    row.RelativeItem().Text($"Ho va ten: {request.Requester?.FullName ?? "Khong xac dinh"}");
-                    row.RelativeItem().Text($"Phong ban: {request.Requester?.Department?.Name ?? "Khong xac dinh"}");
+                    row.RelativeItem().Text($"Họ và tên: {request.Requester?.FullName ?? "Không xác định"}");
+                    row.RelativeItem().Text($"Phòng ban: {request.Requester?.Department?.Name ?? "Không xác định"}");
                 });
                 section.Item().Row(row =>
                 {
-                    row.RelativeItem().Text($"Ma nhan vien: {request.Requester?.EmployeeCode ?? "--"}");
-                    row.RelativeItem().Text($"Ngay lap don: {request.CreatedAt:dd/MM/yyyy}");
+                    row.RelativeItem().Text($"Mã nhân viên: {request.Requester?.EmployeeCode ?? "--"}");
+                    row.RelativeItem().Text($"Ngày lập đơn: {request.CreatedAt:dd/MM/yyyy}");
                 });
             });
 
             column.Item().Border(1).BorderColor(Colors.Grey.Medium).Padding(14).Column(section =>
             {
                 section.Spacing(8);
-                section.Item().AlignCenter().Text("NOI DUNG XIN NGHI BENH").FontSize(13).SemiBold();
-                section.Item().Text($"Kinh gui: Truong phong / Bo phan Nhan su");
-                section.Item().Text($"Toi lam don nay de de nghi nghi om tu ngay {startDate} den ngay {endDate}, tong cong {totalDays} ngay lam viec.");
-                section.Item().Text($"Ly do/nguyen nhan: {reason}");
-                section.Item().Text("Ho so kem theo: Giay kham benh / giay ra vien / giay chung nhan nghi viec huong BHXH (neu co).")
+                section.Item().AlignCenter().Text("NỘI DUNG XIN NGHỈ ỐM").FontSize(13).SemiBold();
+                section.Item().Text("Kính gửi: Trưởng phòng / Bộ phận Nhân sự");
+                section.Item().Text($"Tôi làm đơn này để xin phép nghỉ ốm từ ngày {startDate} đến ngày {endDate}, tổng cộng {totalDays} ngày làm việc.");
+                section.Item().Text($"Lý do: {reason}");
+                section.Item().Text("Hồ sơ kèm theo: Giấy khám bệnh / Giấy ra viện / Giấy chứng nhận nghỉ việc hưởng BHXH (nếu có).")
                     .FontColor(Colors.Grey.Darken1);
-                section.Item().Text("Toi cam ket cac thong tin tren la dung su that va chiu trach nhiem truoc cong ty ve noi dung da khai.");
+                section.Item().Text("Tôi cam kết các thông tin trên là đúng sự thật và chịu trách nhiệm trước công ty về nội dung đã khai.");
             });
 
             column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(12).Column(note =>
             {
                 note.Spacing(4);
-                note.Item().Text("GHI CHU DOI VOI DON NGHI OM").FontSize(12).SemiBold().FontColor(Colors.Blue.Darken2);
-                note.Item().Text("- So ngay nghi tren he thong duoc tinh theo ngay lam viec, khong tinh Thu 7, Chu nhat va ngay le.").FontSize(10);
-                note.Item().Text("- Truong hop nghi dai ngay hoac nghi om co chung tu, nhan vien can bo sung minh chung dinh kem de doi chieu.").FontSize(10);
+                note.Item().Text("GHI CHÚ").FontSize(12).SemiBold().FontColor(Colors.Blue.Darken2);
+                note.Item().Text("- Số ngày nghỉ được tính theo ngày làm việc (không tính Thứ 7, Chủ nhật và ngày lễ).").FontSize(10);
+                note.Item().Text("- Trường hợp nghỉ dài ngày hoặc có chứng từ, vui lòng bổ sung minh chứng đính kèm để đối chiếu.").FontSize(10);
             });
         }
 
@@ -388,37 +411,58 @@ namespace DANGCAPNE.Services
             var signatures = new List<PdfSignatureInfo>
             {
                 CreateSignature(
-                    "Nhan vien gui don",
-                    request.Requester?.FullName ?? "Khong xac dinh",
+                    "Người làm đơn",
+                    request.Requester?.FullName ?? "Không xác định",
                     request.CreatedAt,
                     null,
                     FindProfile(request.RequesterId))
             };
 
-            var managerApproval = approvals.FirstOrDefault(a => a.StepName.Contains("Tr", StringComparison.OrdinalIgnoreCase));
-            var hrApproval = approvals.FirstOrDefault(a => a.StepName.Contains("HR", StringComparison.OrdinalIgnoreCase));
-
-            if (managerApproval?.Status == "Approved")
+            foreach (var approval in approvals.OrderBy(a => a.StepOrder))
             {
-                signatures.Add(CreateSignature(
-                    "Truong phong duyet",
-                    managerApproval.Approver?.FullName ?? "Chua xac dinh",
-                    managerApproval.ActionDate,
-                    managerApproval.IpAddress,
-                    managerApproval.ApproverId.HasValue ? FindProfile(managerApproval.ApproverId.Value) : null));
-            }
+                if (!approval.ApproverId.HasValue || approval.Status != "Approved")
+                {
+                    continue;
+                }
 
-            if (hrApproval?.Status == "Approved")
-            {
+                var label = NormalizeSignatureRoleLabel(approval.StepName);
                 signatures.Add(CreateSignature(
-                    "HR duyet",
-                    hrApproval.Approver?.FullName ?? "Chua xac dinh",
-                    hrApproval.ActionDate,
-                    hrApproval.IpAddress,
-                    hrApproval.ApproverId.HasValue ? FindProfile(hrApproval.ApproverId.Value) : null));
+                    label,
+                    approval.Approver?.FullName ?? "Không xác định",
+                    approval.ActionDate,
+                    approval.IpAddress,
+                    FindProfile(approval.ApproverId.Value)));
             }
 
             return signatures;
+        }
+
+        private static string NormalizeSignatureRoleLabel(string stepName)
+        {
+            if (string.IsNullOrWhiteSpace(stepName))
+            {
+                return "Người duyệt";
+            }
+
+            var name = stepName.Trim();
+            if (name.Contains("HR", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Phòng Nhân sự";
+            }
+            if (name.Contains("Kế toán", StringComparison.OrdinalIgnoreCase) || name.Contains("Ke toan", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Phòng Kế toán";
+            }
+            if (name.Contains("Giám đốc", StringComparison.OrdinalIgnoreCase) || name.Contains("Giam doc", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Ban Giám đốc";
+            }
+            if (name.Contains("Trưởng", StringComparison.OrdinalIgnoreCase) || name.Contains("Truong", StringComparison.OrdinalIgnoreCase) || name.Contains("Manager", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Trưởng đơn vị";
+            }
+
+            return name;
         }
 
         private static PdfSignatureInfo CreateSignature(string roleLabel, string signerName, DateTime? signedAt, string? ipAddress, DigitalSignatureProfile? profile)
@@ -426,7 +470,7 @@ namespace DANGCAPNE.Services
             return new PdfSignatureInfo(
                 roleLabel,
                 signerName,
-                !string.IsNullOrWhiteSpace(profile?.SignatureName) ? profile.SignatureName : $"Ky dien tu boi {signerName}",
+                !string.IsNullOrWhiteSpace(profile?.SignatureName) ? profile.SignatureName : $"Ký điện tử bởi {signerName}",
                 profile?.SignatureImageUrl,
                 signedAt,
                 ipAddress);

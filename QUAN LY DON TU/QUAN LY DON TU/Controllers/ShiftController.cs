@@ -137,81 +137,24 @@ namespace DANGCAPNE.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Json(new { success = false, message = "Vui lòng đăng nhập" });
-            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
 
-            if (!IsEmployeeOnlySession())
-            {
-                return Json(new { success = false, message = "Chức năng đổi ca chỉ dành cho nhân viên." });
-            }
+            return Json(new { success = false, message = "Chức năng trao đổi/đổi ca làm đã được tắt." });
 
-            if (targetUserId == userId.Value)
-            {
-                return Json(new { success = false, message = "Bạn không thể đổi ca với chính mình." });
-            }
-
-            var targetUser = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == targetUserId && u.TenantId == tenantId && u.Status == "Active");
-            if (targetUser == null)
-            {
-                return Json(new { success = false, message = "Không tìm thấy đồng nghiệp để đổi ca." });
-            }
-
-            if (!await IsEmployeeOnlyUserAsync(targetUserId, tenantId))
-            {
-                return Json(new { success = false, message = "Bạn chỉ có thể đổi ca với nhân viên (không áp dụng cho Admin/HR/Manager/IT/Kế toán)." });
-            }
-
-            var request = new ShiftSwapRequest
-            {
-                TenantId = tenantId,
-                RequesterId = userId.Value,
-                TargetUserId = targetUserId,
-                RequesterShiftId = requesterShiftId,
-                RequesterDate = requesterDate,
-                TargetShiftId = targetShiftId,
-                TargetDate = targetDate,
-                Reason = reason,
-                Status = "Pending",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.ShiftSwapRequests.Add(request);
-            await _context.SaveChangesAsync();
-
-            // Gửi thông báo cho đồng nghiệp (TargetUserId) - Logic Notification đã có sẵn trong project
-            // TODO: Call Notification Service
-
-            return Json(new { success = true, message = "Đã gửi yêu cầu đổi ca cho đồng nghiệp." });
+            // (Disabled)
         }
 
         [HttpPost]
         public async Task<IActionResult> RespondToSwap(int requestId, bool accept)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-            var request = await _context.ShiftSwapRequests.FindAsync(requestId);
-
-            if (request == null || request.TargetUserId != userId)
-                return Json(new { success = false, message = "Yêu cầu không hợp lệ" });
-
-            if (!accept)
-            {
-                request.Status = "Rejected";
-            }
-            else
-            {
-                // Employee-only flow: target acceptance is final approval.
-                request.Status = "Approved";
-            }
-
-            await _context.SaveChangesAsync();
-            return Json(new { success = true, message = accept ? "Bạn đã đồng ý đổi ca" : "Bạn đã từ chối đổi ca" });
+            if (userId == null) return Json(new { success = false, message = "Vui lòng đăng nhập" });
+            return Json(new { success = false, message = "Chức năng trao đổi/đổi ca làm đã được tắt." });
         }
 
         [HttpPost]
         public async Task<IActionResult> ManagerApproveSwap(int requestId, bool approve)
         {
-            return Json(new { success = false, message = "Luồng duyệt quản lý đã được tắt. Đổi ca chỉ áp dụng giữa nhân viên." });
+            return Json(new { success = false, message = "Chức năng trao đổi/đổi ca làm đã được tắt." });
         }
     }
 }

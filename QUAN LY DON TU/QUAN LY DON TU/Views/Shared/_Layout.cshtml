@@ -73,12 +73,6 @@
                             <a href="@Url.Action("Timeline", "Attendance")" class="nav-link @(currentController == "Attendance" && currentAction == "Timeline" ? "active" : "")" data-i18n="NavEmpTimeline">
                                 <i class="bi bi-clock-history"></i> Timeline check out
                             </a>
-                            @if (isEmployeeOnly)
-                            {
-                                <a href="@Url.Action("EmployeeSwap", "Home")" class="nav-link @(currentController == "Home" && currentAction == "EmployeeSwap" ? "active" : "")">
-                                    <i class="bi bi-arrow-left-right"></i> Trao đổi ca làm
-                                </a>
-                            }
                             <a href="@Url.Action("Index", "Shift")" class="nav-link @(currentController == "Shift" && currentAction == "Index" ? "active" : "")" data-i18n="NavEmpSchedule">
                                 <i class="bi bi-calendar3"></i> Lịch biểu & ca làm
                             </a>
@@ -226,6 +220,16 @@
                         </a>
                     </div>
                 }
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Tài khoản</div>
+                    <a href="@Url.Action("Profile", "Account")" class="nav-link @(currentController == "Account" && currentAction == "Profile" ? "active" : "")">
+                        <i class="bi bi-person-circle"></i> Hồ sơ
+                    </a>
+                    <a href="@Url.Action("HandSign", "Account")" class="nav-link @(currentController == "Account" && currentAction == "HandSign" ? "active" : "")">
+                        <i class="bi bi-pen-fill"></i> Tự ký bằng tay
+                    </a>
+                </div>
 
             </div>
             <div class="sidebar-footer">

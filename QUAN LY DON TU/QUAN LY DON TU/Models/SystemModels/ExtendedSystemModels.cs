@@ -9,6 +9,8 @@ namespace DANGCAPNE.Models.SystemModels
         public int Id { get; set; }
         public int TenantId { get; set; }
         public int UserId { get; set; }
+        [Required, MaxLength(100)]
+        public string ProviderName { get; set; } = "Image";
         [Required, MaxLength(150)]
         public string SignatureName { get; set; } = string.Empty;
         [MaxLength(500)]

@@ -21,17 +21,20 @@ namespace DANGCAPNE.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly DANGCAPNE.Services.GeminiAIService _aiService;
         private readonly IEmailNotificationService _emailNotificationService;
+        private readonly IApprovedRequestPdfService _approvedRequestPdfService;
 
         public RequestsController(
             ApplicationDbContext context,
             IWebHostEnvironment env,
             DANGCAPNE.Services.GeminiAIService aiService,
-            IEmailNotificationService emailNotificationService)
+            IEmailNotificationService emailNotificationService,
+            IApprovedRequestPdfService approvedRequestPdfService)
         {
             _context = context;
             _env = env;
             _aiService = aiService;
             _emailNotificationService = emailNotificationService;
+            _approvedRequestPdfService = approvedRequestPdfService;
         }
 
         public async Task<IActionResult> Index(string? status, string? type, string? search, int? departmentId, DateTime? from, DateTime? to, string? priority, int page = 1)
@@ -756,6 +759,36 @@ namespace DANGCAPNE.Controllers
             model.Timeline = BuildTimeline(approvals, comments, auditLogs);
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadAttachment(int id)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var attachment = await _context.RequestAttachments
+                .Include(a => a.Request)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (attachment == null) return NotFound();
+
+            var normalizedPath = attachment.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var physicalPath = Path.Combine(_env.WebRootPath, normalizedPath);
+
+            if (!System.IO.File.Exists(physicalPath) && attachment.FilePath.Contains("/generated/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (attachment.Request != null && string.Equals(attachment.Request.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _approvedRequestPdfService.GenerateApprovedPdfAsync(attachment.Request.Id, userId.Value);
+                    physicalPath = Path.Combine(_env.WebRootPath, normalizedPath);
+                }
+            }
+
+            if (!System.IO.File.Exists(physicalPath))
+                return NotFound();
+
+            return PhysicalFile(physicalPath, string.IsNullOrWhiteSpace(attachment.ContentType) ? "application/octet-stream" : attachment.ContentType, attachment.FileName);
         }
 
         private static List<RequestTimelineEventViewModel> BuildTimeline(

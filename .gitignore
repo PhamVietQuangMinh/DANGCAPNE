@@ -1,0 +1,54 @@
+# ============ .NET build output ============
+bin/
+obj/
+out/
+publish/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ============ VS / VS Code ============
+.vs/
+.vscode/
+*.swp
+
+# ============ Static web assets cache ============
+**/*.staticwebassets.*.json
+**/GeneratedMSBuildEditorConfig.editorconfig
+**/*.sourcelink.json
+**/*.dswa.cache.json
+**/apphost.exe
+
+# ============ NuGet ============
+*.nuget.props
+*.nuget.targets
+packages/
+*.nupkg
+
+# ============ Logs / Temp ============
+*.log
+logs/
+Logs/
+*.tmp
+*.temp
+
+# ============ Environment ============
+.env
+.env.local
+appsettings.Development.json
+
+# ============ OS files ============
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ============ Database files (SQLite) ============
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3

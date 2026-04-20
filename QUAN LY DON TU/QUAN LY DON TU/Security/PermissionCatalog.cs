@@ -9,6 +9,7 @@ namespace DANGCAPNE.Security
         public const string ApprovalsView = "approvals.view";
         public const string ApprovalsAct = "approvals.act";
         public const string DelegationManage = "delegation.manage";
+        public const string SlaManage = "sla.manage";
         public const string PolicyView = "policy.view";
         public const string PolicyManage = "policy.manage";
         public const string ChecklistManage = "checklist.manage";
@@ -43,6 +44,7 @@ namespace DANGCAPNE.Security
                 permissions.Add(AttendanceAdmin);
                 permissions.Add(ModulesView);
                 permissions.Add(AccessProvision);
+                permissions.Add(SlaManage);
             }
 
             if (roles.Contains("HR"))
@@ -50,6 +52,7 @@ namespace DANGCAPNE.Security
                 permissions.Add(ChecklistManage);
                 permissions.Add(PolicyManage);
                 permissions.Add(AttendanceAdmin);
+                permissions.Add(SlaManage);
             }
 
             if (roles.Contains("IT") || roles.Contains("ITManager"))

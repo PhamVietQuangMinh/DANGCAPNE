@@ -442,6 +442,23 @@ namespace DANGCAPNE.ViewModels
         public List<Delegation> DelegatedToMe { get; set; } = new();
     }
 
+    public class SlaManagementViewModel
+    {
+        public List<SlaConfig> Configs { get; set; } = new();
+        public List<EscalationRule> EscalationRules { get; set; } = new();
+        public List<FormTemplate> FormTemplates { get; set; } = new();
+        public List<User> PotentialEscalationTargets { get; set; } = new();
+        public int? SelectedFormTemplateId { get; set; }
+        public int ReminderHours { get; set; } = 24;
+        public int EscalationHours { get; set; } = 48;
+        public bool AutoRemind { get; set; } = true;
+        public bool AutoEscalate { get; set; } = true;
+        public int? EscalateToUserId { get; set; }
+        public int EscalateAfterHours { get; set; } = 48;
+        public string? NotificationMessage { get; set; }
+        public int? SelectedSlaConfigId { get; set; }
+    }
+
     public class PolicyPortalViewModel
     {
         public List<PolicyDocument> ActivePolicies { get; set; } = new();

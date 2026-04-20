@@ -1,0 +1,207 @@
+@model DANGCAPNE.ViewModels.SlaManagementViewModel
+@{
+    ViewData["Title"] = "Cấu hình SLA & Escalation";
+}
+<div class="page-content">
+    <div class="d-flex justify-between align-center mb-24" style="flex-wrap:wrap;gap:16px">
+        <div>
+            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px"><i class="bi bi-stopwatch text-primary"></i> Cấu hình SLA & Auto-Escalation</h2>
+            <p class="text-muted">Đặt thời hạn nhắc nhở, thời hạn vượt ngưỡng và người nhận escalation tự động cho từng loại đơn. Chỉ Admin và HR có quyền thay đổi.</p>
+        </div>
+        <div class="text-muted" style="font-size:13px">
+            <i class="bi bi-info-circle"></i> Hệ thống kiểm tra mỗi 5 phút và gửi SignalR + Email tự động
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="content-grid-2">
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-plus-circle text-primary"></i> Thêm / Cập nhật cấu hình SLA</h3></div>
+            <div class="card-body">
+                <form method="post" asp-action="SaveSla">
+                    <div class="form-group">
+                        <label class="form-label">Áp dụng cho loại đơn</label>
+                        <select name="SelectedFormTemplateId" class="form-control">
+                            <option value="">-- Mặc định cho tất cả --</option>
+                            @foreach (var f in Model.FormTemplates)
+                            {
+                                <option value="@f.Id">@f.Name</option>
+                            }
+                        </select>
+                        <small class="text-muted">Để trống = áp dụng toàn cục. Cấu hình riêng cho từng form sẽ ưu tiên hơn.</small>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Nhắc nhở sau (giờ) *</label>
+                                <input type="number" name="ReminderHours" class="form-control" value="24" min="1" required />
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Vượt ngưỡng sau (giờ) *</label>
+                                <input type="number" name="EscalationHours" class="form-control" value="48" min="1" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" name="AutoRemind" value="true" checked />
+                                    <input type="hidden" name="AutoRemind" value="false" />
+                                    Tự động nhắc nhở
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" name="AutoEscalate" value="true" checked />
+                                    <input type="hidden" name="AutoEscalate" value="false" />
+                                    Tự động escalation
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu cấu hình SLA</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-list-check text-success"></i> Các cấu hình SLA hiện có</h3></div>
+            <div class="card-body" style="padding:0">
+                @if (Model.Configs.Any())
+                {
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Loại đơn</th>
+                                <th>Nhắc (giờ)</th>
+                                <th>Vượt (giờ)</th>
+                                <th>Auto</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.Configs)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@(c.FormTemplate?.Name ?? "Mặc định toàn cục")</strong>
+                                    </td>
+                                    <td>@c.ReminderHours</td>
+                                    <td>@c.EscalationHours</td>
+                                    <td>
+                                        @if (c.AutoRemind) { <span class="status-badge approved">Nhắc</span> }
+                                        @if (c.AutoEscalate) { <span class="status-badge pending">Escalate</span> }
+                                    </td>
+                                    <td>
+                                        <form method="post" asp-action="DeleteSla" onsubmit="return confirm('Xoá cấu hình này?');" style="display:inline">
+                                            <input type="hidden" name="id" value="@c.Id" />
+                                            <button type="submit" class="btn btn-outline btn-sm text-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:32px"><i class="bi bi-stopwatch"></i><h3>Chưa có cấu hình SLA</h3></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid-2" style="margin-top:24px">
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-arrow-up-circle text-warning"></i> Thêm rule Escalation</h3></div>
+            <div class="card-body">
+                <form method="post" asp-action="SaveEscalationRule">
+                    <div class="form-group">
+                        <label class="form-label">Áp dụng cho cấu hình SLA *</label>
+                        <select name="SelectedSlaConfigId" class="form-control" required>
+                            <option value="">-- Chọn --</option>
+                            @foreach (var c in Model.Configs)
+                            {
+                                <option value="@c.Id">@(c.FormTemplate?.Name ?? "Mặc định") (nhắc @c.ReminderHours h / vượt @c.EscalationHours h)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Escalate đến *</label>
+                        <select name="EscalateToUserId" class="form-control" required>
+                            <option value="">-- Chọn người nhận --</option>
+                            @foreach (var u in Model.PotentialEscalationTargets)
+                            {
+                                <option value="@u.Id">@u.FullName (@u.EmployeeCode)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sau bao nhiêu giờ *</label>
+                        <input type="number" name="EscalateAfterHours" class="form-control" value="48" min="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nội dung thông báo</label>
+                        <textarea name="NotificationMessage" class="form-control" placeholder="Tin nhắn gửi kèm khi escalate"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-plus"></i> Thêm rule</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-diagram-3 text-primary"></i> Rules Escalation đang áp dụng</h3></div>
+            <div class="card-body" style="padding:0">
+                @if (Model.EscalationRules.Any())
+                {
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>SLA áp dụng</th>
+                                <th>Escalate đến</th>
+                                <th>Sau (giờ)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.EscalationRules)
+                            {
+                                <tr>
+                                    <td>@(r.SlaConfig?.FormTemplate?.Name ?? "Mặc định")</td>
+                                    <td>
+                                        <strong>@r.EscalateToUser?.FullName</strong>
+                                        <div class="text-muted" style="font-size:12px">@r.EscalateToUser?.Email</div>
+                                    </td>
+                                    <td>@r.EscalateAfterHours</td>
+                                    <td>
+                                        <form method="post" asp-action="DeleteEscalationRule" onsubmit="return confirm('Xoá rule này?');" style="display:inline">
+                                            <input type="hidden" name="id" value="@r.Id" />
+                                            <button type="submit" class="btn btn-outline btn-sm text-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:32px"><i class="bi bi-diagram-3"></i><h3>Chưa có rule escalation</h3></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

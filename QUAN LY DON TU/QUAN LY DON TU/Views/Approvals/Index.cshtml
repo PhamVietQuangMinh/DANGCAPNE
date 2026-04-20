@@ -16,6 +16,52 @@
 
     @if (Model.PendingApprovals.Any())
     {
+        <div class="glass-card mb-16">
+            <div class="card-header"><h3><i class="bi bi-funnel text-primary"></i> Bộ lọc nâng cao</h3></div>
+            <div class="card-body">
+                <div class="form-row" style="gap:12px;flex-wrap:wrap">
+                    <div class="col" style="min-width:180px">
+                        <label class="form-label">Tìm nhanh</label>
+                        <input type="text" id="filterKeyword" class="form-control" placeholder="Mã đơn / người gửi / tiêu đề" oninput="applyApprovalFilters()" />
+                    </div>
+                    <div class="col" style="min-width:180px">
+                        <label class="form-label">Loại đơn</label>
+                        <select id="filterFormType" class="form-control" onchange="applyApprovalFilters()">
+                            <option value="">-- Tất cả --</option>
+                            @foreach (var name in Model.PendingApprovals.Select(a => a.Request?.FormTemplate?.Name).Where(n => !string.IsNullOrEmpty(n)).Distinct())
+                            {
+                                <option value="@name">@name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col" style="min-width:160px">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date" id="filterFrom" class="form-control" onchange="applyApprovalFilters()" />
+                    </div>
+                    <div class="col" style="min-width:160px">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date" id="filterTo" class="form-control" onchange="applyApprovalFilters()" />
+                    </div>
+                    <div class="col" style="min-width:160px">
+                        <label class="form-label">Nguồn</label>
+                        <select id="filterSource" class="form-control" onchange="applyApprovalFilters()">
+                            <option value="">-- Tất cả --</option>
+                            <option value="direct">Của tôi</option>
+                            <option value="delegated">Duyệt thay</option>
+                        </select>
+                    </div>
+                    <div class="col" style="min-width:100px;display:flex;align-items:flex-end">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="resetApprovalFilters()"><i class="bi bi-arrow-counterclockwise"></i> Xoá lọc</button>
+                    </div>
+                </div>
+                <div class="d-flex gap-8 align-center mt-8" style="flex-wrap:wrap">
+                    <span class="text-muted" style="font-size:12px">Lọc nhanh:</span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="savePresetFilter()"><i class="bi bi-bookmark"></i> Lưu bộ lọc</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="loadPresetFilter()"><i class="bi bi-bookmark-check"></i> Áp bộ lọc đã lưu</button>
+                    <span class="text-muted" style="font-size:12px" id="filterSummary"></span>
+                </div>
+            </div>
+        </div>
         <div class="glass-card mb-24">
             <div class="card-header"><h3><i class="bi bi-clock-fill text-warning"></i> Dang cho duyet (@Model.PendingApprovals.Count)</h3></div>
             <div class="card-body" style="padding:0">
@@ -37,7 +83,13 @@
                             @foreach (var approval in Model.PendingApprovals)
                             {
                                 var isDelegated = Model.DelegatedApprovalIds.Contains(approval.Id);
-                                <tr>
+                                <tr class="approval-row"
+                                    data-form="@approval.Request?.FormTemplate?.Name"
+                                    data-requester="@approval.Request?.Requester?.FullName"
+                                    data-code="@approval.Request?.RequestCode"
+                                    data-title="@approval.Request?.Title"
+                                    data-date="@(approval.Request?.CreatedAt.ToString("yyyy-MM-dd"))"
+                                    data-source="@(isDelegated ? "delegated" : "direct")">
                                     <td><input type="checkbox" name="ApprovalIds" value="@approval.Id" class="bulk-check" /></td>
                                     <td><strong class="text-primary">@approval.Request?.RequestCode</strong></td>
                                     <td><i class="bi @approval.Request?.FormTemplate?.Icon" style="color:@approval.Request?.FormTemplate?.IconColor"></i> @approval.Request?.FormTemplate?.Name</td>
@@ -148,6 +200,58 @@
         document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = true);
         updateBulkUI();
         window.scrollTo({ top: document.getElementById('bulkForm').offsetTop, behavior: 'smooth' });
+    }
+
+    function applyApprovalFilters() {
+        const kw = (document.getElementById('filterKeyword')?.value || '').trim().toLowerCase();
+        const formType = document.getElementById('filterFormType')?.value || '';
+        const from = document.getElementById('filterFrom')?.value || '';
+        const to = document.getElementById('filterTo')?.value || '';
+        const source = document.getElementById('filterSource')?.value || '';
+        let visible = 0;
+        document.querySelectorAll('.approval-row').forEach(row => {
+            const matchesKw = !kw || ['code','requester','title','form'].some(k =>
+                (row.dataset[k] || '').toLowerCase().includes(kw));
+            const matchesForm = !formType || row.dataset.form === formType;
+            const date = row.dataset.date || '';
+            const matchesFrom = !from || date >= from;
+            const matchesTo = !to || date <= to;
+            const matchesSource = !source || row.dataset.source === source;
+            const show = matchesKw && matchesForm && matchesFrom && matchesTo && matchesSource;
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        const sum = document.getElementById('filterSummary');
+        if (sum) sum.textContent = `Hiển thị ${visible} dòng`;
+    }
+
+    function resetApprovalFilters() {
+        ['filterKeyword','filterFormType','filterFrom','filterTo','filterSource'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = '';
+        });
+        applyApprovalFilters();
+    }
+
+    function savePresetFilter() {
+        const preset = {
+            kw: document.getElementById('filterKeyword')?.value || '',
+            form: document.getElementById('filterFormType')?.value || '',
+            from: document.getElementById('filterFrom')?.value || '',
+            to: document.getElementById('filterTo')?.value || '',
+            source: document.getElementById('filterSource')?.value || ''
+        };
+        localStorage.setItem('approvalFilterPreset', JSON.stringify(preset));
+        alert('Đã lưu bộ lọc vào thiết bị này.');
+    }
+
+    function loadPresetFilter() {
+        const raw = localStorage.getItem('approvalFilterPreset');
+        if (!raw) { alert('Chưa có bộ lọc nào được lưu.'); return; }
+        const p = JSON.parse(raw);
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+        set('filterKeyword', p.kw); set('filterFormType', p.form);
+        set('filterFrom', p.from); set('filterTo', p.to); set('filterSource', p.source);
+        applyApprovalFilters();
     }
 </script>
 }

@@ -31,6 +31,7 @@
                     var isIT = roles.Contains("IT") || roles.Contains("ITManager");
                     var canViewApprovals = permissions.Contains("approvals.view");
                     var canManageDelegation = permissions.Contains("delegation.manage");
+                    var canManageSla = permissions.Contains("sla.manage");
                     var canViewPolicies = permissions.Contains("policy.view");
                     var canManageChecklist = permissions.Contains("checklist.manage");
                     var canViewAudit = permissions.Contains("audit.view");
@@ -142,6 +143,12 @@
                         {
                             <a href="@Url.Action("Delegation", "Admin")" class="nav-link @(currentAction == "Delegation" ? "active" : "")" data-i18n="NavDelegate">
                                 <i class="bi bi-arrow-left-right"></i> Ủy quyền
+                            </a>
+                        }
+                        @if (canManageSla)
+                        {
+                            <a href="@Url.Action("Sla", "Admin")" class="nav-link @(currentAction == "Sla" ? "active" : "")">
+                                <i class="bi bi-stopwatch"></i> Cấu hình SLA
                             </a>
                         }
                     </div>

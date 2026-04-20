@@ -1018,6 +1018,138 @@ namespace DANGCAPNE.Controllers
         }
 
         [HttpGet]
+        [PermissionAuthorize("sla.manage")]
+        public async Task<IActionResult> Sla()
+        {
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var model = new SlaManagementViewModel
+            {
+                Configs = await _context.SlaConfigs
+                    .Include(s => s.FormTemplate)
+                    .Where(s => s.TenantId == tenantId)
+                    .OrderBy(s => s.FormTemplateId)
+                    .ToListAsync(),
+                EscalationRules = await _context.EscalationRules
+                    .Include(e => e.SlaConfig).ThenInclude(s => s!.FormTemplate)
+                    .Include(e => e.EscalateToUser)
+                    .Where(e => e.TenantId == tenantId)
+                    .OrderBy(e => e.SlaConfigId)
+                    .ToListAsync(),
+                FormTemplates = await _context.FormTemplates
+                    .Where(f => f.TenantId == tenantId && f.IsActive)
+                    .OrderBy(f => f.Name)
+                    .ToListAsync(),
+                PotentialEscalationTargets = await _context.Users
+                    .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                    .Where(u => u.TenantId == tenantId && u.Status == "Active" &&
+                        u.UserRoles.Any(ur => ur.Role!.Name == "Admin" || ur.Role!.Name == "HR" || ur.Role!.Name == "Manager" || ur.Role!.Name == "ITManager"))
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync()
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("sla.manage")]
+        public async Task<IActionResult> SaveSla(SlaManagementViewModel model)
+        {
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            if (model.ReminderHours <= 0 || model.EscalationHours <= 0 || model.EscalationHours < model.ReminderHours)
+            {
+                TempData["Error"] = "Giờ nhắc và giờ escalation phải > 0, và giờ escalation >= giờ nhắc.";
+                return RedirectToAction("Sla");
+            }
+
+            var existing = await _context.SlaConfigs.FirstOrDefaultAsync(s =>
+                s.TenantId == tenantId && s.FormTemplateId == model.SelectedFormTemplateId);
+            if (existing == null)
+            {
+                _context.SlaConfigs.Add(new SlaConfig
+                {
+                    TenantId = tenantId,
+                    FormTemplateId = model.SelectedFormTemplateId,
+                    ReminderHours = model.ReminderHours,
+                    EscalationHours = model.EscalationHours,
+                    AutoRemind = model.AutoRemind,
+                    AutoEscalate = model.AutoEscalate
+                });
+            }
+            else
+            {
+                existing.ReminderHours = model.ReminderHours;
+                existing.EscalationHours = model.EscalationHours;
+                existing.AutoRemind = model.AutoRemind;
+                existing.AutoEscalate = model.AutoEscalate;
+            }
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã lưu cấu hình SLA.";
+            return RedirectToAction("Sla");
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("sla.manage")]
+        public async Task<IActionResult> DeleteSla(int id)
+        {
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var cfg = await _context.SlaConfigs.FirstOrDefaultAsync(s => s.Id == id && s.TenantId == tenantId);
+            if (cfg != null)
+            {
+                var rules = _context.EscalationRules.Where(r => r.SlaConfigId == id);
+                _context.EscalationRules.RemoveRange(rules);
+                _context.SlaConfigs.Remove(cfg);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Đã xoá cấu hình SLA.";
+            }
+            return RedirectToAction("Sla");
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("sla.manage")]
+        public async Task<IActionResult> SaveEscalationRule(SlaManagementViewModel model)
+        {
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            if (!model.SelectedSlaConfigId.HasValue || !model.EscalateToUserId.HasValue || model.EscalateAfterHours <= 0)
+            {
+                TempData["Error"] = "Vui lòng chọn cấu hình SLA, người nhận escalation và giờ hợp lệ.";
+                return RedirectToAction("Sla");
+            }
+
+            var configExists = await _context.SlaConfigs.AnyAsync(s => s.Id == model.SelectedSlaConfigId.Value && s.TenantId == tenantId);
+            if (!configExists)
+            {
+                TempData["Error"] = "Cấu hình SLA không tồn tại.";
+                return RedirectToAction("Sla");
+            }
+
+            _context.EscalationRules.Add(new EscalationRule
+            {
+                TenantId = tenantId,
+                SlaConfigId = model.SelectedSlaConfigId.Value,
+                EscalateToUserId = model.EscalateToUserId.Value,
+                EscalateAfterHours = model.EscalateAfterHours,
+                NotificationMessage = model.NotificationMessage ?? string.Empty
+            });
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã thêm rule escalation.";
+            return RedirectToAction("Sla");
+        }
+
+        [HttpPost]
+        [PermissionAuthorize("sla.manage")]
+        public async Task<IActionResult> DeleteEscalationRule(int id)
+        {
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var rule = await _context.EscalationRules.FirstOrDefaultAsync(r => r.Id == id && r.TenantId == tenantId);
+            if (rule != null)
+            {
+                _context.EscalationRules.Remove(rule);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Đã xoá rule escalation.";
+            }
+            return RedirectToAction("Sla");
+        }
+
+        [HttpGet]
         [PermissionAuthorize("audit.view")]
         public async Task<IActionResult> AuditLogs(int? requestId, int page = 1)
         {

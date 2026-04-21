@@ -135,6 +135,9 @@ namespace DANGCAPNE.Data
         public DbSet<TenantConfig> TenantConfigs { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ZaloSubscriber> ZaloSubscribers { get; set; } = null!;
+        public DbSet<ZaloSettings> ZaloSettings { get; set; } = null!;
+        public DbSet<ZaloNotificationLog> ZaloNotificationLogs { get; set; } = null!;
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<EmailLog> EmailLogs { get; set; }
         public DbSet<SystemError> SystemErrors { get; set; }

@@ -423,6 +423,74 @@ namespace DANGCAPNE.Controllers
                 });
             }
 
+            // Rule 3: Nhân viên có nhiều đơn bị từ chối (>=3 trong 90 ngày) — dấu hiệu gửi đơn bừa bãi
+            var rejectedGroups = await _context.Requests
+                .Include(r => r.Requester)
+                .Where(r => r.TenantId == tenantId && r.Status == "Rejected" && r.CreatedAt >= threeMonthsAgo)
+                .AsNoTracking()
+                .ToListAsync();
+            var highRejection = rejectedGroups
+                .GroupBy(r => new { r.RequesterId, Name = r.Requester!.FullName })
+                .Where(g => g.Count() >= 3)
+                .Select(g => new { g.Key.Name, Count = g.Count() })
+                .ToList();
+            foreach (var item in highRejection)
+            {
+                anomalies.Add(new AnomalyAlert
+                {
+                    EmployeeName = item.Name,
+                    AlertType = "Tỷ lệ từ chối cao",
+                    Description = $"Đã có {item.Count} đơn bị từ chối trong 90 ngày — cần trao đổi",
+                    Severity = "Warning"
+                });
+            }
+
+            // Rule 4: Tần suất gửi đơn cùng loại bất thường (>=5 đơn cùng loại trong 30 ngày)
+            var oneMonthAgo = DateTime.UtcNow.AddDays(-30);
+            var recentReqs = await _context.Requests
+                .Include(r => r.Requester)
+                .Include(r => r.FormTemplate)
+                .Where(r => r.TenantId == tenantId && r.CreatedAt >= oneMonthAgo)
+                .AsNoTracking()
+                .ToListAsync();
+            var burstRequests = recentReqs
+                .GroupBy(r => new { r.RequesterId, Name = r.Requester!.FullName, Form = r.FormTemplate!.Name })
+                .Where(g => g.Count() >= 5)
+                .Select(g => new { g.Key.Name, g.Key.Form, Count = g.Count() })
+                .ToList();
+            foreach (var item in burstRequests)
+            {
+                anomalies.Add(new AnomalyAlert
+                {
+                    EmployeeName = item.Name,
+                    AlertType = "Gửi đơn tần suất cao",
+                    Description = $"Đã gửi {item.Count} đơn \"{item.Form}\" trong 30 ngày qua — có thể lạm dụng",
+                    Severity = "Warning"
+                });
+            }
+
+            // Rule 5: Đơn gửi ngoài giờ hành chính (>=5 đơn sau 22h hoặc trước 6h trong 30 ngày)
+            var offHours = recentReqs
+                .Where(r =>
+                {
+                    var h = r.CreatedAt.AddHours(7).Hour; // VN timezone
+                    return h < 6 || h >= 22;
+                })
+                .GroupBy(r => new { r.RequesterId, Name = r.Requester!.FullName })
+                .Where(g => g.Count() >= 5)
+                .Select(g => new { g.Key.Name, Count = g.Count() })
+                .ToList();
+            foreach (var item in offHours)
+            {
+                anomalies.Add(new AnomalyAlert
+                {
+                    EmployeeName = item.Name,
+                    AlertType = "Gửi đơn ngoài giờ",
+                    Description = $"Có {item.Count} đơn được gửi ngoài giờ hành chính (22h-6h) — cần xác minh",
+                    Severity = "Info"
+                });
+            }
+
             return anomalies;
         }
 

@@ -1,0 +1,156 @@
+@model DANGCAPNE.ViewModels.ApproverKpiViewModel
+@{
+    ViewData["Title"] = "KPI người duyệt";
+    var top5Fast = Model.Rows.Where(r => r.TotalHandled >= 3).OrderBy(r => r.AvgHours).Take(5).ToList();
+    var top5Slow = Model.Rows.Where(r => r.TotalHandled >= 3).OrderByDescending(r => r.AvgHours).Take(5).ToList();
+    var topRejection = Model.Rows.Where(r => r.TotalHandled >= 5).OrderByDescending(r => r.RejectionRate).Take(5).ToList();
+    var totalHandled = Model.Rows.Sum(r => r.TotalHandled);
+    var totalPending = Model.Rows.Sum(r => r.Pending);
+    var overallAvg = Model.Rows.Any(r => r.TotalHandled > 0) ? Math.Round(Model.Rows.Where(r => r.TotalHandled > 0).Average(r => r.AvgHours), 1) : 0;
+    var totalOverdue = Model.Rows.Sum(r => r.OverdueCount);
+}
+<div class="page-content">
+    <div class="d-flex justify-between align-center mb-24" style="flex-wrap:wrap;gap:16px">
+        <div>
+            <h2 style="font-size:24px;font-weight:800;margin-bottom:4px"><i class="bi bi-bar-chart-steps text-primary"></i> KPI người duyệt</h2>
+            <p class="text-muted">Đo lường hiệu suất phê duyệt của từng quản lý để cải thiện quy trình</p>
+        </div>
+    </div>
+
+    <form method="get" class="glass-card mb-16" style="padding:16px">
+        <div class="d-flex gap-12 align-end flex-wrap">
+            <div><label class="form-label">Từ ngày</label>
+                <input type="date" name="from" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control" /></div>
+            <div><label class="form-label">Đến ngày</label>
+                <input type="date" name="to" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control" /></div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i> Lọc</button>
+        </div>
+    </form>
+
+    <div class="content-grid-4 mb-24">
+        <div class="glass-card"><div class="card-body">
+            <div class="text-muted" style="font-size:12px">Tổng đơn đã xử lý</div>
+            <div style="font-size:28px;font-weight:800;color:var(--primary-color)">@totalHandled</div>
+        </div></div>
+        <div class="glass-card"><div class="card-body">
+            <div class="text-muted" style="font-size:12px">Đơn còn chờ duyệt</div>
+            <div style="font-size:28px;font-weight:800;color:var(--warning-color)">@totalPending</div>
+        </div></div>
+        <div class="glass-card"><div class="card-body">
+            <div class="text-muted" style="font-size:12px">Thời gian xử lý trung bình</div>
+            <div style="font-size:28px;font-weight:800;color:var(--success-color)">@overallAvg h</div>
+        </div></div>
+        <div class="glass-card"><div class="card-body">
+            <div class="text-muted" style="font-size:12px">Đơn duyệt trễ (>24h)</div>
+            <div style="font-size:28px;font-weight:800;color:var(--danger-color)">@totalOverdue</div>
+        </div></div>
+    </div>
+
+    <div class="content-grid-3 mb-24">
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-trophy text-success"></i> Top 5 duyệt nhanh nhất</h3></div>
+            <div class="card-body">
+                @if (top5Fast.Any())
+                {
+                    @for (int i = 0; i < top5Fast.Count; i++)
+                    {
+                        var r = top5Fast[i];
+                        <div class="d-flex gap-8 align-center" style="padding:8px;border-bottom:1px solid var(--border-glass)">
+                            <span style="font-size:20px;font-weight:800;color:#16a34a;min-width:24px">@(i + 1)</span>
+                            <div style="flex:1"><strong>@r.FullName</strong><div class="text-muted" style="font-size:11px">@r.Department</div></div>
+                            <span class="status-badge approved">@r.AvgHours h</span>
+                        </div>
+                    }
+                }
+                else { <div class="empty-state" style="padding:16px">Chưa có dữ liệu</div> }
+            </div>
+        </div>
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-hourglass-bottom text-warning"></i> Top 5 duyệt chậm nhất</h3></div>
+            <div class="card-body">
+                @if (top5Slow.Any())
+                {
+                    @for (int i = 0; i < top5Slow.Count; i++)
+                    {
+                        var r = top5Slow[i];
+                        <div class="d-flex gap-8 align-center" style="padding:8px;border-bottom:1px solid var(--border-glass)">
+                            <span style="font-size:20px;font-weight:800;color:#ea580c;min-width:24px">@(i + 1)</span>
+                            <div style="flex:1"><strong>@r.FullName</strong><div class="text-muted" style="font-size:11px">@r.Department</div></div>
+                            <span class="status-badge pending">@r.AvgHours h</span>
+                        </div>
+                    }
+                }
+                else { <div class="empty-state" style="padding:16px">Chưa có dữ liệu</div> }
+            </div>
+        </div>
+        <div class="glass-card">
+            <div class="card-header"><h3><i class="bi bi-x-octagon text-danger"></i> Tỷ lệ từ chối cao nhất</h3></div>
+            <div class="card-body">
+                @if (topRejection.Any())
+                {
+                    @for (int i = 0; i < topRejection.Count; i++)
+                    {
+                        var r = topRejection[i];
+                        <div class="d-flex gap-8 align-center" style="padding:8px;border-bottom:1px solid var(--border-glass)">
+                            <span style="font-size:20px;font-weight:800;color:#dc2626;min-width:24px">@(i + 1)</span>
+                            <div style="flex:1"><strong>@r.FullName</strong><div class="text-muted" style="font-size:11px">@r.Department</div></div>
+                            <span class="status-badge rejected">@r.RejectionRate%</span>
+                        </div>
+                    }
+                }
+                else { <div class="empty-state" style="padding:16px">Chưa có dữ liệu</div> }
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header"><h3><i class="bi bi-table"></i> Chi tiết toàn bộ người duyệt</h3></div>
+        <div class="card-body" style="padding:0">
+            @if (Model.Rows.Any())
+            {
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Người duyệt</th><th>Phòng ban</th>
+                            <th>Đã xử lý</th><th>Duyệt</th><th>Từ chối</th><th>Chờ</th>
+                            <th>Tỷ lệ từ chối</th><th>TB (giờ)</th><th>Trễ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@r.FullName</strong>
+                                    <div class="text-muted" style="font-size:11px">@r.Email</div>
+                                </td>
+                                <td>@r.Department</td>
+                                <td><strong>@r.TotalHandled</strong></td>
+                                <td><span class="status-badge approved">@r.Approved</span></td>
+                                <td><span class="status-badge rejected">@r.Rejected</span></td>
+                                <td><span class="status-badge pending">@r.Pending</span></td>
+                                <td>@r.RejectionRate%</td>
+                                <td>
+                                    <strong style="color:@(r.AvgHours <= 4 ? "#16a34a" : r.AvgHours <= 24 ? "#ca8a04" : "#dc2626")">
+                                        @r.AvgHours h
+                                    </strong>
+                                </td>
+                                <td>
+                                    @if (r.OverdueCount > 0)
+                                    {
+                                        <span class="status-badge rejected">@r.OverdueCount</span>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:32px"><i class="bi bi-bar-chart"></i><h3>Không có dữ liệu trong khoảng này</h3></div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,58 @@
+@using DANGCAPNE.Models.Requests
+@model Tuple<RequestApproval, Dictionary<int, string>>
+@{
+    var a = Model.Item1;
+    var delegatedMap = Model.Item2;
+    var isDelegated = a.ApproverId.HasValue && delegatedMap.ContainsKey(a.ApproverId.Value);
+    var isProcessed = a.Status != "Pending";
+    var cardClass = isProcessed ? "kanban-card processed" : "kanban-card";
+    var draggable = isProcessed ? "false" : "true";
+    var daysAgo = (DateTime.UtcNow - a.CreatedAt).Days;
+}
+<div class="@cardClass"
+     data-id="@a.Id"
+     data-priority="@(a.Request?.Priority ?? "Normal")"
+     draggable="@draggable"
+     ondragstart="kanbanDragStart(event, @a.Id)"
+     ondragend="kanbanDragEnd(event)"
+     onclick="location.href='@Url.Action("Detail", "Requests", new { id = a.RequestId })'">
+    <div class="kanban-card-header">
+        <span><i class="bi @(a.Request?.FormTemplate?.Icon ?? "bi-file-text")"></i> @a.Request?.RequestCode</span>
+        @if (a.Request?.Priority == "Urgent")
+        {
+            <span style="color:#dc2626"><i class="bi bi-fire"></i> Khẩn</span>
+        }
+        else if (a.Request?.Priority == "High")
+        {
+            <span style="color:#ea580c"><i class="bi bi-arrow-up"></i> Cao</span>
+        }
+    </div>
+    <div class="kanban-card-title">@a.Request?.Title</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+        <i class="bi bi-person"></i> @a.Request?.Requester?.FullName
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">
+        @a.Request?.FormTemplate?.Name
+    </div>
+    @if (isDelegated)
+    {
+        <div style="font-size:10px;color:var(--primary-color);margin-bottom:6px">
+            <i class="bi bi-person-check"></i> Duyệt thay: @delegatedMap[a.ApproverId!.Value]
+        </div>
+    }
+    <div class="kanban-card-meta">
+        <span><i class="bi bi-clock"></i> @(daysAgo == 0 ? "Hôm nay" : daysAgo + " ngày trước")</span>
+        @if (a.Status == "Approved")
+        {
+            <span style="color:#16a34a"><i class="bi bi-check2-all"></i> Đã duyệt</span>
+        }
+        else if (a.Status == "Rejected")
+        {
+            <span style="color:#dc2626"><i class="bi bi-x"></i> Từ chối</span>
+        }
+        else
+        {
+            <span style="color:var(--warning-color)"><i class="bi bi-hourglass-split"></i> Chờ duyệt</span>
+        }
+    </div>
+</div>

@@ -18,6 +18,7 @@ namespace DANGCAPNE.Security
         public const string AttendanceAdmin = "attendance.admin";
         public const string ModulesView = "modules.view";
         public const string AccessProvision = "access.provision";
+        public const string IntegrationManage = "integration.manage";
 
         public static IReadOnlyCollection<string> ResolvePermissions(User user, IReadOnlyCollection<string> roles, string primaryRole)
         {
@@ -45,6 +46,7 @@ namespace DANGCAPNE.Security
                 permissions.Add(ModulesView);
                 permissions.Add(AccessProvision);
                 permissions.Add(SlaManage);
+                permissions.Add(IntegrationManage);
             }
 
             if (roles.Contains("HR"))

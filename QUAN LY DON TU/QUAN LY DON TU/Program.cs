@@ -27,6 +27,8 @@ builder.Services.AddScoped<DANGCAPNE.Services.IPayrollPdfService, DANGCAPNE.Serv
 builder.Services.AddScoped<DANGCAPNE.Services.IFaceDescriptorMigrationService, DANGCAPNE.Services.FaceDescriptorMigrationService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IEmailNotificationService, DANGCAPNE.Services.EmailNotificationService>();
 builder.Services.AddScoped<DANGCAPNE.Services.IAttendanceRiskScoringService, DANGCAPNE.Services.AttendanceRiskScoringService>();
+builder.Services.AddScoped<DANGCAPNE.Services.IRequestRiskScoringService, DANGCAPNE.Services.RequestRiskScoringService>();
+builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -94,7 +96,8 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
 }
 
-var uploadsPath = Path.Combine(app.Environment.WebRootPath, "uploads");
+var webRootPath = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+var uploadsPath = Path.Combine(webRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
 
 app.UseStaticFiles(new StaticFileOptions

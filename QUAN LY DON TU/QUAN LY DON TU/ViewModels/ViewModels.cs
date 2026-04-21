@@ -257,6 +257,7 @@ namespace DANGCAPNE.ViewModels
         public int? CurrentApprovalId { get; set; }
         public Dictionary<string, string> FormData { get; set; } = new();
         public List<FormField> FormFields { get; set; } = new();
+        public DANGCAPNE.Services.RequestRiskAssessment? RiskAssessment { get; set; }
     }
 
     public class RequestTimelineEventViewModel
@@ -440,6 +441,55 @@ namespace DANGCAPNE.ViewModels
         public string? Reason { get; set; }
         public List<Delegation> MyDelegations { get; set; } = new();
         public List<Delegation> DelegatedToMe { get; set; } = new();
+    }
+
+    public class ZaloSettingsViewModel
+    {
+        public int Id { get; set; }
+        public string? AppId { get; set; }
+        public string? AccessToken { get; set; }
+        public string? OaId { get; set; }
+        public string? OaName { get; set; }
+        public string? TemplateRequestCreated { get; set; }
+        public string? TemplateRequestApproved { get; set; }
+        public string? TemplateRequestRejected { get; set; }
+        public string? TemplateSlaWarning { get; set; }
+        public bool Enabled { get; set; }
+        public bool IsMockMode { get; set; } = true;
+        public bool NotifyOnRequestCreated { get; set; } = true;
+        public bool NotifyOnRequestApproved { get; set; } = true;
+        public bool NotifyOnRequestRejected { get; set; } = true;
+        public bool NotifyOnSlaWarning { get; set; } = true;
+
+        public string? TestPhone { get; set; }
+
+        public List<DANGCAPNE.Models.SystemModels.ZaloSubscriber> Subscribers { get; set; } = new();
+        public List<DANGCAPNE.Models.SystemModels.ZaloNotificationLog> RecentLogs { get; set; } = new();
+        public int TotalSent { get; set; }
+        public int TotalMocked { get; set; }
+        public int TotalFailed { get; set; }
+    }
+
+    public class ApproverKpiRow
+    {
+        public int UserId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? Department { get; set; }
+        public int TotalHandled { get; set; }
+        public int Approved { get; set; }
+        public int Rejected { get; set; }
+        public int Pending { get; set; }
+        public double AvgHours { get; set; }
+        public double RejectionRate { get; set; }
+        public int OverdueCount { get; set; }
+    }
+
+    public class ApproverKpiViewModel
+    {
+        public List<ApproverKpiRow> Rows { get; set; } = new();
+        public DateTime FromDate { get; set; } = DateTime.Today.AddMonths(-1);
+        public DateTime ToDate { get; set; } = DateTime.Today;
     }
 
     public class SlaManagementViewModel

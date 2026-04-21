@@ -151,6 +151,12 @@
                                 <i class="bi bi-stopwatch"></i> Cấu hình SLA
                             </a>
                         }
+                        @if (canViewAudit)
+                        {
+                            <a href="@Url.Action("ApproverKpi", "Admin")" class="nav-link @(currentAction == "ApproverKpi" ? "active" : "")">
+                                <i class="bi bi-bar-chart-steps"></i> KPI người duyệt
+                            </a>
+                        }
                     </div>
                 }
                 @if (isHR || isAdmin || canManageChecklist)

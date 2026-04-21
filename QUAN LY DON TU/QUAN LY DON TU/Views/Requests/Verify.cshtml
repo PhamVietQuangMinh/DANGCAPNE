@@ -25,6 +25,22 @@
             }
             else
             {
+                var verifyUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Requests/Verify?id={Model.Request.RequestCode}";
+                var qrSrc = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(verifyUrl)}";
+                <div style="display:flex;gap:20px;align-items:center;padding:16px;background:rgba(22,163,74,0.05);border-radius:12px;border-left:4px solid #16a34a;margin-bottom:20px;flex-wrap:wrap">
+                    <img src="@qrSrc" alt="QR xác minh" style="width:180px;height:180px;border-radius:8px;background:white;padding:6px" />
+                    <div style="flex:1;min-width:200px">
+                        <div style="font-size:16px;font-weight:700;color:#16a34a;margin-bottom:6px">
+                            <i class="bi bi-shield-check"></i> Đơn được xác thực bởi hệ thống
+                        </div>
+                        <div class="text-muted" style="font-size:13px;margin-bottom:10px">
+                            Mã QR này có thể scan bằng điện thoại để tra cứu lại đơn bất cứ lúc nào. Dùng làm bằng chứng chống giả mạo.
+                        </div>
+                        <div class="text-muted" style="font-size:11px;font-family:monospace;word-break:break-all">
+                            @verifyUrl
+                        </div>
+                    </div>
+                </div>
                 <div class="info-grid-2" style="margin-bottom: 20px">
                     <div>
                         <span class="text-muted" style="font-size:12px">Mã đơn</span><br />

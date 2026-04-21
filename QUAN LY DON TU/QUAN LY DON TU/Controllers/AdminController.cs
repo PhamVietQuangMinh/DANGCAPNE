@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DANGCAPNE.Data;
 using DANGCAPNE.Filters;
@@ -1151,6 +1151,85 @@ namespace DANGCAPNE.Controllers
 
         [HttpGet]
         [PermissionAuthorize("audit.view")]
+        public async Task<IActionResult> ApproverKpi(DateTime? from = null, DateTime? to = null)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;
+            var fromDate = from?.Date ?? DateTime.Today.AddMonths(-1);
+            var toDate = to?.Date ?? DateTime.Today;
+            if (toDate < fromDate)
+            {
+                (fromDate, toDate) = (toDate, fromDate);
+            }
+
+            var approvals = await _context.RequestApprovals
+                .Include(a => a.Approver).ThenInclude(u => u!.Department)
+                .Include(a => a.Request)
+                .Where(a => a.ApproverId.HasValue &&
+                            a.Request != null &&
+                            a.Request.TenantId == tenantId &&
+                            a.Request.CreatedAt.Date >= fromDate &&
+                            a.Request.CreatedAt.Date <= toDate)
+                .ToListAsync();
+
+            var rows = approvals
+                .Where(a => a.Approver != null)
+                .GroupBy(a => new
+                {
+                    a.ApproverId,
+                    FullName = a.Approver!.FullName,
+                    Email = a.Approver.Email,
+                    Department = a.Approver.Department != null ? a.Approver.Department.Name : null
+                })
+                .Select(g =>
+                {
+                    var handled = g.Where(x => x.Status == "Approved" || x.Status == "Rejected").ToList();
+                    var pending = g.Count(x => x.Status == "Pending");
+                    var approved = g.Count(x => x.Status == "Approved");
+                    var rejected = g.Count(x => x.Status == "Rejected");
+                    var overdue = g.Count(x =>
+                        x.Status == "Pending" &&
+                        x.Request != null &&
+                        x.Request.CreatedAt <= DateTime.UtcNow.AddHours(-24));
+                    var avgHours = handled.Any() && handled.All(x => x.ActionDate.HasValue)
+                        ? Math.Round(handled.Average(x => (x.ActionDate!.Value - x.Request!.CreatedAt).TotalHours), 1)
+                        : 0d;
+                    var totalHandled = approved + rejected;
+                    var rejectionRate = totalHandled > 0
+                        ? Math.Round((double)rejected / totalHandled * 100, 1)
+                        : 0d;
+
+                    return new ApproverKpiRow
+                    {
+                        UserId = g.Key.ApproverId ?? 0,
+                        FullName = g.Key.FullName,
+                        Email = g.Key.Email,
+                        Department = g.Key.Department,
+                        TotalHandled = totalHandled,
+                        Approved = approved,
+                        Rejected = rejected,
+                        Pending = pending,
+                        AvgHours = avgHours,
+                        RejectionRate = rejectionRate,
+                        OverdueCount = overdue
+                    };
+                })
+                .OrderByDescending(r => r.TotalHandled)
+                .ThenBy(r => r.FullName)
+                .ToList();
+
+            var model = new ApproverKpiViewModel
+            {
+                Rows = rows,
+                FromDate = fromDate,
+                ToDate = toDate
+            };
+
+            return View(model);
+        }
+
         public async Task<IActionResult> AuditLogs(int? requestId, int page = 1)
         {
             var tenantId = HttpContext.Session.GetInt32("TenantId") ?? 1;

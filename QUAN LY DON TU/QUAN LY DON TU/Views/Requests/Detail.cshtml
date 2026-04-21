@@ -57,6 +57,24 @@
                     </div>
                     <h4 style="font-size:18px;font-weight:700;margin-bottom:16px">@Model.Request?.Title</h4>
 
+                    @if (Model.Request?.Status == "Approved" && !string.IsNullOrEmpty(Model.Request.RequestCode))
+                    {
+                        var verifyUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/Requests/Verify?id={Model.Request.RequestCode}";
+                        var qrSrc = $"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={Uri.EscapeDataString(verifyUrl)}";
+                        <div style="display:flex;gap:14px;align-items:center;padding:12px;background:rgba(22,163,74,0.06);border-radius:10px;border-left:3px solid #16a34a;margin-bottom:16px;flex-wrap:wrap">
+                            <img src="@qrSrc" alt="QR xác minh" style="width:100px;height:100px;border-radius:6px;background:white;padding:4px" />
+                            <div style="flex:1;min-width:160px">
+                                <div style="font-size:13px;font-weight:700;color:#16a34a;margin-bottom:4px">
+                                    <i class="bi bi-shield-check-fill"></i> Đơn đã được xác thực
+                                </div>
+                                <div class="text-muted" style="font-size:11px;margin-bottom:4px">
+                                    Quét QR để xác minh tính hợp lệ của đơn
+                                </div>
+                                <a href="@verifyUrl" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-box-arrow-up-right"></i> Mở trang xác minh</a>
+                            </div>
+                        </div>
+                    }
+
                     <div class="meta-box">
                         @foreach (var field in Model.FormFields)
                         {
@@ -304,6 +322,78 @@
             }
             else
             {
+                @* ═══════════ AI RISK ASSESSMENT CARD ═══════════ *@
+                @if (Model.RiskAssessment != null)
+                {
+                    var ra = Model.RiskAssessment;
+                    var (levelClass, levelColor, levelBg, levelIcon, levelText) = ra.Level switch
+                    {
+                        "Critical" => ("risk-critical", "#dc2626", "rgba(220,38,38,0.08)", "bi-exclamation-octagon-fill", "RỦI RO NGHIÊM TRỌNG"),
+                        "High" => ("risk-high", "#ea580c", "rgba(234,88,12,0.08)", "bi-exclamation-triangle-fill", "RỦI RO CAO"),
+                        "Medium" => ("risk-medium", "#ca8a04", "rgba(202,138,4,0.08)", "bi-info-circle-fill", "CẦN LƯU Ý"),
+                        _ => ("risk-low", "#16a34a", "rgba(22,163,74,0.08)", "bi-shield-check", "AN TOÀN")
+                    };
+                    <div class="glass-card mb-24" style="border-left:4px solid @levelColor;background:@levelBg">
+                        <div class="card-header">
+                            <h3><i class="bi bi-robot" style="color:@levelColor"></i> AI Smart Approval Assistant</h3>
+                            <span style="font-size:11px;color:var(--text-muted);margin-left:auto">
+                                <i class="bi bi-lightbulb"></i> Phân tích dựa trên @ra.Reasons.Count yếu tố
+                            </span>
+                        </div>
+                        <div class="card-body" style="padding:20px">
+                            <div class="d-flex gap-24 align-center flex-wrap" style="margin-bottom:16px">
+                                <div style="text-align:center;min-width:140px">
+                                    <div style="font-size:48px;font-weight:900;color:@levelColor;line-height:1">
+                                        @ra.Score<span style="font-size:18px;font-weight:500;opacity:0.6">/100</span>
+                                    </div>
+                                    <div style="font-size:11px;font-weight:700;color:@levelColor;letter-spacing:1px;margin-top:4px">
+                                        <i class="bi @levelIcon"></i> @levelText
+                                    </div>
+                                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Điểm rủi ro tổng hợp</div>
+                                </div>
+                                <div style="flex:1;min-width:240px">
+                                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:6px">
+                                        @ra.Recommendation
+                                    </div>
+                                    <div style="font-size:12px;color:var(--text-muted)">
+                                        <i class="bi bi-graph-up"></i> Lịch sử 90 ngày:
+                                        <strong style="color:@(ra.HistoricalApprovalRate >= 80 ? "#16a34a" : ra.HistoricalApprovalRate >= 50 ? "#ca8a04" : "#dc2626")">
+                                            @ra.HistoricalApprovalRate% đơn được duyệt
+                                        </strong>
+                                    </div>
+                                    <div style="background:rgba(0,0,0,0.05);border-radius:8px;height:8px;margin-top:8px;overflow:hidden">
+                                        <div style="background:@levelColor;height:100%;width:@(ra.Score)%;transition:width 0.6s"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="border-top:1px solid var(--border-glass);padding-top:14px">
+                                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px">
+                                    <i class="bi bi-list-check"></i> Phân tích chi tiết
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:8px">
+                                    @foreach (var reason in ra.Reasons)
+                                    {
+                                        var (rIcon, rColor, rBg) = reason.Severity switch
+                                        {
+                                            "danger" => ("#dc2626", "#dc2626", "rgba(220,38,38,0.06)"),
+                                            "warning" => ("#ea580c", "#ea580c", "rgba(234,88,12,0.06)"),
+                                            "success" => ("#16a34a", "#16a34a", "rgba(22,163,74,0.06)"),
+                                            _ => ("#6b7280", "#6b7280", "rgba(107,114,128,0.05)")
+                                        };
+                                        <div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:@rBg;border-radius:6px;border-left:3px solid @rColor">
+                                            <i class="bi @reason.Icon" style="color:@rIcon;font-size:16px"></i>
+                                            <span style="font-size:13px;color:var(--text-primary)">@reason.Text</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;font-size:10px;color:var(--text-muted);font-style:italic">
+                                <i class="bi bi-shield-lock"></i> Gợi ý AI chỉ mang tính tham khảo. Quyết định duyệt là của bạn.
+                            </div>
+                        </div>
+                    </div>
+                }
+
                 @* ═══════════ APPROVER VIEW: Compact Professional Timeline ═══════════ *@
                 <div class="glass-card mb-24">
                     <div class="card-header">
